@@ -53,6 +53,43 @@ falls back to the old path: evict, then reopen with `--resume`, which picks
 the settings up at launch. A failed live change therefore costs a restart,
 never a stale setting.
 
+## 3. Composer: steer and queue (proposal, not built)
+
+What the two tools do when a message is sent mid-turn:
+
+| | Claude Code | Codex |
+| --- | --- | --- |
+| Default | queue, drained into the model request at the next step boundary (after the running tool call); leftovers run as the next turn | queue as a follow-up for the next turn |
+| Into the running turn | the default path itself (observed, `ref/live-control.md`) | explicit per-message **Steer** (`turn/steer` with `expectedTurnId`), at the next step boundary |
+| Edit before it goes | up-arrow edits queued messages | queued chip, can be promoted or removed |
+| Known friction | none reported | Enter/Tab swapped between versions; users had to Ctrl+C to send "now" (openai/codex#13595); request for a "steer by default" toggle (#32709) |
+
+Neither can cut a running tool call short: "now" always means "at the next
+step". Only Stop does that. So there are two real intents, not three:
+*change course in this turn* (steer) and *do this afterwards* (queue).
+
+Proposal, one composer, no mode picker:
+
+- **Enter while a turn runs = steer.** `Engine.Inject`; the message shows in
+  the transcript marked "Claude will see it at its next step". Irrevocable
+  once sent, so the mark is honest rather than "delivered".
+- **Queue is a second, explicit action** (a "Send after this turn" button and
+  a key): the message is held by the host as a chip above the composer,
+  editable and removable, and sent as a normal turn when the current one ends.
+  Held chips survive a Stop.
+- **Stop with text in the composer = "Stop and send"** (interrupt, then send),
+  so nobody has to Ctrl+C and retype.
+- **Fallbacks are silent and honest.** If the session cannot take an
+  injection (`ErrNotInjectable`, a non-steerable turn, an agent without
+  steering), Enter becomes a normal send when idle or a queue chip when busy,
+  and the chip says why.
+- Host API: `POST message {mode: steer|queue}` (steer falls back as above),
+  `GET`/`DELETE` queue items. A Codex backend maps steer to `turn/steer`
+  (`expectedTurnId`, fall back to queue on a race or on review/compact turns).
+
+Open choice: whether Enter should steer (above) or queue like Codex. Steer
+matches what Claude Code does in effect and what Codex users ask for.
+
 ## Not done
 
 - No host (Desk, Projects) calls `Engine.Inject` yet; their HTTP routes and UI
