@@ -68,27 +68,39 @@ Neither can cut a running tool call short: "now" always means "at the next
 step". Only Stop does that. So there are two real intents, not three:
 *change course in this turn* (steer) and *do this afterwards* (queue).
 
-Proposal, one composer, no mode picker:
+Decision (YZ, 2026-10-19): the default is Claude Code's behaviour, and the
+user can choose another at send time.
 
-- **Enter while a turn runs = steer.** `Engine.Inject`; the message shows in
-  the transcript marked "Claude will see it at its next step". Irrevocable
-  once sent, so the mark is honest rather than "delivered".
-- **Queue is a second, explicit action** (a "Send after this turn" button and
-  a key): the message is held by the host as a chip above the composer,
-  editable and removable, and sent as a normal turn when the current one ends.
-  Held chips survive a Stop.
-- **Stop with text in the composer = "Stop and send"** (interrupt, then send),
-  so nobody has to Ctrl+C and retype.
-- **Fallbacks are silent and honest.** If the session cannot take an
-  injection (`ErrNotInjectable`, a non-steerable turn, an agent without
-  steering), Enter becomes a normal send when idle or a queue chip when busy,
-  and the chip says why.
-- Host API: `POST message {mode: steer|queue}` (steer falls back as above),
-  `GET`/`DELETE` queue items. A Codex backend maps steer to `turn/steer`
-  (`expectedTurnId`, fall back to queue on a race or on review/compact turns).
+Checked on CLI 2.1.302 (`ref/live-control.md`): a message written mid-turn is
+read at the next step boundary; if the turn ends first (a reply with no tool
+call), the CLI runs it as the next turn by itself. So the default needs no
+client-side branching: one send, and the CLI decides step or next turn.
 
-Open choice: whether Enter should steer (above) or queue like Codex. Steer
-matches what Claude Code does in effect and what Codex users ask for.
+One composer, no mode setting:
+
+- **Send (Enter), the default.** Idle: a normal turn. Running: `Engine.Inject`.
+  The message appears in the transcript at once, marked "Claude will read it
+  at its next step" until the next assistant step shows it was taken up. If
+  the turn ended first, the CLI's own next turn starts and the transcript
+  shows it as a turn start. Irrevocable once sent, which the mark says.
+- **Choose another way at send time**, only while a turn runs, from a menu on
+  the send button (and a key, e.g. Alt+Enter), per message, never sticky:
+  - **After this turn**: the host holds the message as an editable, removable
+    chip above the composer and sends it as a normal turn when the session is
+    idle. Chips survive Stop.
+  - **Stop and send**: interrupt, then send, so nobody has to Ctrl+C and
+    retype.
+- **Fallbacks are silent and honest.** If the session cannot take an injection
+  (`ErrNotInjectable`, a non-steerable turn, an agent without steering), Send
+  becomes a held chip with a one-line reason.
+- Host API: `POST message {mode: send|queue|stop_and_send}` (default `send`),
+  `GET` / `PATCH` / `DELETE` queue items. A Codex backend maps `send` while
+  running to `turn/steer` (`expectedTurnId`; on a race or on review / compact
+  turns fall back to a held chip).
+- Gap to close in the engine: between a turn's `result` and the CLI's own next
+  turn's `init` the session reads Idle, so a host `Send` in that instant could
+  start a second turn. `Inject`-then-`Send` fallback must tolerate
+  `ErrTurnInFlight` (it already surfaces as `NotSent`).
 
 ## Not done
 

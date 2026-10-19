@@ -16,6 +16,9 @@ or `go test -tags e2e -run TestE2E_Live ./agentboot/`.
   echoed (`isReplay: true` with `--replay-user-messages`).
 - The model sees it: the later tool call and the final answer follow the
   injected instruction. One `result` for the whole turn, not one per message.
+- If the turn ends before another step (a reply with no tool call), the CLI
+  runs the message as its own next turn: `result`, then a fresh `system/init`,
+  the message echo, a second `result` (`live-control-spike.py notool`).
 - AgentBoot does not pass `--replay-user-messages`, so no echo reaches the
   transcript; the host records the injected message itself.
 

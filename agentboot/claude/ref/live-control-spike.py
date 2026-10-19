@@ -68,3 +68,10 @@ if __name__=="__main__":
             time.sleep(14)
         mode=[sys.argv[2]]
         run("adddir-"+mode[0],s,["--permission-mode","default"])
+    if which=="notool":
+        def s(send,h,log):
+            send({"type":"user","message":{"role":"user","content":"Count from 1 to 40, one number per line, no tools, nothing else."}})
+            time.sleep(2.2)
+            send({"type":"user","message":{"role":"user","content":"SECOND: now reply with exactly the word ZEBRA."}})
+            time.sleep(25)
+        run("notool",s,["--permission-mode","bypassPermissions"])
