@@ -43,8 +43,8 @@ The table below covers all 74 preset entries in `internal/catalog/providers.json
 | Catalog ID | Service | Connection / status |
 | --- | --- | --- |
 | `aws-bedrock` | AWS Bedrock | AWS credentials / Bedrock Key |
-| `gcp-vertex-claude` | Vertex — Claude | GCP Service账号 |
-| `gcp-vertex-gemini` | Vertex — Gemini | GCP Service账号 |
+| `gcp-vertex-claude` | Vertex — Claude | GCP service account |
+| `gcp-vertex-gemini` | Vertex — Gemini | GCP service account |
 | `azure-openai` | Azure OpenAI | Azure Key |
 | `openai-com` | OpenAI | API Key / compatible API |
 | `anthropic-com` | Anthropic | API Key / compatible API |
