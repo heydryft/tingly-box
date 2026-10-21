@@ -3,6 +3,7 @@ package loadbalance
 import (
 	"errors"
 	"maps"
+	"strings"
 	"sync"
 	"time"
 
@@ -68,6 +69,7 @@ func DefaultHealthMonitorConfig() HealthMonitorConfig {
 // HealthMonitor manages health status for all services
 type HealthMonitor struct {
 	services               map[string]*ServiceHealth // serviceID -> health
+	providerRestrictions   map[string]time.Time      // provider UUID -> retry time
 	mutex                  sync.RWMutex
 	config                 HealthMonitorConfig
 	defaultRecoveryTimeout time.Duration
@@ -78,6 +80,7 @@ type HealthMonitor struct {
 func NewHealthMonitor(config HealthMonitorConfig) *HealthMonitor {
 	return &HealthMonitor{
 		services:               make(map[string]*ServiceHealth),
+		providerRestrictions:   make(map[string]time.Time),
 		config:                 config,
 		defaultRecoveryTimeout: time.Duration(config.RecoveryTimeoutSeconds) * time.Second,
 		probeFunc:              nil, // Can be set via SetProbeFunc
@@ -119,6 +122,10 @@ func (hm *HealthMonitor) getHealth(serviceID string) *ServiceHealth {
 
 // IsHealthy checks if a service is healthy (with time-based recovery and probing)
 func (hm *HealthMonitor) IsHealthy(serviceID string) bool {
+	provider, _, _ := strings.Cut(serviceID, "/")
+	if hm.IsProviderRestricted(provider) {
+		return false
+	}
 	health := hm.getHealth(serviceID)
 	if health == nil {
 		// No health record means healthy by default
@@ -165,6 +172,21 @@ func (hm *HealthMonitor) IsHealthy(serviceID string) bool {
 	}
 
 	return false
+}
+
+// ReportProviderRestricted pauses every model of one upstream account. An
+// in-flight success or the ordinary auth probe must not lift this restriction.
+func (hm *HealthMonitor) ReportProviderRestricted(providerUUID string) {
+	hm.mutex.Lock()
+	defer hm.mutex.Unlock()
+	hm.providerRestrictions[providerUUID] = clock.Now().Add(2 * time.Hour)
+}
+
+func (hm *HealthMonitor) IsProviderRestricted(providerUUID string) bool {
+	hm.mutex.RLock()
+	until := hm.providerRestrictions[providerUUID]
+	hm.mutex.RUnlock()
+	return clock.Now().Before(until)
 }
 
 // recoverService recovers a service to healthy state
@@ -291,6 +313,10 @@ func (hm *HealthMonitor) GetAllHealth() map[string]*ServiceHealth {
 
 // ResetHealth manually resets a service's health to healthy
 func (hm *HealthMonitor) ResetHealth(serviceID string) {
+	provider, _, _ := strings.Cut(serviceID, "/")
+	hm.mutex.Lock()
+	delete(hm.providerRestrictions, provider)
+	hm.mutex.Unlock()
 	hm.recoverService(serviceID)
 }
 

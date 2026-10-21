@@ -14,7 +14,17 @@ import (
 type UpstreamFailure struct {
 	Status  int
 	Message string
+	Kind    string
+	Code    string
 }
+
+// WorkBuddy's transport tags its own error envelopes before the OpenAI SDK
+// decodes them. Do not infer these meanings from a numeric code on other hosts.
+const (
+	FailureChannelRefused    = "workbuddy_channel_refused"
+	FailureAccountRestricted = "workbuddy_account_restricted"
+	FailureInvalidRequest    = "workbuddy_invalid_request"
+)
 
 // ClassifyUpstreamFailure classifies err once into both the HTTP status to
 // answer the client with and a client-safe message — the status and message
@@ -36,7 +46,15 @@ func ClassifyUpstreamFailure(err error, fallbackStatus int) UpstreamFailure {
 
 	var oaiErr *openai.Error
 	if errors.As(err, &oaiErr) {
-		return withSDKStatus(fallbackStatus, oaiErr.StatusCode, safeOpenAIMessage(oaiErr))
+		failure := withSDKStatus(fallbackStatus, oaiErr.StatusCode, safeOpenAIMessage(oaiErr))
+		switch oaiErr.Type {
+		case "workbuddy_error":
+			failure.Code = oaiErr.Code
+		case FailureChannelRefused, FailureAccountRestricted, FailureInvalidRequest:
+			failure.Kind = oaiErr.Type
+			failure.Code = oaiErr.Code
+		}
+		return failure
 	}
 
 	var anthropicErr *anthropic.Error

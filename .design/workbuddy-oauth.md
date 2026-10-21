@@ -8,7 +8,8 @@ covers only what WorkBuddy does differently. Proposal: TEP-2097.
 
 ## Status of the protocol: third-party, cross-checked
 
-WorkBuddy publishes no API for third-party login. The routes first came from
+This integration uses WorkBuddy's undocumented desktop login routes, rather
+than the OAuth 2.1 application flow of its Open Platform. The routes first came from
 integrations that agree on them (`elavita/dsh-codearts-auth`,
 `pilciw/codebuddy2api`, OmniRoute's CodeBuddy CN gateway). The client
 identification and the billing meter were then aligned with
@@ -26,6 +27,31 @@ account. To keep a correction cheap:
   does not fail a login.
 
 When a real capture disagrees, fix the table / parser and record it here.
+
+### Upstream refusals (2026-10-21)
+
+The WorkBuddy transport normalizes `{code,msg,displayMsg}` errors into an OpenAI
+error envelope, keeping the original fields and HTTP status for diagnostics.
+The SDK's typed error carries the vendor code and a provider-specific failure
+kind through both streaming and complete calls. `11128` alone is ambiguous:
+only an `unapproved channel` message (or the client-identification code `10085`)
+is a channel refusal; a first-message/schema error remains an invalid request.
+
+Channel refusals can fall back to another provider before response commitment.
+Other WorkBuddy candidates are skipped for that request only; neither account
+health nor the transient-failure breaker is penalized. `403/11140` pauses all
+models of that provider for two hours, including new models and other rules.
+Ordinary health probes and in-flight successes cannot end this pause; the
+existing health reset can end it after the vendor lifts the restriction.
+An all-unhealthy fallback does not re-admit a restricted provider. The pause is
+in memory and is cleared on restart, like the other health-monitor state.
+
+Message/Schema errors remain terminal. Generic 401/429 retain the existing
+authentication/rate-limit behavior. These classifications are attached only by
+the WorkBuddy transport, not inferred from another vendor's numeric codes.
+
+References: [channel refusals](https://github.com/magpie-community/plugins/issues/279),
+[account restrictions](https://github.com/yetone/magpie/issues/1849).
 
 ## Login: server-mediated poll (`OAuthMethodServerPoll`)
 

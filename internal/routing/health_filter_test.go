@@ -169,3 +169,16 @@ func TestHealthFilter_GetHealthMonitor(t *testing.T) {
 
 	assert.Equal(t, monitor, hf.GetHealthMonitor())
 }
+
+func TestHealthFilter_AllUnhealthyDoesNotReadmitRestrictedProvider(t *testing.T) {
+	monitor := loadbalance.NewHealthMonitor(loadbalance.DefaultHealthMonitorConfig())
+	monitor.ReportProviderRestricted("restricted")
+	monitor.ReportRateLimit("limited/m")
+	services := []*loadbalance.Service{{Provider: "restricted", Model: "m"}, {Provider: "limited", Model: "m"}}
+	filter := NewHealthFilter(monitor)
+	assert.Equal(t, services[1:], filter.FilterWithFallback(services))
+	assert.Empty(t, filter.FilterWithFallback(services[:1]))
+	got, _, err := NewHealthStage(filter).Evaluate(nil, services[:1])
+	assert.NoError(t, err)
+	assert.Empty(t, got)
+}

@@ -41,11 +41,12 @@ func (s *HealthStage) Evaluate(ctx *SelectionContext, candidates []*loadbalance.
 	// caller still gets a service (and the real upstream 429/auth) instead of a
 	// "no service available" routing error.
 	if before > 0 && len(healthy) == 0 {
+		candidates = s.filter.WithoutRestricted(candidates)
 		logrus.WithContext(selectionLogContext(ctx)).WithFields(logrus.Fields{
 			"stage":      "routing_health_degrade",
 			"rule_uuid":  selectionRuleUUID(ctx),
 			"candidates": before,
-		}).Warnf("[health] all %d candidates unhealthy; keeping the full set (degrade)", before)
+		}).Warnf("[health] all %d candidates unhealthy; retaining %d unrestricted candidates (degrade)", before, len(candidates))
 		return candidates, nil, nil
 	}
 

@@ -69,17 +69,25 @@ func SendErrorResponse(c *gin.Context, err error, desc string) {
 	// provider's HTTP status when the error carries one, so a 401/429/4xx is
 	// not flattened into a 500) and the message.
 	failure := protocol.ClassifyUpstreamFailure(err, http.StatusInternalServerError)
+	code := failure.Code
+	if code == "" {
+		code = desc
+	}
+	kind := failure.Kind
+	if kind == "" {
+		kind = "protocol_error"
+	}
 
 	// c.Error keeps the full raw error for the server-side access log
 	// (internal/middleware/memory_log.go); the JSON body below shows the
 	// client a categorized, non-leaky message instead.
-	asErr := fmt.Errorf("%s: %s", protocol.LoggableUpstreamError(err).Error(), desc)
+	asErr := fmt.Errorf("%w: %s", protocol.LoggableUpstreamError(err), desc)
 	c.Error(asErr).SetType(gin.ErrorTypePublic) //nolint:errcheck
 	c.JSON(failure.Status, ErrorResponse{
 		Error: ErrorDetail{
 			Message: fmt.Sprintf("%s: %s", failure.Message, desc),
-			Type:    "protocol_error",
-			Code:    desc,
+			Type:    kind,
+			Code:    code,
 		},
 	})
 }
