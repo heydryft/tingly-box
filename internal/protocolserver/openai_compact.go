@@ -89,9 +89,6 @@ func compactRequestModel(body []byte) (string, error) {
 	if model.Type != gjson.String || strings.TrimSpace(model.String()) == "" {
 		return "", fmt.Errorf("model is required")
 	}
-	if stream := gjson.GetBytes(body, "stream"); stream.Exists() {
-		return "", fmt.Errorf("responses/compact is non-streaming; omit stream")
-	}
 	return model.String(), nil
 }
 

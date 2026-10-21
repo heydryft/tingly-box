@@ -16,8 +16,10 @@ native gateway route, like images/decisions, not an admin/frontend SDK endpoint.
 The request travels as raw JSON through the SDK's authenticated transport.
 Typed input-union reserialization could invent IDs or lose fields on opaque
 history. Do not run chat preprocessing, vision translation or Responses-create
-defaults. Forwarding retains request cancellation and provider timeouts. Cache,
-reasoning and output usage are normalized with the shared Responses usage helper.
+defaults. TB does not reject or rewrite a caller-supplied `stream` field;
+parameter acceptance is left to the upstream. The published compact response
+contract remains JSON. Forwarding retains request cancellation and provider
+timeouts. Cache, reasoning and output usage are normalized with the shared Responses usage helper.
 Malformed successful upstream replies without an output array are gateway errors,
 not fabricated successful compactions. Non-2xx upstream status is retained.
 

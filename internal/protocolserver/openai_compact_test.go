@@ -48,6 +48,40 @@ func TestCompactEndpointNativeForwarding(t *testing.T) {
 	}
 }
 
+// Compact has a JSON response contract, but TB must not impose its own
+// stream-parameter policy on native upstreams.
+func TestCompactEndpointStreamPassthrough(t *testing.T) {
+	for _, value := range []string{"false", "true"} {
+		t.Run(value, func(t *testing.T) {
+			for _, status := range []int{http.StatusOK, http.StatusBadRequest} {
+				var calls atomic.Int32
+				upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					calls.Add(1)
+					body, err := io.ReadAll(r.Body)
+					require.NoError(t, err)
+					require.Equal(t, value, gjson.GetBytes(body, "stream").Raw)
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(status)
+					if status == http.StatusOK {
+						_, _ = io.WriteString(w, `{"object":"response.compaction","output":[]}`)
+					} else {
+						_, _ = io.WriteString(w, `{"error":{"type":"invalid_request_error","message":"upstream rejected stream"}}`)
+					}
+				}))
+				router := newDualProviderRouter(t, upstream.URL, protocol.APIStyleOpenAI, typ.ScenarioOpenAI, "compact-model", "native-model")
+				w := httptest.NewRecorder()
+				router.ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/tingly/openai/v1/responses/compact", strings.NewReader(`{"model":"compact-model","stream":`+value+`}`)))
+				upstream.Close()
+				require.Equal(t, status, w.Code, w.Body.String())
+				require.Equal(t, int32(1), calls.Load())
+				if status == http.StatusBadRequest {
+					require.Contains(t, w.Body.String(), "upstream rejected stream")
+				}
+			}
+		})
+	}
+}
+
 func TestCompactEndpointValidationAndUpstreamFailures(t *testing.T) {
 	for _, status := range []int{400, 403, 429, 502} {
 		t.Run(http.StatusText(status), func(t *testing.T) {
@@ -60,7 +94,7 @@ func TestCompactEndpointValidationAndUpstreamFailures(t *testing.T) {
 			}))
 			defer upstream.Close()
 			router := newDualProviderRouter(t, upstream.URL, protocol.APIStyleOpenAI, typ.ScenarioOpenAI, "compact-model", "native-model")
-			for _, bad := range []string{`{`, `[]`, `{}`, `{"model":3}`, `{"model":" "}`, `{"model":"compact-model","stream":true}`} {
+			for _, bad := range []string{`{`, `[]`, `{}`, `{"model":3}`, `{"model":" "}`} {
 				w := httptest.NewRecorder()
 				router.ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/tingly/openai/v1/responses/compact", strings.NewReader(bad)))
 				require.Equal(t, 400, w.Code, w.Body.String())
