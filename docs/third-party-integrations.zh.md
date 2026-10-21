@@ -1,5 +1,7 @@
 # 第三方接入声明
 
+[中文](third-party-integrations.zh.md) | [English](third-party-integrations.en.md)
+
 更新日期：2026 年 10 月 21 日
 
 Tingly Box 提供第三方模型、客户端和工具的兼容接入，帮助用户在上游服务允许的范围内完成日常工作，并使用路由、调用记录、权限控制和工具扩展等能力。本文说明这些接入的适用边界，覆盖 API Key、云平台凭据、账号登录、客户端配置及工具连接等方式。
