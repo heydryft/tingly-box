@@ -100,8 +100,8 @@ Desktop applications can bundle a different core version.
   reapplying Quick Config also replaces a manually added capability override.
 
 The standalone `POST /responses/compact` JSON endpoint remains a supported public
-OpenAI contract and is separate from either audited CLI branch. Native gateway
-support is separate work. Its availability does not establish
+OpenAI contract and is separate from either audited CLI branch. The gateway
+exposes it natively; see `compaction.md`. Its availability does not establish
 the cause of an upstream protection error during a different compaction mode.
 
 The exact prefix `received error while streaming:` is emitted by TB's vendored

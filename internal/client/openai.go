@@ -33,6 +33,7 @@ type OpenAIClientInterface interface {
 	ResponsesNewStreaming(ctx context.Context, req responses.ResponseNewParams) *ssestream.Stream[responses.ResponseStreamEventUnion]
 	EmbeddingsNew(ctx context.Context, req openai.EmbeddingNewParams) (*openai.CreateEmbeddingResponse, error)
 	DecisionsNew(ctx context.Context, body []byte) ([]byte, error)
+	ResponsesCompact(ctx context.Context, body []byte) ([]byte, error)
 
 	// Utility methods
 	ListModels(ctx context.Context) (*ModelListResult, error)
@@ -159,6 +160,25 @@ func (c *OpenAIClient) DecisionsNew(ctx context.Context, body []byte) ([]byte, e
 	opts := append([]option.RequestOption{option.WithRequestBody("application/json", body)}, override...)
 	err := c.client.Post(ctx, path, nil, &out, opts...)
 	return out, err
+}
+
+// ResponsesCompact preserves the native compaction window as opaque JSON. In
+// particular, round-tripping input through SDK unions can invent required IDs
+// or discard future item fields. Authentication, timeouts and HTTP errors still
+// go through the same SDK transport as other Responses requests.
+func (c *OpenAIClient) ResponsesCompact(ctx context.Context, body []byte) ([]byte, error) {
+	var out []byte
+	err := c.client.Post(ctx, "responses/compact", nil, &out, option.WithRequestBody("application/json", body))
+	if err != nil {
+		return nil, err
+	}
+	var window struct {
+		Output json.RawMessage `json:"output"`
+	}
+	if json.Unmarshal(out, &window) != nil || len(window.Output) == 0 || window.Output[0] != '[' {
+		return nil, &protocol.EmptyResponseError{Err: fmt.Errorf("upstream compact endpoint did not return an output array")}
+	}
+	return out, nil
 }
 
 // decisionsTarget resolves where a provider serves decisions. Most vendors expose
