@@ -1,5 +1,10 @@
 // Providers, credentials and access: provider dialogs, API keys, sharing keys, teams, access control
 export default {
+  "workbuddyConnection": {
+      "cnDescription": "Connect your WorkBuddy / CodeBuddy CN account for everyday work with Tingly Box routing and tool extensions.",
+      "globalDescription": "Connect your WorkBuddy international account for everyday work with Tingly Box routing and tool extensions.",
+      "scope": "This third-party connection uses WorkBuddy client interfaces. Models, credits and permitted clients are determined by WorkBuddy. A successful sign-in does not guarantee access from every client; use the connection within your account permissions and WorkBuddy’s terms."
+  },
   "provider": {
     "pageTitle": "Credentials",
     "subtitleWithCount": "Managing {{count}} providers and API keys",

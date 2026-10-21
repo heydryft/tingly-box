@@ -17,6 +17,7 @@ import {
     alpha,
 } from '@mui/material';
 import React, {useMemo, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {useInRouterContext, useNavigate} from 'react-router-dom';
 import {type UniqueProvider, useProviderCatalogs, useCloudProviders, searchProviders} from '../services/serviceProviders';
 import ProviderIcon from './ProviderIcon';
@@ -294,6 +295,7 @@ export const ProviderListContent: React.FC<ProviderListContentProps> = ({
     showDetails = false,
     wide = false,
 }) => {
+    const {t} = useTranslation();
     const keyProviders = useProviderCatalogs();
     const cloudProviders = useCloudProviders();
 
@@ -433,7 +435,7 @@ export const ProviderListContent: React.FC<ProviderListContentProps> = ({
                                     key={`oauth-${p.id}`}
                                     icon={p.icon}
                                     name={p.name}
-                                    meta="OAuth sign-in"
+                                    meta={p.descriptionKey ? t(p.descriptionKey) : 'OAuth sign-in'}
                                     badge={oauthBadge}
                                     showDetails={showDetails}
                                     onClick={() => onSelect({kind: 'oauth', providerId: p.id})}

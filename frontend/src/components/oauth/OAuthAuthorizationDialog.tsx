@@ -14,6 +14,7 @@ import {
     Typography,
 } from '@mui/material';
 import {useEffect, useState} from 'react';
+import WorkBuddyConnectionNote from './WorkBuddyConnectionNote';
 import api from "@/services/api.ts";
 import { fontMono } from '@/theme/fonts';
 
@@ -28,6 +29,7 @@ export interface OAuthAuthorizationData {
     expires_in?: number;
     interval?: number;
     provider?: string;
+    providerId?: string;
     flow_type: 'standard' | 'device_code';
     session_id?: string; // Session ID for status tracking
 }
@@ -261,6 +263,7 @@ const OAuthAuthorizationDialog = ({
                 </DialogTitle>
                 <DialogContent>
                     <Stack spacing={3}>
+                        <WorkBuddyConnectionNote providerId={authData?.providerId}/>
                         {/* Error message */}
                         {errorMessage && (
                             <Alert severity="error" aria-live="polite">

@@ -1,5 +1,10 @@
 // Providers, credentials and access: provider dialogs, API keys, sharing keys, teams, access control
 export default {
+  "workbuddyConnection": {
+      "cnDescription": "Подключите аккаунт WorkBuddy / CodeBuddy CN для повседневной работы с маршрутизацией и инструментами Tingly Box.",
+      "globalDescription": "Подключите международный аккаунт WorkBuddy для повседневной работы с маршрутизацией и инструментами Tingly Box.",
+      "scope": "Это стороннее подключение использует интерфейсы клиента WorkBuddy. Доступные модели, лимиты и разрешённые клиенты определяет WorkBuddy. Успешный вход не гарантирует доступ из любого клиента; используйте подключение в пределах прав аккаунта и условий WorkBuddy."
+  },
   "provider": {
     "pageTitle": "Учётные данные",
     "subtitleWithCount": "Управление провайдерами и API-ключами: {{count}}",

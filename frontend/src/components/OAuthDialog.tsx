@@ -16,10 +16,12 @@ import {
     Typography,
 } from '@mui/material';
 import {useEffect, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import api from "@/services/api.ts";
 import {getOAuthRedirectPath} from "@/utils/protocol";
 import {FALLBACK_OAUTH_PROVIDERS, type OAuthProvider} from './oauth/fallbackProviders';
 import OAuthAuthorizationDialog, {type OAuthAuthorizationData} from './oauth/OAuthAuthorizationDialog';
+import WorkBuddyConnectionNote from './oauth/WorkBuddyConnectionNote';
 import { fontMono, fontSizes } from '@/theme/fonts';
 
 interface OAuthDialogProps {
@@ -38,6 +40,7 @@ interface OAuthDialogProps {
 }
 
 const OAuthDialog = ({open, onClose, onSuccess, autoStartProviderId, reauthProviderUuid}: OAuthDialogProps) => {
+    const {t} = useTranslation();
     const isReauth = Boolean(reauthProviderUuid);
     const [authorizing, setAuthorizing] = useState<string | null>(null);
     const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -210,6 +213,7 @@ const OAuthDialog = ({open, onClose, onSuccess, autoStartProviderId, reauthProvi
                     expires_in: data.expires_in,
                     interval: data.interval,
                     provider: provider.name,
+                    providerId: provider.id,
                     flow_type: flowType,
                     session_id: data.session_id, // Session ID for status tracking
                 });
@@ -338,11 +342,13 @@ const OAuthDialog = ({open, onClose, onSuccess, autoStartProviderId, reauthProvi
                                             <Typography variant="body2" sx={{
                                                 color: "text.secondary"
                                             }}>
-                                                {provider.description}
+                                                {provider.descriptionKey ? t(provider.descriptionKey) : provider.description}
                                             </Typography>
                                         </Box>
                                     </Stack>
                                 )}
+
+                                <WorkBuddyConnectionNote providerId={provider?.id}/>
 
                                 {/* Some providers (Claude Code, Codex) redirect the browser to a fixed
                                     loopback port for the callback. On a remote deployment that port lives
