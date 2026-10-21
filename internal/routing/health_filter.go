@@ -41,24 +41,10 @@ func (hf *HealthFilter) Filter(services []*loadbalance.Service) []*loadbalance.S
 func (hf *HealthFilter) FilterWithFallback(services []*loadbalance.Service) []*loadbalance.Service {
 	healthy := hf.Filter(services)
 	if len(healthy) == 0 && len(services) > 0 {
-		// Degrade transient failures, but never probe an account the vendor
-		// restricted during its rest window.
-		return hf.WithoutRestricted(services)
-	}
-	return healthy
-}
-
-func (hf *HealthFilter) WithoutRestricted(services []*loadbalance.Service) []*loadbalance.Service {
-	if hf == nil || hf.monitor == nil {
+		// Fallback: return all services if none are healthy
 		return services
 	}
-	available := make([]*loadbalance.Service, 0, len(services))
-	for _, svc := range services {
-		if svc != nil && !hf.monitor.IsProviderRestricted(svc.Provider) {
-			available = append(available, svc)
-		}
-	}
-	return available
+	return healthy
 }
 
 // IsHealthy checks if a specific service is healthy

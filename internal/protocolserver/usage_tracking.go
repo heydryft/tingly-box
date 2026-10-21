@@ -312,9 +312,6 @@ func classifyErrorCode(err error) string {
 	if err == nil {
 		return ""
 	}
-	if failure := protocol.ClassifyUpstreamFailure(err, 0); failure.Kind != "" {
-		return failure.Kind
-	}
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return "client_disconnected"
 	}
@@ -498,15 +495,6 @@ func (ph *ProtocolHandler) ReportHealthStatus(provider *typ.Provider, model stri
 	}
 
 	serviceID := loadbalance.FormatServiceID(provider.UUID, model)
-	// These are provider-specific, typed errors; numeric codes alone are not
-	// enough. In particular, a channel refusal must not poison account health.
-	switch protocol.ClassifyUpstreamFailure(err, 0).Kind {
-	case protocol.FailureAccountRestricted:
-		ph.deps.HealthMonitor.ReportProviderRestricted(provider.UUID)
-		return
-	case protocol.FailureChannelRefused, protocol.FailureInvalidRequest:
-		return
-	}
 
 	logrus.WithFields(logrus.Fields{
 		"provider":   provider.Name,

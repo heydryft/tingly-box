@@ -75,15 +75,10 @@ func SendInvalidRequestBodyError(c *gin.Context, err error) {
 func SendStreamingError(c *gin.Context, err error) {
 	c.Error(protocol.LoggableUpstreamError(err)).SetType(gin.ErrorTypePublic) //nolint:errcheck
 	failure := protocol.ClassifyUpstreamFailure(err, http.StatusInternalServerError)
-	kind := failure.Kind
-	if kind == "" {
-		kind = "api_error"
-	}
 	c.JSON(failure.Status, protocol.ErrorResponse{
 		Error: protocol.ErrorDetail{
 			Message: "Failed to create streaming request: " + failure.Message,
-			Type:    kind,
-			Code:    failure.Code,
+			Type:    "api_error",
 		},
 	})
 }
@@ -93,15 +88,10 @@ func SendStreamingError(c *gin.Context, err error) {
 func SendForwardingError(c *gin.Context, err error) {
 	c.Error(protocol.LoggableUpstreamError(err)).SetType(gin.ErrorTypePublic) //nolint:errcheck
 	failure := protocol.ClassifyUpstreamFailure(err, http.StatusInternalServerError)
-	kind := failure.Kind
-	if kind == "" {
-		kind = "api_error"
-	}
 	c.JSON(failure.Status, protocol.ErrorResponse{
 		Error: protocol.ErrorDetail{
 			Message: "Failed to forward request: " + failure.Message,
-			Type:    kind,
-			Code:    failure.Code,
+			Type:    "api_error",
 		},
 	})
 }

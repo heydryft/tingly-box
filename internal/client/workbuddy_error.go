@@ -3,18 +3,19 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/tingly-dev/tingly-box/internal/protocol"
+	"github.com/openai/openai-go/v3"
 )
 
 // WorkBuddy's errors use {code,msg,displayMsg}, not OpenAI's {error:{...}}.
 // Normalize at this provider's transport boundary, preserving the envelope for
 // diagnostics and the HTTP status for callers. The SDK can then retain both the
-// vendor code and the failure kind through streaming and complete-call paths.
+// vendor code and message through streaming and complete-call paths.
 func workbuddyNormalizeError(resp *http.Response) error {
 	if resp == nil || resp.Body == nil || resp.StatusCode < 400 {
 		return nil
@@ -39,13 +40,11 @@ func workbuddyNormalizeError(resp *http.Response) error {
 		kind := "workbuddy_error"
 		switch {
 		case resp.StatusCode == http.StatusForbidden && code == "11140":
-			kind = protocol.FailureAccountRestricted
+			kind = "workbuddy_account_restricted"
 			msg += ": account restricted by the upstream; submit feedback in WorkBuddy to appeal"
 		case code == "11128" && strings.Contains(strings.ToLower(msg), "unapproved channel"), code == "10085":
-			kind = protocol.FailureChannelRefused
+			kind = "workbuddy_channel_refused"
 			msg += "; use an allowed client channel or another provider"
-		case resp.StatusCode == http.StatusBadRequest:
-			kind = protocol.FailureInvalidRequest
 		}
 		if display["en"] != "" {
 			msg += ": " + display["en"]
@@ -62,4 +61,11 @@ func workbuddyNormalizeError(resp *http.Response) error {
 	resp.ContentLength = int64(len(body))
 	resp.Header.Set("Content-Length", strconv.Itoa(len(body)))
 	return nil
+}
+
+// IsWorkBuddyChannelRefusal identifies a non-retryable HTTP status that can use
+// the existing provider fallback. Numeric codes alone are not enough.
+func IsWorkBuddyChannelRefusal(err error) bool {
+	var sdkErr *openai.Error
+	return errors.As(err, &sdkErr) && sdkErr.StatusCode == http.StatusBadRequest && sdkErr.Type == "workbuddy_channel_refused"
 }

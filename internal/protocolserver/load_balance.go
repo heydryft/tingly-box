@@ -78,10 +78,7 @@ func (lb *LoadBalancer) selectService(rule *typ.Rule, claim bool) (*loadbalance.
 	if len(healthyServices) == 0 {
 		logrus.Warnf("[load_balancer] all %d active services for rule %s are unhealthy; "+
 			"falling back to active set", len(activeServices), rule.RequestModel)
-		healthyServices = lb.healthFilter.WithoutRestricted(activeServices)
-		if len(healthyServices) == 0 {
-			return nil, fmt.Errorf("all upstream accounts for rule %s are restricted; submit feedback in WorkBuddy to appeal", rule.RequestModel)
-		}
+		healthyServices = activeServices
 	}
 
 	// For single healthy service rules, return it directly

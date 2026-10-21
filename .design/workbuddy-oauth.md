@@ -30,25 +30,13 @@ When a real capture disagrees, fix the table / parser and record it here.
 
 ### Upstream refusals (2026-10-21)
 
-The WorkBuddy transport normalizes `{code,msg,displayMsg}` errors into an OpenAI
-error envelope, keeping the original fields and HTTP status for diagnostics.
-The SDK's typed error carries the vendor code and a provider-specific failure
-kind through both streaming and complete calls. `11128` alone is ambiguous:
-only an `unapproved channel` message (or the client-identification code `10085`)
-is a channel refusal; a first-message/schema error remains an invalid request.
-
-Channel refusals can fall back to another provider before response commitment.
-Other WorkBuddy candidates are skipped for that request only; neither account
-health nor the transient-failure breaker is penalized. `403/11140` pauses all
-models of that provider for two hours, including new models and other rules.
-Ordinary health probes and in-flight successes cannot end this pause; the
-existing health reset can end it after the vendor lifts the restriction.
-An all-unhealthy fallback does not re-admit a restricted provider. The pause is
-in memory and is cleared on restart, like the other health-monitor state.
-
-Message/Schema errors remain terminal. Generic 401/429 retain the existing
-authentication/rate-limit behavior. These classifications are attached only by
-the WorkBuddy transport, not inferred from another vendor's numeric codes.
+The WorkBuddy transport normalizes `{code,msg,displayMsg}` into an OpenAI
+error envelope, preserving the HTTP status, vendor code and original body.
+Only `11128` with an `unapproved channel` message, or client-identification
+code `10085`, marks a channel refusal. Such a 400 may use the existing fallback
+before response commitment, without counting as a transient service failure.
+Other 400s remain terminal; `403/11140` includes an account-restriction message
+and follows the existing 403 handling. No new health state or cooldown is added.
 
 References: [channel refusals](https://github.com/magpie-community/plugins/issues/279),
 [account restrictions](https://github.com/yetone/magpie/issues/1849).

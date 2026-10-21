@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tingly-dev/tingly-box/internal/clock"
 )
 
 func TestNewHealthMonitor(t *testing.T) {
@@ -325,28 +324,4 @@ func TestHealthMonitor_ProbeExtendsTimeout(t *testing.T) {
 
 	// Should now recover
 	assert.True(t, hm.IsHealthy(serviceID))
-}
-
-// A vendor restriction belongs to the provider, including models that have no
-// health record yet. Ordinary successes/probes must not end the rest early.
-func TestHealthMonitor_ProviderRestriction(t *testing.T) {
-	now := time.Date(2026, 10, 21, 0, 0, 0, 0, time.UTC)
-	restore := clock.SetClock(func() time.Time { return now })
-	defer restore()
-	hm := NewHealthMonitor(DefaultHealthMonitorConfig())
-	probes := 0
-	hm.SetProbeFunc(func(string) bool { probes++; return true })
-	hm.ReportProviderRestricted("wb")
-	assert.False(t, hm.IsHealthy("wb/model/with/slashes"))
-	hm.ReportSuccess("wb/model/with/slashes")
-	assert.False(t, hm.IsHealthy("wb/other"))
-	assert.True(t, hm.IsHealthy("another/model"))
-	now = now.Add(90 * time.Minute)
-	assert.False(t, hm.IsHealthy("wb/other"))
-	assert.Zero(t, probes)
-	now = now.Add(31 * time.Minute)
-	assert.True(t, hm.IsHealthy("wb/other"))
-	hm.ReportProviderRestricted("wb")
-	hm.ResetHealth("wb/other")
-	assert.True(t, hm.IsHealthy("wb/model"))
 }

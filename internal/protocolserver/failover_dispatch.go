@@ -26,7 +26,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/tingly-dev/tingly-box/ai"
+	"github.com/tingly-dev/tingly-box/internal/client"
 	"github.com/tingly-dev/tingly-box/internal/constant"
 	"github.com/tingly-dev/tingly-box/internal/recording"
 
@@ -303,9 +303,6 @@ func (ph *ProtocolHandler) selectFallbackService(
 		if excluded[svc.ServiceID()] {
 			continue
 		}
-		if ph.deps.HealthMonitor != nil && ph.deps.HealthMonitor.IsProviderRestricted(svc.Provider) {
-			continue
-		}
 		p, err := ph.deps.Config.GetProviderByUUID(svc.Provider)
 		if err != nil || p == nil {
 			continue
@@ -424,24 +421,14 @@ func (ph *ProtocolHandler) DispatchWithPriorityFailover(
 
 		// Once bytes reach the wire, retry is impossible, even if streaming fails.
 		status, committed := gate.Status(), gate.Committed()
-		failure := protocol.UpstreamFailure{Status: status}
-		for j := len(c.Errors) - 1; j >= errorsBeforeAttempt; j-- {
-			if classified := protocol.ClassifyUpstreamFailure(c.Errors[j].Err, status); classified.Kind != "" {
-				failure = classified
-				break
-			}
-		}
-		retryable := isRetryableStatus(status)
-		switch failure.Kind {
-		case protocol.FailureChannelRefused, protocol.FailureAccountRestricted:
-			retryable = true
-		case protocol.FailureInvalidRequest:
-			retryable = false
-		}
 		if committed {
 			loadbalance.RecordServiceSuccess(rule.UUID, serviceID)
 		}
-		if committed || !retryable {
+		channelRefused := false
+		for _, attemptErr := range c.Errors[errorsBeforeAttempt:] {
+			channelRefused = channelRefused || client.IsWorkBuddyChannelRefusal(attemptErr.Err)
+		}
+		if committed || (!isRetryableStatus(status) && !channelRefused) {
 			fields := failoverLogFields(c, rule, provider, model, serviceID)
 			fields["stage"] = "failover_terminal"
 			fields["attempt"] = i + 1
@@ -470,14 +457,10 @@ func (ph *ProtocolHandler) DispatchWithPriorityFailover(
 		// so record a failed 429 attempt here or the next request would select
 		// the rate-limited service again before SmartRouting/LB evaluation.
 		if ph.deps.HealthMonitor != nil {
-			switch {
-			case failure.Kind == protocol.FailureAccountRestricted:
-				ph.deps.HealthMonitor.ReportProviderRestricted(provider.UUID)
-			case failure.Kind == protocol.FailureChannelRefused:
-				// A request/channel refusal says nothing about account health.
-			case status == http.StatusTooManyRequests:
+			switch status {
+			case http.StatusTooManyRequests:
 				ph.deps.HealthMonitor.ReportRateLimit(serviceID)
-			case status == http.StatusUnauthorized || status == http.StatusForbidden:
+			case http.StatusUnauthorized, http.StatusForbidden:
 				// Same reasoning as the 429 case: the fallback's success is all
 				// the final usage tracking sees, so the broken credential would
 				// keep winning selection on every subsequent request.
@@ -485,32 +468,17 @@ func (ph *ProtocolHandler) DispatchWithPriorityFailover(
 			}
 		}
 
-		if failure.Kind == "" {
+		// A channel refusal does not indicate a transient service outage.
+		if !channelRefused {
 			loadbalance.RecordServiceFailure(rule.UUID, serviceID)
+			state := loadbalance.DefaultBreakerStore().Get(rule.UUID, serviceID).State()
+			fields = failoverLogFields(c, rule, provider, model, serviceID)
+			fields["stage"] = "breaker_failure_recorded"
+			fields["rule_uuid"] = rule.UUID
+			fields["status"] = status
+			fields["breaker_state"] = state.String()
+			logrus.WithContext(c.Request.Context()).WithFields(fields).Warnf("[breaker] recorded failure for %s; state=%s", serviceID, state.String())
 		}
-		// Avoid walking the same rejected channel (or another model of the
-		// restricted account) on this request. Other requests remain free to
-		// use WorkBuddy when their channel is accepted.
-		for _, svc := range activeServices {
-			if failure.Kind == protocol.FailureAccountRestricted && svc.Provider == provider.UUID {
-				tried[svc.ServiceID()] = true
-			}
-			if failure.Kind == protocol.FailureChannelRefused {
-				p, err := ph.deps.Config.GetProviderByUUID(svc.Provider)
-				if err == nil && p != nil && ai.IsWorkBuddyIssuer(p.OAuthIssuer()) {
-					tried[svc.ServiceID()] = true
-				}
-			}
-		}
-		state := loadbalance.DefaultBreakerStore().Get(rule.UUID, serviceID).State()
-		fields = failoverLogFields(c, rule, provider, model, serviceID)
-		fields["stage"] = "breaker_failure_recorded"
-		fields["rule_uuid"] = rule.UUID
-		fields["status"] = status
-		fields["failure_kind"] = failure.Kind
-		fields["upstream_code"] = failure.Code
-		fields["breaker_state"] = state.String()
-		logrus.WithContext(c.Request.Context()).WithFields(fields).Warnf("[breaker] recorded failure for %s; state=%s", serviceID, state.String())
 
 		fields = failoverLogFields(c, rule, provider, model, serviceID)
 		fields["stage"] = "failover_attempt_failed"

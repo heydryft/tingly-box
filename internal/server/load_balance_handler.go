@@ -357,10 +357,6 @@ func (api *LoadBalancerAPI) GetServicesHealth(c *gin.Context) {
 					if health.LastError != nil {
 						serviceHealth["last_error"] = health.LastError.Error()
 					}
-					if monitor.IsProviderRestricted(service.Provider) {
-						serviceHealth["status"] = "unhealthy"
-						serviceHealth["last_error"] = "Account restricted by the upstream; submit feedback in WorkBuddy to appeal. Paused for 2 hours; reset health after the restriction is lifted."
-					}
 				}
 			}
 		} else {
