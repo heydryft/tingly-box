@@ -435,7 +435,7 @@ export const ProviderListContent: React.FC<ProviderListContentProps> = ({
                                     key={`oauth-${p.id}`}
                                     icon={p.icon}
                                     name={p.name}
-                                    meta={p.descriptionKey ? t(p.descriptionKey) : 'OAuth sign-in'}
+                                    meta={p.summaryKey ? t(p.summaryKey) : 'OAuth sign-in'}
                                     badge={oauthBadge}
                                     showDetails={showDetails}
                                     onClick={() => onSelect({kind: 'oauth', providerId: p.id})}

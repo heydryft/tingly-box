@@ -1,6 +1,8 @@
 // Providers, credentials and access: provider dialogs, API keys, sharing keys, teams, access control
 export default {
   "workbuddyConnection": {
+    "cardSummary": "日常使用 · 路由与工具扩展",
+    "proxyHint": "可选：为此连接设置网络代理。",
       "cnDescription": "连接日常使用的 WorkBuddy / CodeBuddy 国内版账号，使用 Tingly Box 的路由与工具扩展能力。",
       "globalDescription": "连接日常使用的 WorkBuddy 国际版账号，使用 Tingly Box 的路由与工具扩展能力。",
       "scope": "此第三方接入使用 WorkBuddy 客户端接口。可用模型、额度及允许使用的客户端由 WorkBuddy 决定，登录成功不代表所有客户端均可调用。请在账号授权范围及 WorkBuddy 服务条款允许的范围内使用。"

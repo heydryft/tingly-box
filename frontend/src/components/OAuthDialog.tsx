@@ -265,6 +265,7 @@ const OAuthDialog = ({open, onClose, onSuccess, autoStartProviderId, reauthProvi
     if (autoStartProviderId) {
         const provider = oauthProviders.find((p) => p.id === autoStartProviderId);
         const name = provider?.displayName || provider?.name || 'provider';
+        const isWorkBuddy = provider?.id === 'workbuddy' || provider?.id === 'workbuddy_cn';
         const isConnecting = configConfirmed && !initError;
 
         const handleRetry = () => {
@@ -415,7 +416,9 @@ const OAuthDialog = ({open, onClose, onSuccess, autoStartProviderId, reauthProvi
                                     helperText={
                                         autoDetectedProxy
                                             ? 'Auto-detected from existing provider. You can override if needed.'
-                                            : 'Optional: use a proxy to bypass regional restrictions.'
+                                            : isWorkBuddy
+                                                ? t('workbuddyConnection.proxyHint')
+                                                : 'Optional: use a proxy to bypass regional restrictions.'
                                     }
                                     size="small"
                                     color={autoDetectedProxy ? 'success' : 'primary'}

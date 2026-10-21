@@ -7,6 +7,7 @@ export interface OAuthProvider {
     displayName: string;
     description: string;
     descriptionKey?: string;
+    summaryKey?: string;
     icon: React.ReactNode;
     color: string;
     enabled?: boolean;
@@ -123,6 +124,7 @@ export const FALLBACK_OAUTH_PROVIDERS: OAuthProvider[] = [
         displayName: 'WorkBuddy / CodeBuddy CN',
         description: 'Connect your WorkBuddy / CodeBuddy CN account for everyday work with Tingly Box routing and tool extensions.',
         descriptionKey: 'workbuddyConnection.cnDescription',
+        summaryKey: 'workbuddyConnection.cardSummary',
         icon: <WorkBuddy size={32}/>,
         color: '#14C38E',
         enabled: true,
@@ -133,6 +135,7 @@ export const FALLBACK_OAUTH_PROVIDERS: OAuthProvider[] = [
         displayName: 'WorkBuddy (workbuddy.ai)',
         description: 'Connect your WorkBuddy international account for everyday work with Tingly Box routing and tool extensions.',
         descriptionKey: 'workbuddyConnection.globalDescription',
+        summaryKey: 'workbuddyConnection.cardSummary',
         icon: <WorkBuddy size={32}/>,
         color: '#14C38E',
         enabled: true,
