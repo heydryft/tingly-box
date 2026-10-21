@@ -119,7 +119,7 @@ Tingly Box 的接入用途是用户获准的常规使用及能力扩展。请勿
 
 客户端配置入口包括 Claude Code、Claude Desktop、Codex、Gemini CLI、OpenCode、Pi、DeepSeek Harness（DSH）、WorkBuddy、Xcode、VS Code 和 Cursor。协议入口包括 OpenAI、Anthropic、Google Gemini 及相应兼容协议；每个客户端能使用哪些上游能力，由双方实际支持的协议和上游授权共同决定。
 
-工具接入包括用户配置的 MCP 服务与技能，以及 Telegram、Discord、Slack、飞书 / Lark、钉钉、企业微信、微信和 WhatsApp 等消息平台适配。各平台的机器人、账号、组织审批及数据访问要求仍然适用；存在适配代码不等于当前部署已经启用或完成授权。
+工具接入包括用户配置的 MCP 服务与技能，以及 Telegram、Discord、Slack、飞书 / Lark、钉钉、企业微信、微信、QQ 和 WhatsApp 等消息平台适配。各平台的机器人、账号、组织审批及数据访问要求仍然适用；存在适配代码不等于当前部署已经启用或完成授权。
 
 ## 凭据与数据
 
