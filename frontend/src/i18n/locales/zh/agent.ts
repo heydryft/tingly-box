@@ -232,6 +232,8 @@ export default {
       "defaultRule": "主规则，没有自己规则的槽位都走它",
       "mainRule": "使用主规则（点击给它单独加一条规则）",
       "ownRule": "使用自己的规则（点击改回主规则）",
+      "splitAll": "全部拆开",
+      "mergeAll": "全部合并",
       "failed": "更新槽位失败"
     },
     "configModes": {

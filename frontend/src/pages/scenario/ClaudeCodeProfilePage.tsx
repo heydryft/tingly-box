@@ -99,10 +99,8 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
     const [renameName, setRenameName] = useState('');
     const [isProfileMutating, setIsProfileMutating] = useState(false);
     const [appVersion, setAppVersion] = useState('');
-    const [unifiedMode, setUnifiedMode] = useState(currentProfile?.unified || false);
-    // The profile's rules (and, in unified mode, its Slots row). Its mode is
-    // fixed at creation, so there is no switch.
-    const slots = useSlotRouting(scenario, `builtin:${scenario}:cc`, !!currentProfile, unifiedMode ? 'unified' : 'separate');
+    // The profile's rules and its Slots row.
+    const slots = useSlotRouting(scenario, `builtin:${scenario}:cc`, !!currentProfile);
     // npx matches the primary installation path and does not assume that the
     // package has also installed a permanent executable on PATH. Keep the
     // global command available as an explicit alternative for those who have.
@@ -125,11 +123,6 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
     // elsewhere) instead of two separate always-expanded rows — same info,
     // less vertical space, one at a time.
     const [profileConfigTab, setProfileConfigTab] = useState<'quickstart' | 'settings-file'>('quickstart');
-
-    // Update unified mode when profile changes
-    useEffect(() => {
-        setUnifiedMode(currentProfile?.unified || false);
-    }, [currentProfile]);
 
     useEffect(() => {
         setSettingsArtifact(null);
@@ -242,7 +235,7 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
                         configStatus={null}
                         unconnectedText={t('agentStatus.noRequestsYet')}
                         // The alias is in the title; the id stays here since the launch command uses it.
-                        leading={`${currentProfile ? `${profileId} · ` : ''}${unifiedMode ? t('claudeCode.profile.unified') : t('claudeCode.profile.separate')}`}
+                        leading={currentProfile ? profileId : ''}
                     />
                 )}
                 // Same shape as the Agent pages: looks-in first, the key action

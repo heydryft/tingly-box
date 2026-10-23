@@ -17,7 +17,7 @@ import { useProviderDialog } from '@/hooks/useProviderDialog';
 import { ScenarioPageModalProvider } from '@/pages/scenario/context/ScenarioPageContext';
 import { useContext1MToggle } from '@/pages/scenario/hooks/useContext1MToggle';
 import { useScenarioPageInternal } from '@/pages/scenario/hooks/useScenarioPageInternal.ts';
-import { type SlotMode, useSlotRouting } from '@/pages/scenario/hooks/useSlotRouting';
+import { useSlotRouting } from '@/pages/scenario/hooks/useSlotRouting';
 import { useAgentObservation } from '@/pages/scenario/hooks/useAgentObservation';
 import AgentAccessSection, { useAccessExpanded } from './components/AgentAccessSection';
 import AgentActivityDialog from './components/AgentActivityDialog';
@@ -63,9 +63,7 @@ export type AgentSetup =
 /** What a one-click apply derives its settings from. */
 export interface AgentApplyContext {
     rules: any[];
-    /** Set for agents with slot routing. */
-    slotMode?: SlotMode;
-    /** Slot routing, unified mode: slots with a rule of their own. */
+    /** Slot routing: slots with a rule of their own. */
     slots?: string[];
 }
 
@@ -130,7 +128,6 @@ export interface AgentPageSlot {
     showNotification: ReturnType<typeof useScenarioPageInternal>['showNotification'];
     rules: any[];
     loadRules: (scenario: string) => Promise<void>;
-    slotMode?: SlotMode;
     slots?: string[];
     dialogOpen: boolean;
     /** Close the setup dialog and drop a pending 1M-context change. */
@@ -165,7 +162,7 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
 
     // Rules: the scenario's own, or — with slot routing — the set for the current mode.
     const slots = useSlotRouting(scenario, slotRouting?.unifiedRuleUuid ?? '', !!slotRouting);
-    const slotMode = slotRouting ? slots.mode : undefined;
+    const slotList = slotRouting ? slots.slots : undefined;
     const internal = useScenarioPageInternal(scenario, { skipRules: !!slotRouting });
     const { notification, showNotification, copyToClipboard, baseUrl, loadRules } = internal;
     const rules = slotRouting ? slots.rules : internal.rules;
@@ -192,7 +189,7 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
         wasAllDone.current = done;
         setSetupDone(done);
     }, []);
-    const { status: clientConfigStatus } = useClientConfigStatus(agent.clientConfigTool ?? null, [rules, dialogOpen, slotMode]);
+    const { status: clientConfigStatus } = useClientConfigStatus(agent.clientConfigTool ?? null, [rules, dialogOpen, slotList]);
     const context1M = useContext1MToggle(() => setDialogOpen(true));
     // Auto-config agents apply a 1M toggle straight away: no dialog, a toast says so.
     const handleContext1MToggle = async (enabled: boolean, ruleUuid?: string) => {
@@ -200,7 +197,7 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
             context1M.handleContext1MToggle(enabled, ruleUuid);
             return;
         }
-        const result = await runApply(() => setup.applyContext1M!(t, { rules, slotMode }, { enabled, ruleUuid }));
+        const result = await runApply(() => setup.applyContext1M!(t, { rules, slots: slotList }, { enabled, ruleUuid }));
         if (result.success) {
             showNotification(t(enabled ? 'context1M.appliedOn' : 'context1M.appliedOff', { client: agent.title }), 'success');
         } else if (result.error) {
@@ -223,8 +220,7 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
             setIsApplyLoading(false);
         }
     };
-    const slotList = slotRouting ? slots.slots : undefined;
-    const applyContext: AgentApplyContext = { rules, slotMode, slots: slotList };
+    const applyContext: AgentApplyContext = { rules, slots: slotList };
     const closeDialog = () => {
         setDialogOpen(false);
         context1M.clearPendingContext1MChange();
@@ -237,7 +233,6 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
         showNotification,
         rules,
         loadRules,
-        slotMode,
         slots: slotList,
         dialogOpen,
         closeDialog,
@@ -265,7 +260,6 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
     // Until progress is known, an agent that already routes a model counts as done.
     const setupFinished = setupDone ?? hasModelOnAnyRule(rules);
     const quickStartHidden = !quickStart || (setupFinished && !quickStartReopened);
-    const slotModeLabel = t('scenarioPage.slotMode', { defaultValue: 'Model mode' });
     const restartQuickStart = () => {
         resetSetupProgress(scenario);
         wasAllDone.current = null;
@@ -357,17 +351,7 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
                         />
                         {slotRouting && (
                             <Box sx={{ px: 2, py: 0.5 }}>
-                                <ToggleRow label={slotModeLabel}>
-                                    <ChoiceToggle<SlotMode>
-                                        value={slots.mode}
-                                        options={slots.modeOptions}
-                                        onChange={slots.requestMode}
-                                        optionWidth={112}
-                                        flush
-                                        ariaLabel={slotModeLabel}
-                                    />
-                                </ToggleRow>
-                                {slots.slotsRow && <Box sx={{ py: 0.5 }}>{slots.slotsRow}</Box>}
+                                <Box sx={{ py: 0.5 }}>{slots.slotsRow}</Box>
                             </Box>
                         )}
                     </Box>
@@ -432,7 +416,6 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
 
                 <ScenarioLogDialog open={logOpen} onClose={() => setLogOpen(false)} scenario={scenario} title={t('agentStatus.log')} />
                 <AgentActivityDialog scenario={scenario} open={requestsOpen} onClose={() => setRequestsOpen(false)} />
-                {slotRouting && slots.modeDialog}
                 {setup.kind !== 'none' && setup.renderDialog(slot)}
                 {quickStart && <ConnectAIDialogs flow={connectAI} />}
             </Stack>

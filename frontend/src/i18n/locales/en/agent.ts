@@ -256,6 +256,8 @@ export default {
       "defaultRule": "the main rule; every slot without its own rule uses it",
       "mainRule": "uses the main rule (click to give it its own rule)",
       "ownRule": "has its own rule (click to use the main rule again)",
+      "splitAll": "Split all",
+      "mergeAll": "Merge all",
       "failed": "Failed to update the slot"
     },
     "configModes": {

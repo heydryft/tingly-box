@@ -96,14 +96,6 @@ const CCProfileDialog: React.FC<CCProfileDialogProps> = ({
                                 primary={p.name}
                                 secondary={`claude_code:${p.id}`}
                             />
-                            <Chip
-                                label={p.unified
-                                    ? t('remoteAgent.ccProfile.unified', { defaultValue: 'unified' })
-                                    : t('remoteAgent.ccProfile.separate', { defaultValue: 'separate' })}
-                                size="small"
-                                variant="outlined"
-                                sx={{ height: 20, fontSize: fontSizes.micro }}
-                            />
                         </ListItemButton>
                     ))}
                 </List>

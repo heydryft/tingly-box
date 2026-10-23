@@ -29,11 +29,11 @@ export const profileApi = {
         }));
     },
 
-    createProfile: async (scenario: string, name: string, unified?: boolean): Promise<any> => {
+    createProfile: async (scenario: string, name: string): Promise<any> => {
         return controlApi((client, headers) => client.POST('/api/v1/scenario/{scenario}/profiles', {
             headers,
             params: {path: {scenario}},
-            body: {name, unified},
+            body: {name},
         }));
     },
 
