@@ -160,7 +160,7 @@ export const zh: Dict<typeof en> = {
         group: { waiting: '等你处理', ready: '可以 review', working: '进行中', idle: '空闲', resolved: '已解决' },
     },
     thread: {
-        status: { waiting: '等你处理', ready: '可以 review', working: '进行中', idle: '空闲', resolved: '已解决' },
+        status: { waiting: '等你处理', ready: '可以 review', working: '进行中', idle: '空闲', resolved: '已解决', failed: '失败' },
         commits_one: '{{count}} 个提交', commits_other: '{{count}} 个提交',
         files_one: '{{count}} 个文件', files_other: '{{count}} 个文件',
         noRepo: '无仓库——文件放入文件库', fromBase: '基于 {{base}}', uncommitted: '有未提交的改动',

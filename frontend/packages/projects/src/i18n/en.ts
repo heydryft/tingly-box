@@ -155,7 +155,7 @@ export const en = {
         group: { waiting: 'Waiting on you', ready: 'Ready for review', working: 'Working', idle: 'Idle', resolved: 'Resolved' },
     },
     thread: {
-        status: { waiting: 'Waiting on you', ready: 'Ready for review', working: 'Working', idle: 'Idle', resolved: 'Resolved' },
+        status: { waiting: 'Waiting on you', ready: 'Ready for review', working: 'Working', idle: 'Idle', resolved: 'Resolved', failed: 'Failed' },
         commits_one: '{{count}} commit', commits_other: '{{count}} commits',
         files_one: '{{count}} file', files_other: '{{count}} files',
         noRepo: 'No repository — files go to the Library', fromBase: 'from {{base}}', uncommitted: 'uncommitted changes',

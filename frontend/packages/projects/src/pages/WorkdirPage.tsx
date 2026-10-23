@@ -41,11 +41,11 @@ function changesLiveTasks(e: ThreadEvent): boolean {
     }
 }
 
-const GROUPS: { key: string; color: StatusGroup['color']; collapsed?: boolean }[] = [
-    { key: 'waiting', color: 'warning' },
-    { key: 'working', color: 'info' },
-    { key: 'idle', color: 'default' },
-    { key: 'resolved', color: 'default', collapsed: true },
+const GROUPS: { key: string; collapsed?: boolean }[] = [
+    { key: 'waiting' },
+    { key: 'working' },
+    { key: 'idle' },
+    { key: 'resolved', collapsed: true },
 ];
 
 /**
@@ -303,7 +303,7 @@ export default function WorkdirPage() {
         }
     };
 
-    const groups: StatusGroup[] = GROUPS.map((g) => ({ key: g.key, label: t(`session.group.${g.key}`), color: g.color, collapsed: g.collapsed }));
+    const groups: StatusGroup[] = GROUPS.map((g) => ({ key: g.key, label: t(`session.group.${g.key}`), collapsed: g.collapsed }));
     const rows = useMemo(() => (sessions ?? []).map((s) => ({
         id: s.id,
         group: s.status === 'ready' ? 'idle' : s.status,

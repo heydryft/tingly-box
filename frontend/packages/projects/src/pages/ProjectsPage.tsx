@@ -10,17 +10,17 @@ import { useProjectsHost } from '../host/ProjectsHost';
 import { timeAgo } from '../utils/format';
 import { EmptyState, PageHeader } from '@tingly/ui';
 import { fontSizes } from '@tingly/ui/theme/fonts';
-import { toneColor } from '../components/project/threadStatus';
+import { stateColor, ThreadStateMark } from '../components/project/threadStatus';
 
 function ProjectCard({ p }: { p: ProjectSummary }) {
     const { t, i18n } = useTranslation('projects');
     const navigate = useNavigate();
     const { paths: routes } = useProjectsHost();
     const c = p.threads;
-    const counts: { key: string; n: number; color: 'warning' | 'success' | 'info' | 'default' }[] = [
-        { key: 'waiting', n: c.waiting, color: 'warning' },
-        { key: 'ready', n: c.ready, color: 'success' },
-        { key: 'working', n: c.working, color: 'info' },
+    const counts = [
+        { key: 'waiting', n: c.waiting },
+        { key: 'ready', n: c.ready },
+        { key: 'working', n: c.working },
     ];
     return (
         <Card variant="outlined" sx={{ borderRadius: 1.5, '&:hover': { borderColor: 'text.disabled' } }}>
@@ -36,8 +36,8 @@ function ProjectCard({ p }: { p: ProjectSummary }) {
                 {/* What needs you, in one quiet line: a dot per state that has threads. */}
                 <Box sx={{ display: 'flex', columnGap: 1.5, rowGap: 0.5, flexWrap: 'wrap', mt: 1.5, minHeight: 20, fontSize: fontSizes.sm }}>
                     {counts.filter((x) => x.n > 0).map((x) => (
-                        <Box key={x.key} component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: x.key === 'waiting' ? toneColor(x.color) : 'text.secondary', fontWeight: x.key === 'waiting' ? 600 : 400 }}>
-                            <Box component="span" sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: toneColor(x.color) }} />
+                        <Box key={x.key} component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: stateColor(x.key), fontWeight: x.key === 'waiting' ? 600 : 400 }}>
+                            <ThreadStateMark status={x.key} />
                             {x.n} {t(`overview.group.${x.key}`)}
                         </Box>
                     ))}

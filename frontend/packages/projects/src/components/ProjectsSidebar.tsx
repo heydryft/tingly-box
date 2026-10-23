@@ -32,6 +32,9 @@ export interface ProjectsSidebarRow {
     end?: ReactNode;
 }
 
+/** Running is neutral: only what needs the user is coloured (amber). */
+const RUNNING_DOT = { '& .MuiBadge-badge': { backgroundColor: 'text.secondary' } } as const;
+
 /** A titled group of rows. Hosts pass their own (e.g. Tingly Box's working folders). */
 export interface ProjectsSidebarSection {
     key: string;
@@ -162,7 +165,7 @@ function SectionView({ section, onNavigate }: { section: ProjectsSidebarSection;
                         }}
                     >
                         <ListItemIcon sx={{ minWidth: 32, color: 'inherit', '& svg': { fontSize: 20 } }}>
-                            <Badge color={row.attention ? 'warning' : 'info'} variant="dot" invisible={!row.attention && !row.running}>
+                            <Badge color="warning" variant="dot" invisible={!row.attention && !row.running} sx={row.attention ? undefined : RUNNING_DOT}>
                                 {row.icon ?? <Folder />}
                             </Badge>
                         </ListItemIcon>
@@ -185,7 +188,7 @@ function SectionView({ section, onNavigate }: { section: ProjectsSidebarSection;
                                 ...(c.selected && { backgroundColor: 'action.selected', color: 'text.primary' }),
                             }}
                         >
-                            <Badge color={c.attention ? 'warning' : 'info'} variant="dot" invisible={!c.attention && !c.running} sx={{ mr: 1.25, '& .MuiBadge-badge': { position: 'static', transform: 'none' } }} />
+                            <Badge color="warning" variant="dot" invisible={!c.attention && !c.running} sx={[{ mr: 1.25, '& .MuiBadge-badge': { position: 'static', transform: 'none' } }, c.attention ? {} : RUNNING_DOT]} />
                             <Typography noWrap sx={{ flex: 1, minWidth: 0, fontSize: fontSizes.sm, color: 'inherit' }}>{c.label}</Typography>
                             {c.end != null && <Box sx={{ ml: 1, flexShrink: 0, fontSize: fontSizes.xs, color: 'text.disabled' }}>{c.end}</Box>}
                         </ListItemButton>

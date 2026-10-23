@@ -1,13 +1,13 @@
 import { useState, type ReactNode } from 'react';
-import { Box, Collapse, Typography, type ChipProps } from '@mui/material';
+import { Box, Collapse, Typography } from '@mui/material';
 import { ExpandMore } from '../icons';
 import { fontSizes } from '@tingly/ui/theme/fonts';
+import { stateColor, ThreadStateMark } from '../project/threadStatus';
 
 /** One group of the list: what needs the user comes first. */
 export interface StatusGroup {
     key: string;
     label: string;
-    color: ChipProps['color'];
     /** Closed until clicked (finished work). */
     collapsed?: boolean;
 }
@@ -28,12 +28,13 @@ export interface StatusRow {
     unseen?: boolean;
 }
 
-/** A quiet group heading: a status dot, the name, a count. */
-export function StatusHeading({ label, color, count }: { label: string; color: ChipProps['color']; count: number }) {
+/** A quiet group heading: the state's mark, the name, a count. The key of a
+ * group is the status it lists. */
+export function StatusHeading({ label, status, count }: { label: string; status: string; count: number }) {
     return (
         <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
-            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color === 'default' ? 'text.disabled' : `${color}.main` }} />
-            <Box component="span" sx={{ fontSize: fontSizes.sm, fontWeight: 600, color: color === 'default' ? 'text.secondary' : `${color}.main` }}>{label}</Box>
+            <ThreadStateMark status={status} />
+            <Box component="span" sx={{ fontSize: fontSizes.sm, fontWeight: 600, color: stateColor(status) }}>{label}</Box>
             <Box component="span" sx={{ fontSize: fontSizes.sm, color: 'text.disabled' }}>{count}</Box>
         </Box>
     );
@@ -90,7 +91,7 @@ export function StatusGroups({ groups, rows, onOpen, empty }: { groups: StatusGr
                             onClick={g.collapsed ? () => setExpanded((e) => ({ ...e, [g.key]: !open })) : undefined}
                             sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, cursor: g.collapsed ? 'pointer' : undefined }}
                         >
-                            <StatusHeading label={g.label} color={g.color} count={list.length} />
+                            <StatusHeading label={g.label} status={g.key} count={list.length} />
                             {g.collapsed && <ExpandMore sx={{ fontSize: 16, color: 'text.secondary', transform: open ? 'rotate(180deg)' : 'none' }} />}
                         </Box>
                         <Collapse in={open}>

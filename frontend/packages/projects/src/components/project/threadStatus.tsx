@@ -2,7 +2,7 @@ import { alpha, Box, type ChipProps } from '@mui/material';
 import { fontMono, fontSizes } from '@tingly/ui/theme/fonts';
 import { getReadableAccent } from '@tingly/ui/theme/status';
 import { useTranslation } from 'react-i18next';
-import { Branch, CheckCircle, CircleDashed, HandStop, Merge, Spinner } from '../icons';
+import { Branch, CheckCircle, CircleDashed, Merge, Spinner } from '../icons';
 import type { Thread } from '../../client';
 
 /** Overview groups, in the order the Overview shows them: what needs the
@@ -10,32 +10,50 @@ import type { Thread } from '../../client';
 export const STATUS_ORDER = ['waiting', 'ready', 'working', 'idle', 'resolved'] as const;
 export type ThreadStatus = (typeof STATUS_ORDER)[number];
 
-const COLOR: Record<ThreadStatus, ChipProps['color']> = {
-    waiting: 'warning',
-    ready: 'success',
-    working: 'info',
-    idle: 'default',
-    resolved: 'default',
-};
+/** How a state reads: amber when it needs the user, red when it failed,
+ * otherwise neutral, told apart by its mark and word. */
+export type StateTone = 'attention' | 'failed' | 'neutral';
 
-export function statusColor(s: string): ChipProps['color'] {
-    return COLOR[s as ThreadStatus] ?? 'default';
+export function stateTone(status: string): StateTone {
+    return status === 'waiting' ? 'attention' : status === 'failed' ? 'failed' : 'neutral';
 }
 
-export function StatusIcon({ status }: { status: string }) {
+const toneOf = (theme: Parameters<typeof getReadableAccent>[0], tone: StateTone) =>
+    tone === 'attention' ? getReadableAccent(theme, 'warning') : tone === 'failed' ? getReadableAccent(theme, 'error') : theme.palette.text.secondary;
+
+/** The text colour of a state: amber, red, or the secondary text colour. */
+export const stateColor = (status: string) => (theme: Parameters<typeof getReadableAccent>[0]) => toneOf(theme, stateTone(status));
+
+const dot = { width: 8, height: 8, borderRadius: '50%', boxSizing: 'border-box' } as const;
+
+/** The mark of a state, in a 14px slot: a filled dot for what needs the user
+ * (amber) or failed (red), a spinner for work, a ring for ready, a check for
+ * done. */
+export function ThreadStateMark({ status }: { status: string }) {
     const sx = { fontSize: 14 };
+    let mark;
     switch (status) {
         case 'working':
-            return <Spinner sx={{ ...sx, animation: 'spin 1s linear infinite' }} />;
-        case 'waiting':
-            return <HandStop sx={sx} />;
+            mark = <Spinner sx={{ ...sx, animation: 'spin 1s linear infinite' }} />;
+            break;
         case 'ready':
-            return <Merge sx={sx} />;
+            mark = <Box component="span" sx={{ ...dot, border: '1.5px solid currentColor' }} />;
+            break;
         case 'resolved':
-            return <CheckCircle sx={sx} />;
+            mark = <CheckCircle sx={sx} />;
+            break;
+        case 'waiting':
+        case 'failed':
+            mark = <Box component="span" sx={{ ...dot, bgcolor: 'currentColor' }} />;
+            break;
         default:
-            return <CircleDashed sx={sx} />;
+            mark = <CircleDashed sx={sx} />;
     }
+    return (
+        <Box component="span" aria-hidden sx={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, flexShrink: 0, color: stateColor(status) }}>
+            {mark}
+        </Box>
+    );
 }
 
 /** A tone's readable text colour, or the secondary text colour for none. */
@@ -44,18 +62,20 @@ export const toneColor = (color: ChipProps['color']) => (theme: Parameters<typeo
         ? theme.palette.text.secondary
         : getReadableAccent(theme, color);
 
-/** A thread's status as quiet text: its icon and name in the status colour,
- * no fill, so the title stays the subject. */
-export function ThreadStatusChip({ thread }: { thread: Pick<Thread, 'status'> }) {
+/** One state, one look, wherever a thread's status shows: its mark, and its
+ * word unless `compact` (the word then sits in the title attribute). */
+export function ThreadState({ status, compact }: { status: string; compact?: boolean }) {
     const { t } = useTranslation('projects');
+    const word = t(`thread.status.${status}`);
     return (
         <Box
             component="span"
-            data-status={thread.status}
-            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, flexShrink: 0, fontSize: fontSizes.sm, fontWeight: 500, whiteSpace: 'nowrap', color: toneColor(statusColor(thread.status)) }}
+            data-status={status}
+            title={compact ? word : undefined}
+            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, flexShrink: 0, fontSize: fontSizes.sm, fontWeight: 500, whiteSpace: 'nowrap', color: stateColor(status) }}
         >
-            <StatusIcon status={thread.status} />
-            {t(`thread.status.${thread.status}`)}
+            <ThreadStateMark status={status} />
+            {!compact && word}
         </Box>
     );
 }

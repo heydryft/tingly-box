@@ -6,7 +6,7 @@ import { api, apiFetch, unwrap, type LibraryFile, type Thread } from '../../clie
 import { Delete, Description, Download, UploadFile } from '../icons';
 import { useNotify } from '../../hooks/useNotify';
 import { formatBytes, timeAgo } from '../../utils/format';
-import { STATUS_ORDER, ThreadBadges, ThreadSubtitle, statusColor } from './threadStatus';
+import { STATUS_ORDER, ThreadBadges, ThreadSubtitle } from './threadStatus';
 import { StatusGroups } from '../workspace/StatusGroups';
 import { fontMono, fontSizes } from '@tingly/ui/theme/fonts';
 
@@ -15,7 +15,7 @@ const mono = { fontFamily: fontMono } as const;
 function ThreadGroups({ threads, selectedId, onOpen }: { threads: Thread[]; selectedId?: string; onOpen: (id: string) => void }) {
     const { t, i18n } = useTranslation('projects');
     const groups = STATUS_ORDER.map((status) => ({
-        key: status, label: t(`overview.group.${status}`), color: statusColor(status), collapsed: status === 'resolved',
+        key: status, label: t(`overview.group.${status}`), collapsed: status === 'resolved',
     }));
     const rows = threads.map((th) => ({
         id: th.id, group: th.status, title: th.title, selected: th.id === selectedId,

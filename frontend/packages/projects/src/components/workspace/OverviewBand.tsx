@@ -2,7 +2,7 @@ import { Box, Button, IconButton, Tooltip, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import type { Thread } from '../../client';
 import { ExpandLess, ExpandMore } from '../icons';
-import { STATUS_ORDER, ThreadBadges, ThreadSubtitle, statusColor } from '../project/threadStatus';
+import { STATUS_ORDER, ThreadBadges, ThreadSubtitle } from '../project/threadStatus';
 import { StatusHeading } from './StatusGroups';
 import { timeAgo } from '../../utils/format';
 import { fontSizes } from '@tingly/ui/theme/fonts';
@@ -33,7 +33,7 @@ export function OverviewBand({ threads, selectedId, open, onToggle, onOpen, onLi
                 {/* Closed: the counts stand in for the columns. */}
                 <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 2, overflow: 'hidden' }}>
                     {groups.length === 0 && <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>{t('overview.noThreads')}</Typography>}
-                    {!open && groups.map((g) => <StatusHeading key={g.key} label={t(`overview.group.${g.key}`)} color={statusColor(g.key)} count={g.list.length} />)}
+                    {!open && groups.map((g) => <StatusHeading key={g.key} label={t(`overview.group.${g.key}`)} status={g.key} count={g.list.length} />)}
                 </Box>
                 <Button size="small" onClick={onLibrary}>{t('overview.library')}</Button>
                 <Tooltip title={open ? t('band.collapse') : t('band.expand')}>
@@ -46,7 +46,7 @@ export function OverviewBand({ threads, selectedId, open, onToggle, onOpen, onLi
                 <Box sx={{ display: 'flex', gap: 1.5, px: 2, pb: 1.5, overflowX: 'auto' }}>
                     {shown.map((g) => (
                         <Box key={g.key} sx={{ flex: '1 1 0', minWidth: 220, maxWidth: 360 }}>
-                            <Box sx={{ mb: 0.75 }}><StatusHeading label={t(`overview.group.${g.key}`)} color={statusColor(g.key)} count={g.list.length} /></Box>
+                            <Box sx={{ mb: 0.75 }}><StatusHeading label={t(`overview.group.${g.key}`)} status={g.key} count={g.list.length} /></Box>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, maxHeight: 152, overflowY: 'auto' }}>
                                 {g.list.map((th) => (
                                     <Box
@@ -76,7 +76,7 @@ export function OverviewBand({ threads, selectedId, open, onToggle, onOpen, onLi
                     ))}
                     {resolved > 0 && (
                         <Box sx={{ flex: '0 0 auto', minWidth: 120 }}>
-                            <StatusHeading label={t('overview.group.resolved')} color="default" count={resolved} />
+                            <StatusHeading label={t('overview.group.resolved')} status="resolved" count={resolved} />
                         </Box>
                     )}
                 </Box>

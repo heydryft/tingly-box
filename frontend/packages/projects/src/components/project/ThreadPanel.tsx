@@ -18,7 +18,7 @@ import { DiffDialog } from './DiffDialog';
 import { ComposerStrip } from './ComposerStrip';
 import { RAIL_MIN_PANEL, ThreadInfoRail } from './ThreadInfoRail';
 import { LoadEarlier } from './LoadEarlier';
-import { ThreadStatusChip, toneColor } from './threadStatus';
+import { ThreadState, toneColor } from './threadStatus';
 import { threadTranscript } from './threadTranscript';
 import { threadOps } from './threadOps';
 import { BackgroundTasksPanel } from '../workdir/BackgroundTasksPanel';
@@ -347,7 +347,7 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
                 </Box>
                 <Box sx={{ pl: hideTitle ? 0.5 : 4.5 }}>
                     <MetaLine items={[
-                        <ThreadStatusChip thread={thread} />,
+                        <ThreadState status={thread.status} />,
                         // The folder and branch float above the message box.
                         !thread.branch && !session && t('thread.noRepo'),
                         // The rail's Changes card carries these.

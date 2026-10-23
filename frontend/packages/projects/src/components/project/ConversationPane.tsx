@@ -12,7 +12,7 @@ import { readLocal, writeLocal } from '../../utils/storage';
 import { ChevronRight, DiffIcon, ExpandMore, PlayArrow } from '../icons';
 import { DiffDialog } from './DiffDialog';
 import { LoadEarlier } from './LoadEarlier';
-import { StatusIcon, statusColor, ThreadBadges, ThreadSubtitle, toneColor } from './threadStatus';
+import { ThreadStateMark, ThreadBadges, ThreadSubtitle, toneColor } from './threadStatus';
 
 const REPORTS_KEY = 'conversation.threadReports';
 const COLUMN = { maxWidth: 760, mx: 'auto', width: '100%', px: { xs: 2, md: 3 } } as const;
@@ -50,9 +50,8 @@ export function ThreadCard({ thread, onOpen }: { thread: Thread; onOpen: (id: st
                     '&:focus-visible': { boxShadow: (th) => `inset 0 0 0 2px ${th.palette.primary.main}` },
                 }}
             >
-                <Box component="span" title={t(`thread.status.${thread.status}`)}
-                    sx={{ display: 'inline-flex', flexShrink: 0, color: toneColor(statusColor(thread.status)) }}>
-                    <StatusIcon status={thread.status} />
+                <Box component="span" title={t(`thread.status.${thread.status}`)} sx={{ display: 'inline-flex', flexShrink: 0 }}>
+                    <ThreadStateMark status={thread.status} />
                 </Box>
                 <Typography noWrap sx={{ flex: { xs: 1, sm: '0 1 auto' }, minWidth: 0, maxWidth: { sm: '45%' }, fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>{thread.title}</Typography>
                 {/* On a phone the line keeps the title; the thread holds the rest. */}
@@ -114,8 +113,8 @@ export function ThreadUpdateRow({ message, onOpen }: { message: ThreadEvent; onO
                     '&:focus-visible': { boxShadow: (th) => `inset 0 0 0 2px ${th.palette.primary.main}` },
                 }}
             >
-                <Box component="span" title={t(`thread.status.${pl.status}`)} sx={{ display: 'inline-flex', flexShrink: 0, color: toneColor(statusColor(pl.status)) }}>
-                    <StatusIcon status={pl.status} />
+                <Box component="span" title={t(`thread.status.${pl.status}`)} sx={{ display: 'inline-flex', flexShrink: 0 }}>
+                    <ThreadStateMark status={pl.status} />
                 </Box>
                 <Typography noWrap component="span" sx={{ minWidth: 0, fontSize: 'inherit', fontWeight: 600, color: 'text.primary' }}>{pl.title}</Typography>
                 <Typography noWrap component="span" sx={{ flexShrink: 0, fontSize: 'inherit' }}>{t(`conversation.updateKind.${pl.kind}`, { defaultValue: pl.kind })}</Typography>
