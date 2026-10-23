@@ -330,7 +330,7 @@ jobs:
           # A successful `npm publish` doesn't mean a package is queryable
           # yet — npm's read replicas can lag behind the write by minutes; poll once a minute for up
           # to 5. A timeout fails this step, which skips the publish and hands the decision to the
-          # `production-smoke-review` approval (publish-cli-review).
+          # `production` approval (publish-cli-review).
           # Wait for every platform package the shim depends on (not just
           # linux-x64) to actually be visible before trusting them: a user
           # installing before that would resolve no binary for their
