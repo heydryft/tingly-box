@@ -191,9 +191,13 @@ export interface WorkspaceCollection<T extends Identified> {
 
 // A module-level store over one collection: starts empty, fills from
 // IndexedDB (or the mock seed), and writes every change back.
+// `revive` maps each stored item as it is read back: what a previous session
+// left half-done (a request the reload cut off) is settled once, here, before
+// anything renders it.
 export const createWorkspaceCollection = <T extends Identified>(
     name: Collection,
     seed: (() => Promise<T[]>) | null,
+    revive?: (item: T) => T,
 ): WorkspaceCollection<T> => {
     let items: T[] = [];
     let ready = false;
@@ -205,13 +209,15 @@ export const createWorkspaceCollection = <T extends Identified>(
     };
     const persist = seed === null;
 
-    const hydrate = (loaded: T[]) => {
+    const hydrate = (stored: T[]) => {
+        const loaded = revive ? stored.map(revive) : stored;
+        const revived = loaded.some((item, index) => item !== stored[index]);
         // Anything created before the read finished stays, after what was stored.
         const loadedIds = new Set(loaded.map((item) => item.id));
         const local = items.filter((item) => !loadedIds.has(item.id));
         items = [...loaded, ...local];
         ready = true;
-        if (persist && local.length > 0) saveCollection(name, items);
+        if (persist && (local.length > 0 || revived)) saveCollection(name, items);
         emit();
     };
     void (seed ?? (() => loadCollection<T>(name)))().then(hydrate, () => hydrate([]));

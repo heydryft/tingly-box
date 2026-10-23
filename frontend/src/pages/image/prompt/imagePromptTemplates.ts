@@ -8,9 +8,7 @@
 // caption): lead with subject and medium, then a fixed order of visual facts,
 // no guessing, no filler adjectives, visible text verbatim, the prompt only.
 
-export type InstructionStarter = 'natural' | 'tags' | 'style';
-
-export const INSTRUCTION_STARTERS: Record<InstructionStarter, string> = {
+export const INSTRUCTION_STARTERS = {
     natural: `You write prompts for text-to-image models. Look at the image and write one prompt that would make an image model produce a picture like it.
 
 - Start with the main subject and the medium (photo, oil painting, 3D render, anime illustration, vector art…).
@@ -33,7 +31,11 @@ export const INSTRUCTION_STARTERS: Record<InstructionStarter, string> = {
 - Output only the list.`,
 };
 
+export type InstructionStarter = keyof typeof INSTRUCTION_STARTERS;
+export const STARTERS = Object.keys(INSTRUCTION_STARTERS) as InstructionStarter[];
+
 export const DEFAULT_INSTRUCTIONS = INSTRUCTION_STARTERS.natural;
+export const isDefaultInstructions = (instructions: string) => instructions.trim() === DEFAULT_INSTRUCTIONS;
 
 // The user turn that travels with the picture. The instructions carry the
 // how; this only says which picture.
@@ -56,7 +58,5 @@ export const cleanPromptReply = (reply: string): string => {
 // can tell an edited instruction from an untouched one.
 export const matchingStarter = (instructions: string): InstructionStarter | null => {
     const text = instructions.trim();
-    const entry = (Object.entries(INSTRUCTION_STARTERS) as Array<[InstructionStarter, string]>)
-        .find(([, value]) => value.trim() === text);
-    return entry ? entry[0] : null;
+    return STARTERS.find((key) => INSTRUCTION_STARTERS[key] === text) ?? null;
 };

@@ -33,7 +33,7 @@ export const mockImagePromptRuns: ImagePromptRun[] = [
         image: svgDataUrl(swatch(['#16213A', '#2E4A78', '#8FB3E8', '#F7F0D6'], 'poly')),
         imageName: 'snow-mountain.png',
         model: 'gpt-5.6-sol',
-        instructions: INSTRUCTION_STARTERS.natural,
+        instructions: DEFAULT_INSTRUCTIONS,
         status: 'failed',
         prompt: '',
         error: '400: This model does not accept image input',

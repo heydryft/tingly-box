@@ -63,6 +63,11 @@ Florence-2 的 detailed caption。共同点：主体和媒介在前，然后按�
   用它作为初始提示词，用完即从 history state 去掉，刷新不会覆盖之后的输入。
 - **留作描述片段**:`saveSnippet`,名字取提示词开头几个字。
 - **入口**:Playground 灯箱里任意一张图(结果、导入、参考图)都有"从这张图反推提示词",带着图打开本页。
+  图经 `prompt/pictureHandoff.ts` 的一个模块级槽位交过去，不走 router state:那会把几 MB 的 data URL 克隆进会话历史。
+
+运行状态归 store(`prompt/imagePromptStore.ts`),不归页面：请求、AbortController 都在那里，离开页面再回来，
+进行中的请求照常完成;删除或清空会中止请求。刷新时仍是 pending 的记录，在读回时由
+`createWorkspaceCollection` 的 `revive` 一次性改成"被刷新打断"。
 
 ## 7. 这一版刻意不做的
 

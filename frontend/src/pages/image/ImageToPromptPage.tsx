@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     Box,
     Button,
@@ -15,47 +15,49 @@ import {
     Typography,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { IconLibraryPhoto, IconPhotoScan, IconTextPlus } from '@tabler/icons-react';
 import UnifiedCard from '@/components/UnifiedCard';
 import { CopyIconButton } from '@/components/CopyIconButton';
 import { Check, Close, ContentPaste, DeleteOutline, FileUpload, Palette, Refresh, RestartAlt, tablerMui } from '@/components/icons';
 import { useNotify } from '@/hooks/useNotify';
-import { getOpenAIClient } from '@/services/modelApi';
 import { useRuleManagement } from '@/pages/scenario/hooks/useRuleManagement';
 import ImageModelPicker from './components/ImageModelPicker';
+import ThumbImage from './components/ThumbImage';
+import { THUMB_EDGE_TILE } from './components/imageThumbnails';
+import { pastedImageFiles, readClipboardImages } from './components/clipboardImages';
 import { imageModelOptions } from './components/imageModelRules';
 import AssetPickerDialog from './library/AssetPickerDialog';
 import { saveSnippet } from './library/assetStore';
 import { deriveLabel } from './profiles/promptLabel';
 import {
-    addImagePromptRun,
+    IMAGE_PROMPT_SCENARIO as SCENARIO,
     clearImagePromptRuns,
     removeImagePromptRun,
+    startImagePromptRun,
     updateImagePromptRun,
     useImagePromptRuns,
-    useImagePromptRunsReady,
     type ImagePromptRun,
 } from './prompt/imagePromptStore';
 import {
     DEFAULT_INSTRUCTIONS,
     INSTRUCTION_STARTERS,
-    USER_REQUEST,
-    cleanPromptReply,
+    STARTERS,
+    isDefaultInstructions,
     matchingStarter,
-    type InstructionStarter,
 } from './prompt/imagePromptTemplates';
+import { takeHandedPicture } from './prompt/pictureHandoff';
 import { preparePicture, type Picture } from './prompt/preparePicture';
 
 const PhotoScan = tablerMui(IconPhotoScan);
 const TextPlus = tablerMui(IconTextPlus);
 const LibraryPhoto = tablerMui(IconLibraryPhoto);
 
-const SCENARIO = 'imageprompt';
 const INSTRUCTIONS_KEY = 'image.prompt.instructions';
 const MODEL_KEY = 'image.prompt.model';
 const WORKBENCH_MIN_HEIGHT = 600;
-const STARTERS: InstructionStarter[] = ['natural', 'tags', 'style'];
+// The picture's corner buttons sit over any image, light or dark.
+const overlayButtonSx = { bgcolor: 'background.paper', '&:hover': { bgcolor: 'background.paper' } } as const;
 
 const readLocal = (key: string): string | null => {
     try { return localStorage.getItem(key); } catch { return null; }
@@ -76,7 +78,6 @@ const writeLocal = (key: string, value: string | null) => {
 const ImageToPromptPage: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const location = useLocation();
     const { notify } = useNotify();
     const showNotification = useCallback(
         (message: string, severity: 'success' | 'info' | 'warning' | 'error') => { notify(severity, message); },
@@ -99,9 +100,10 @@ const ImageToPromptPage: React.FC = () => {
     const [instructions, setInstructions] = useState(() => readLocal(INSTRUCTIONS_KEY) ?? DEFAULT_INSTRUCTIONS);
     const changeInstructions = (next: string) => {
         setInstructions(next);
-        writeLocal(INSTRUCTIONS_KEY, next.trim() === DEFAULT_INSTRUCTIONS.trim() ? null : next);
+        writeLocal(INSTRUCTIONS_KEY, isDefaultInstructions(next) ? null : next);
     };
     const starter = matchingStarter(instructions);
+    const isDefault = isDefaultInstructions(instructions);
     const [starterAnchor, setStarterAnchor] = useState<HTMLElement | null>(null);
 
     const [picture, setPicture] = useState<Picture | null>(null);
@@ -109,25 +111,34 @@ const ImageToPromptPage: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [libraryOpen, setLibraryOpen] = useState(false);
 
+    // The last picture chosen wins: a slow one still being prepared must not
+    // land over one picked after it.
+    const pictureRequest = useRef(0);
+    const placePicture = useCallback((next: Picture | null) => {
+        pictureRequest.current += 1;
+        setPreparing(false);
+        setPicture(next);
+    }, []);
     const loadPicture = useCallback(async (source: File | string, name?: string) => {
+        const request = ++pictureRequest.current;
         setPreparing(true);
         try {
-            setPicture(await preparePicture(source, name));
+            const prepared = await preparePicture(source, name);
+            if (request === pictureRequest.current) setPicture(prepared);
         } catch {
-            showNotification(t('imagePrompt.pictureUnreadable', { defaultValue: 'Could not read this picture' }), 'error');
+            if (request === pictureRequest.current) {
+                showNotification(t('imagePrompt.pictureUnreadable', { defaultValue: 'Could not read this picture' }), 'error');
+            }
         } finally {
-            setPreparing(false);
+            if (request === pictureRequest.current) setPreparing(false);
         }
     }, [showNotification, t]);
 
-    // Arriving from "Get prompt" on an image elsewhere: that picture is loaded,
-    // and the hand-off is dropped from history so a reload does not repeat it.
+    // Arriving from "Get a prompt from this image" elsewhere: that picture is loaded.
     useEffect(() => {
-        const handoff = location.state as { image?: string; name?: string } | null;
-        if (!handoff?.image) return;
-        void loadPicture(handoff.image, handoff.name);
-        navigate(location.pathname, { replace: true, state: null });
-    }, [loadPicture, location.pathname, location.state, navigate]);
+        const handed = takeHandedPicture();
+        if (handed) void loadPicture(handed.src, handed.name);
+    }, [loadPicture]);
 
     const handleFiles = useCallback((files: FileList | File[] | null | undefined) => {
         const image = Array.from(files ?? []).find((file) => file.type.startsWith('image/'));
@@ -136,102 +147,37 @@ const ImageToPromptPage: React.FC = () => {
 
     const pasteHint = t('playground.pasteHint', { defaultValue: 'Copy an image first, then press Ctrl+V / ⌘V here' });
     const handlePaste = (event: React.ClipboardEvent) => {
-        const files = Array.from(event.clipboardData?.items ?? [])
-            .filter((item) => item.kind === 'file')
-            .map((item) => item.getAsFile())
-            .filter((file): file is File => file !== null && file.type.startsWith('image/'));
+        const files = pastedImageFiles(event);
         if (files.length === 0) return;
         event.preventDefault();
         handleFiles(files);
     };
     const pasteFromClipboard = async () => {
-        try {
-            for (const item of await navigator.clipboard.read()) {
-                const type = item.types.find((candidate) => candidate.startsWith('image/'));
-                if (!type) continue;
-                const blob = await item.getType(type);
-                handleFiles([new File([blob], `pasted.${type.split('/')[1] ?? 'png'}`, { type })]);
-                return;
-            }
-            showNotification(pasteHint, 'info');
-        } catch {
-            showNotification(pasteHint, 'info');
-        }
+        const files = await readClipboardImages();
+        if (files.length > 0) handleFiles(files);
+        else showNotification(pasteHint, 'info');
     };
 
     const runs = useImagePromptRuns();
-    const runsReady = useImagePromptRunsReady();
-    const inFlight = useRef(new Map<string, AbortController>());
-    // A run still pending after a reload lost its request with the page.
-    const settled = useRef(false);
-    useEffect(() => {
-        if (!runsReady || settled.current) return;
-        settled.current = true;
-        for (const run of runs) {
-            if (run.status === 'pending' && !inFlight.current.has(run.id)) {
-                updateImagePromptRun(run.id, { status: 'failed', error: t('playground.interruptedByReload', { defaultValue: 'Interrupted by a page reload' }) });
-            }
-        }
-    }, [runs, runsReady, t]);
-
-    // One path for a new run and a retry.
-    const startRun = useCallback(async (inputs: Pick<ImagePromptRun, 'image' | 'imageName' | 'model' | 'instructions'>, id?: string) => {
-        const runId = id ?? `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        addImagePromptRun({ ...inputs, id: runId, createdAt: Date.now(), status: 'pending', prompt: '' });
-        const controller = new AbortController();
-        inFlight.current.set(runId, controller);
-        try {
-            const client = await getOpenAIClient(SCENARIO);
-            const response = await client.chat.completions.create({
-                model: inputs.model,
-                messages: [
-                    ...(inputs.instructions.trim() ? [{ role: 'system' as const, content: inputs.instructions }] : []),
-                    {
-                        role: 'user' as const,
-                        content: [
-                            { type: 'image_url' as const, image_url: { url: inputs.image } },
-                            { type: 'text' as const, text: USER_REQUEST },
-                        ],
-                    },
-                ],
-            }, { signal: controller.signal });
-            const prompt = cleanPromptReply(response.choices?.[0]?.message?.content ?? '');
-            updateImagePromptRun(runId, prompt
-                ? { status: 'completed', prompt, error: undefined }
-                : { status: 'failed', error: t('imagePrompt.emptyReply', { defaultValue: 'The model answered with no text' }) });
-        } catch (error: any) {
-            if (controller.signal.aborted) return;
-            const status = error?.status ? `${error.status}: ` : '';
-            const message = error?.error?.message || error?.message || t('playground.requestFailed', { defaultValue: 'Request failed' });
-            updateImagePromptRun(runId, { status: 'failed', error: `${status}${message}` });
-        } finally {
-            inFlight.current.delete(runId);
-        }
-    }, [t]);
-
     const canRun = Boolean(picture) && Boolean(model) && !preparing;
     const getPrompt = () => {
         if (!picture || !model) return;
-        void startRun({ image: picture.dataUrl, imageName: picture.name, model, instructions });
+        void startImagePromptRun({ image: picture.dataUrl, imageName: picture.name, model, instructions });
     };
 
-    const removeRun = (id: string) => {
-        inFlight.current.get(id)?.abort();
-        removeImagePromptRun(id);
-    };
-    const clearRuns = () => {
-        inFlight.current.forEach((controller) => controller.abort());
-        clearImagePromptRuns();
-    };
-    const reuseRun = (run: ImagePromptRun) => {
-        setPicture({ dataUrl: run.image, name: run.imageName });
-        changeInstructions(run.instructions);
-        if (models.includes(run.model)) chooseModel(run.model);
-    };
-    const saveAsSnippet = (text: string) => {
+    // Stable, so typing in the instructions does not re-render every card.
+    const latest = useRef({ models, changeInstructions, chooseModel });
+    latest.current = { models, changeInstructions, chooseModel };
+    const reuseRun = useCallback((run: ImagePromptRun) => {
+        placePicture({ dataUrl: run.image, name: run.imageName });
+        latest.current.changeInstructions(run.instructions);
+        if (latest.current.models.includes(run.model)) latest.current.chooseModel(run.model);
+    }, [placePicture]);
+    const usePrompt = useCallback((prompt: string) => navigate('/image/playground', { state: { prompt } }), [navigate]);
+    const saveAsSnippet = useCallback((text: string) => {
         saveSnippet({ name: deriveLabel(text, 12) || t('imagePrompt.title', { defaultValue: 'Image to Prompt' }), text });
         showNotification(t('imagePrompt.savedSnippet', { defaultValue: 'Saved to Library snippets' }), 'success');
-    };
+    }, [showNotification, t]);
 
     const sources = [
         { key: 'browse', label: t('playground.referenceBrowse', { defaultValue: 'Browse' }), icon: <FileUpload fontSize="small" />, onClick: () => fileInputRef.current?.click() },
@@ -306,7 +252,7 @@ const ImageToPromptPage: React.FC = () => {
                                                     size="small"
                                                     onClick={(event) => { event.stopPropagation(); fileInputRef.current?.click(); }}
                                                     aria-label={t('imagePrompt.replacePicture', { defaultValue: 'Choose another picture' })}
-                                                    sx={{ bgcolor: 'background.paper', '&:hover': { bgcolor: 'background.paper' } }}
+                                                    sx={overlayButtonSx}
                                                 >
                                                     <FileUpload sx={{ fontSize: 16 }} />
                                                 </IconButton>
@@ -314,9 +260,9 @@ const ImageToPromptPage: React.FC = () => {
                                             <Tooltip title={t('imagePrompt.removePicture', { defaultValue: 'Remove picture' })}>
                                                 <IconButton
                                                     size="small"
-                                                    onClick={(event) => { event.stopPropagation(); setPicture(null); }}
+                                                    onClick={(event) => { event.stopPropagation(); placePicture(null); }}
                                                     aria-label={t('imagePrompt.removePicture', { defaultValue: 'Remove picture' })}
-                                                    sx={{ bgcolor: 'background.paper', '&:hover': { bgcolor: 'background.paper' } }}
+                                                    sx={overlayButtonSx}
                                                 >
                                                     <Close sx={{ fontSize: 16 }} />
                                                 </IconButton>
@@ -372,7 +318,7 @@ const ImageToPromptPage: React.FC = () => {
                                 <Button size="small" onClick={(event) => setStarterAnchor(event.currentTarget)} sx={{ py: 0, minWidth: 0 }}>
                                     {t('imagePrompt.startFrom', { defaultValue: 'Start from…' })}
                                 </Button>
-                                {instructions.trim() !== DEFAULT_INSTRUCTIONS.trim() && (
+                                {!isDefault && (
                                     <Button size="small" color="inherit" startIcon={<RestartAlt sx={{ fontSize: 16 }} />} onClick={() => changeInstructions(DEFAULT_INSTRUCTIONS)} sx={{ py: 0, ml: 0.5, color: 'text.secondary' }}>
                                         {t('imagePrompt.resetInstructions', { defaultValue: 'Default' })}
                                     </Button>
@@ -443,7 +389,7 @@ const ImageToPromptPage: React.FC = () => {
                                 {t('imagePrompt.results', { defaultValue: 'Prompts' })}
                             </Typography>
                             {runs.length > 0 && (
-                                <Button size="small" color="inherit" onClick={clearRuns} sx={{ color: 'text.secondary' }}>
+                                <Button size="small" color="inherit" onClick={clearImagePromptRuns} sx={{ color: 'text.secondary' }}>
                                     {t('imagePrompt.clear', { defaultValue: 'Clear' })}
                                 </Button>
                             )}
@@ -455,7 +401,7 @@ const ImageToPromptPage: React.FC = () => {
                                         {t('imagePrompt.empty', { defaultValue: 'Prompts you get appear here.' })}
                                     </Typography>
                                     <Typography variant="caption" sx={{ mt: 0.5, color: 'text.disabled', maxWidth: 420 }}>
-                                        {t('imagePrompt.emptyHint', { defaultValue: 'Edit one, then use it in the Playground or keep it as a snippet. “Get prompt” on any image in the Playground opens it here too.' })}
+                                        {t('imagePrompt.emptyHint', { defaultValue: 'Edit one, then use it in the Playground or keep it as a snippet. “Get a prompt” on any image in the Playground opens it here too.' })}
                                     </Typography>
                                 </Stack>
                             ) : (
@@ -464,10 +410,8 @@ const ImageToPromptPage: React.FC = () => {
                                         <PromptRunCard
                                             key={run.id}
                                             run={run}
-                                            onRemove={() => removeRun(run.id)}
-                                            onRetry={() => { void startRun(run, run.id); }}
-                                            onReuse={() => reuseRun(run)}
-                                            onUse={(prompt) => navigate('/image/playground', { state: { prompt } })}
+                                            onReuse={reuseRun}
+                                            onUse={usePrompt}
                                             onSaveSnippet={saveAsSnippet}
                                         />
                                     ))}
@@ -492,30 +436,37 @@ const ImageToPromptPage: React.FC = () => {
 
 interface PromptRunCardProps {
     run: ImagePromptRun;
-    onRemove: () => void;
-    onRetry: () => void;
-    onReuse: () => void;
+    onReuse: (run: ImagePromptRun) => void;
     onUse: (prompt: string) => void;
     onSaveSnippet: (prompt: string) => void;
 }
 
+// Runs are kept across days: anything not from today says which day.
+const runTimeLabel = (createdAt: number): string => {
+    const created = new Date(createdAt);
+    return created.toDateString() === new Date().toDateString()
+        ? created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : created.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
+
 // One run: the picture, and the prompt as an editable draft with the ways
-// to hand it on.
-const PromptRunCard: React.FC<PromptRunCardProps> = ({ run, onRemove, onRetry, onReuse, onUse, onSaveSnippet }) => {
+// to hand it on. Memoised: the page re-renders on every keystroke in the
+// instructions, and the list keeps runs across days.
+const PromptRunCard = memo(({ run, onReuse, onUse, onSaveSnippet }: PromptRunCardProps) => {
     const { t } = useTranslation();
     const [draft, setDraft] = useState(run.prompt);
     useEffect(() => { setDraft(run.prompt); }, [run.prompt]);
     const commit = () => { if (draft !== run.prompt) updateImagePromptRun(run.id, { prompt: draft }); };
-    const time = new Date(run.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const time = runTimeLabel(run.createdAt);
 
     return (
         <Box sx={{ display: 'flex', gap: 1.5, p: 1.5, border: 1, borderColor: 'divider', borderRadius: 1.5, bgcolor: 'background.paper' }}>
             <ButtonBase
-                onClick={onReuse}
+                onClick={() => onReuse(run)}
                 aria-label={t('imagePrompt.reuse', { defaultValue: 'Put this picture and its instructions back in the panel' })}
                 sx={{ flexShrink: 0, width: 96, height: 96, borderRadius: 1, overflow: 'hidden', bgcolor: 'action.hover', alignSelf: 'flex-start' }}
             >
-                <Box component="img" src={run.image} alt={run.imageName} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <ThumbImage src={run.image} alt={run.imageName} edge={THUMB_EDGE_TILE} />
             </ButtonBase>
             <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
                 {run.status === 'pending' ? (
@@ -566,12 +517,12 @@ const PromptRunCard: React.FC<PromptRunCardProps> = ({ run, onRemove, onRetry, o
                         </>
                     )}
                     {run.status === 'failed' && (
-                        <Button size="small" startIcon={<Refresh sx={{ fontSize: 16 }} />} onClick={onRetry}>
+                        <Button size="small" startIcon={<Refresh sx={{ fontSize: 16 }} />} onClick={() => { void startImagePromptRun(run, run.id); }}>
                             {t('imagePrompt.retry', { defaultValue: 'Retry' })}
                         </Button>
                     )}
                     <Tooltip title={t('imagePrompt.remove', { defaultValue: 'Remove' })}>
-                        <IconButton size="small" onClick={onRemove} aria-label={t('imagePrompt.remove', { defaultValue: 'Remove' })}>
+                        <IconButton size="small" onClick={() => removeImagePromptRun(run.id)} aria-label={t('imagePrompt.remove', { defaultValue: 'Remove' })}>
                             <DeleteOutline sx={{ fontSize: 16 }} />
                         </IconButton>
                     </Tooltip>
@@ -579,6 +530,7 @@ const PromptRunCard: React.FC<PromptRunCardProps> = ({ run, onRemove, onRetry, o
             </Stack>
         </Box>
     );
-};
+});
+PromptRunCard.displayName = 'PromptRunCard';
 
 export default ImageToPromptPage;

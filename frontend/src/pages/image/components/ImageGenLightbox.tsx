@@ -20,6 +20,7 @@ import type { LightboxFrame } from './useImageGenLightbox';
 import type { ReferenceImage } from './ImageGenReferenceImages';
 import { keepImage, useAssets } from '../library/assetStore';
 import { deriveLabel } from '../profiles/promptLabel';
+import { handOffPicture } from '../prompt/pictureHandoff';
 
 // Kept shows as a check: Tabler's filled bookmark loses its fill through
 // tablerMui and would render as nothing.
@@ -327,9 +328,10 @@ const ImageGenLightbox: React.FC<ImageGenLightboxProps> = ({
                     {selectedImage && (
                         <Tooltip title={t('imagePrompt.getPrompt', { defaultValue: 'Get a prompt from this image' })}>
                             <IconButton
-                                onClick={() => navigate('/image/to-prompt', {
-                                    state: { image: selectedImage.src, name: selectedImage.label ?? `image-${selectedImage.index + 1}.png` },
-                                })}
+                                onClick={() => {
+                                    handOffPicture(selectedImage.src, selectedImage.label ?? `image-${selectedImage.index + 1}.png`);
+                                    navigate('/image/to-prompt');
+                                }}
                                 aria-label={t('imagePrompt.getPrompt', { defaultValue: 'Get a prompt from this image' })}
                                 sx={overlayIconSx}
                             >
