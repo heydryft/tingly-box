@@ -178,10 +178,8 @@ func (c *Config) SetScenarioFlag(scenario typ.RuleScenario, flagName string, val
 		if err := c.checkCCSlotScenarioLocked(scenario); err != nil {
 			return err
 		}
-		for _, slot := range CCSlots {
-			if _, err := c.setCCSlotLocked(scenario, slot, flagName == constant.FlagSeparate); err != nil {
-				return err
-			}
+		if err := c.setAllCCSlotsLocked(scenario, flagName == constant.FlagSeparate); err != nil {
+			return err
 		}
 		return c.Save()
 	}
