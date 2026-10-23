@@ -10,7 +10,6 @@ import (
 	"github.com/tingly-dev/tingly-box/internal/agent"
 	"github.com/tingly-dev/tingly-box/internal/catalog"
 	serverconfig "github.com/tingly-dev/tingly-box/internal/config"
-	"github.com/tingly-dev/tingly-box/internal/constant"
 	"github.com/tingly-dev/tingly-box/internal/loadbalance"
 	"github.com/tingly-dev/tingly-box/internal/protocol"
 	"github.com/tingly-dev/tingly-box/internal/typ"
@@ -47,8 +46,7 @@ type quickstartState struct {
 
 	// Apply-agent sub-flow
 	selectedAgents      []agent.AgentType
-	ccUnified           bool
-	ccSubagentModel     string // unified mode: subagent model, "" = same as the default
+	ccSubagentModel     string // subagent model, "" = same as the default
 	ccInstallStatusLine bool
 	agentResults        []*agent.ApplyAgentResult
 }
@@ -701,36 +699,12 @@ func qsAgent(ctx StepContext, s quickstartState) (quickstartState, StepResult, e
 	hasClaudeCode := slices.Contains(s.selectedAgents, agent.AgentTypeClaudeCode)
 
 	if hasClaudeCode {
-		// Back on the subagent question returns to the unified question.
-		for {
-			uni, err := Confirm("Use unified mode for Claude Code? (single config for all models)", ConfirmOptions{
-				Header:     ctx.Header,
-				DefaultYes: true,
-				CanGoBack:  true,
-			})
-			if err != nil {
-				return s, StepCancel, err
-			}
-			if uni.IsBack() {
-				return s, StepBack, nil
-			}
-			if uni.IsCancel() {
-				return s, StepCancel, nil
-			}
-			s.ccUnified = uni.Value
-			s.ccSubagentModel = ""
-			if !s.ccUnified {
-				break
-			}
-			var res StepResult
-			s, res, err = qsSubagentModel(ctx, s)
-			if res == StepBack {
-				continue
-			}
-			if res != StepContinue {
-				return s, res, err
-			}
-			break
+		s.ccSubagentModel = ""
+		var res StepResult
+		var err error
+		s, res, err = qsSubagentModel(ctx, s)
+		if res != StepContinue {
+			return s, res, err
 		}
 
 		sl, err := Confirm("Install Claude Code status line script?", ConfirmOptions{
@@ -752,8 +726,8 @@ func qsAgent(ctx StepContext, s quickstartState) (quickstartState, StepResult, e
 
 	// Before applying, so the Claude Code env written below matches.
 	if hasClaudeCode {
-		if err := applyClaudeCodeChoice(s.mgr.GetGlobalConfig(), s.ccUnified, s.provider.UUID, s.ccSubagentModel); err != nil {
-			fmt.Println(errorStyle.Render(fmt.Sprintf("  ✗ Claude Code mode / subagent model: %v", err)))
+		if err := applyClaudeCodeChoice(s.mgr.GetGlobalConfig(), s.provider.UUID, s.ccSubagentModel); err != nil {
+			fmt.Println(errorStyle.Render(fmt.Sprintf("  ✗ Claude Code subagent model: %v", err)))
 		}
 	}
 
@@ -763,7 +737,6 @@ func qsAgent(ctx StepContext, s quickstartState) (quickstartState, StepResult, e
 			AgentType:         t,
 			Provider:          s.provider.UUID,
 			Model:             s.model,
-			Unified:           s.ccUnified,
 			InstallStatusLine: s.ccInstallStatusLine,
 			Yes:               true,
 		}
@@ -786,9 +759,8 @@ func qsAgent(ctx StepContext, s quickstartState) (quickstartState, StepResult, e
 	return s, StepContinue, nil
 }
 
-// qsSubagentModel asks which model Claude Code's subagents use in unified
-// mode: the default model, or one of their own (the most common reason to
-// split a slot off the unified rule).
+// qsSubagentModel asks which model Claude Code's subagents use: the default model, or one of their own (the most common reason to
+// split a slot off the default rule).
 func qsSubagentModel(ctx StepContext, s quickstartState) (quickstartState, StepResult, error) {
 	const other = "\x00other"
 	items := []SelectItem[string]{
@@ -835,22 +807,9 @@ func qsSubagentModel(ctx StepContext, s quickstartState) (quickstartState, StepR
 }
 
 // applyClaudeCodeChoice makes the claude_code scenario match the quickstart
-// answers: its mode, and in unified mode whether subagents use their own model
-// (subagentModel, routed to providerUUID) or the default one ("" — undoing an
-// earlier split).
-func applyClaudeCodeChoice(cfg *serverconfig.Config, unified bool, providerUUID, subagentModel string) error {
-	if separate := cfg.GetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagSeparate); separate == unified {
-		flag := constant.FlagSeparate
-		if unified {
-			flag = constant.FlagUnified
-		}
-		if err := cfg.SetScenarioFlag(typ.ScenarioClaudeCode, flag, true); err != nil {
-			return err
-		}
-	}
-	if !unified {
-		return nil
-	}
+// answer: whether subagents use their own model (subagentModel, routed to
+// providerUUID) or the default one ("" — undoing an earlier split).
+func applyClaudeCodeChoice(cfg *serverconfig.Config, providerUUID, subagentModel string) error {
 	if subagentModel == "" {
 		if slices.Contains(cfg.ClaudeCodeSlots(typ.ScenarioClaudeCode), "subagent") {
 			_, err := cfg.SetClaudeCodeSlot(typ.ScenarioClaudeCode, "subagent", false)

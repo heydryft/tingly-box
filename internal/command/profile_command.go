@@ -91,23 +91,19 @@ func profileList(appManager *app.AppManager) error {
 	cfg := appManager.GetGlobalConfig()
 	fmt.Println("Claude Code profiles:")
 	for _, p := range profiles {
-		fmt.Printf("  %s  %-20s %s\n", p.ID, p.Name, profileModeLabel(cfg, p))
+		fmt.Printf("  %s  %-20s %s\n", p.ID, p.Name, profileSlotsLabel(cfg, p))
 	}
 	return nil
 }
 
-// profileModeLabel describes how a profile routes Claude Code's model slots:
-// "separate", "unified", or "unified + subagent" when unified-mode slots have
-// a rule of their own.
-func profileModeLabel(cfg *config.Config, p typ.ProfileMeta) string {
-	if !p.Unified {
-		return "separate"
-	}
+// profileSlotsLabel describes how a profile routes Claude Code's model slots:
+// "default", or "default + haiku, subagent" for slots with a rule of their own.
+func profileSlotsLabel(cfg *config.Config, p typ.ProfileMeta) string {
 	slots := cfg.ClaudeCodeSlots(typ.ProfiledScenarioName(profileScenario, p.ID))
 	if len(slots) == 0 {
-		return "unified"
+		return "default"
 	}
-	return "unified + " + strings.Join(slots, ", ")
+	return "default + " + strings.Join(slots, ", ")
 }
 
 // profileShow prints detailed information about a specific profile.
@@ -142,7 +138,7 @@ func profileShow(appManager *app.AppManager, nameOrID string) error {
 
 	fmt.Printf("Profile: %s (%s)\n", result.Profile.ID, result.Profile.Name)
 	fmt.Printf("  Scenario: %s\n", result.Scenario)
-	fmt.Printf("  Mode:     %s\n", profileModeLabel(appManager.GetGlobalConfig(), result.Profile))
+	fmt.Printf("  Slots:    %s\n", profileSlotsLabel(appManager.GetGlobalConfig(), result.Profile))
 	fmt.Println("  Rules:")
 
 	if len(result.Rules) == 0 {
