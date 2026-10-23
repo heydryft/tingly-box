@@ -17,7 +17,7 @@ import {
     Route,
     Visibility,
 } from '@/components/icons';
-import ConfirmDialog from "@/components/ConfirmDialog";
+import ConfirmPopover from "@/components/ConfirmPopover";
 import {
     Box,
     Button,
@@ -488,8 +488,9 @@ const ApiKeyTable = ({
                             <MenuItem
                                 key="delete"
                                 onClick={() => {
+                                    const anchor = moreMenu.anchorEl;
                                     handleMoreClose();
-                                    handleDeleteClick(p.uuid);
+                                    handleDeleteClick(p.uuid, anchor);
                                 }}
                                 sx={{color: "error.main"}}
                             >
@@ -569,10 +570,10 @@ const ApiKeyTable = ({
                 </Box>
             </Modal>
             {/* Delete Confirmation */}
-            <ConfirmDialog
-                open={deleteModal.open}
+            <ConfirmPopover
+                anchorEl={deleteModal.anchorEl}
                 title="Delete Provider"
-                description={`Are you sure you want to delete the provider "${deleteModal.rowName}"? This action cannot be undone.`}
+                description={`Delete "${deleteModal.rowName}"? This cannot be undone.`}
                 confirmLabel="Delete"
                 confirmColor="error"
                 onClose={handleCloseDeleteModal}

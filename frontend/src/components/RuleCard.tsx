@@ -129,7 +129,7 @@ export const RuleCard: React.FC<RuleCardProps> = ({
     });
 
     // Delete confirmation state
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deleteAnchor, setDeleteAnchor] = useState<HTMLElement | null>(null);
     const [flagDialogOpen, setFlagDialogOpen] = useState(false);
     const [flagInput, setFlagInput] = useState('');
     const [flagError, setFlagError] = useState<string | undefined>(undefined);
@@ -228,14 +228,14 @@ export const RuleCard: React.FC<RuleCardProps> = ({
     );
 
     // Handler: Delete button click
-    const handleDeleteButtonClick = useCallback(() => {
-        setDeleteDialogOpen(true);
+    const handleDeleteButtonClick = useCallback((anchorEl: HTMLElement | null) => {
+        setDeleteAnchor(anchorEl);
     }, []);
 
     // Handler: Confirm delete rule
     const confirmDeleteRule = useCallback(async () => {
         if (!onRuleDelete || !rule.uuid) {
-            setDeleteDialogOpen(false);
+            setDeleteAnchor(null);
             return;
         }
 
@@ -251,7 +251,7 @@ export const RuleCard: React.FC<RuleCardProps> = ({
             console.error('Error deleting rule:', error);
             showNotification('Failed to delete routing rule', 'error');
         } finally {
-            setDeleteDialogOpen(false);
+            setDeleteAnchor(null);
         }
     }, [rule.uuid, onRuleDelete, showNotification]);
 
@@ -380,7 +380,7 @@ export const RuleCard: React.FC<RuleCardProps> = ({
             />
 
             {/* Delete Confirmation Dialog */}
-            <RuleCardDeleteDialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} onConfirm={confirmDeleteRule} />
+            <RuleCardDeleteDialog anchorEl={deleteAnchor} onClose={() => setDeleteAnchor(null)} onConfirm={confirmDeleteRule} />
 
             {/* Flag Edit Dialog */}
             <RuleFlagEditDialog

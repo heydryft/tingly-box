@@ -6,7 +6,7 @@ import {
 } from "@/components/rule-card/utils";
 import {QuotaCell} from "@/components/credential/QuotaCell";
 import {ProviderLabel} from "@/components/ProviderLogo";
-import ConfirmDialog from "@/components/ConfirmDialog";
+import ConfirmPopover from "@/components/ConfirmPopover";
 import {
     ContentCopy,
     Delete,
@@ -59,7 +59,7 @@ interface OAuthTableProps {
 }
 
 interface RefreshModalState {
-    open: boolean;
+    anchorEl: HTMLElement | null;
     providerUuid: string;
     providerName: string;
 }
@@ -104,7 +104,7 @@ const OAuthTable = ({
         );
 
     const [refreshModal, setRefreshModal] = useState<RefreshModalState>({
-        open: false,
+        anchorEl: null,
         providerUuid: "",
         providerName: "",
     });
@@ -120,17 +120,17 @@ const OAuthTable = ({
     const showQuota = Boolean(onQuotaRefresh);
     const columns = columnsFor(showQuota);
 
-    const handleRefreshClick = (providerUuid: string) => {
+    const handleRefreshClick = (providerUuid: string, anchorEl: HTMLElement | null) => {
         const provider = providers.find((p) => p.uuid === providerUuid);
         setRefreshModal({
-            open: true,
+            anchorEl,
             providerUuid,
             providerName: provider?.name || "Unknown Provider",
         });
     };
 
     const handleCloseRefreshModal = () => {
-        setRefreshModal({open: false, providerUuid: "", providerName: ""});
+        setRefreshModal({anchorEl: null, providerUuid: "", providerName: ""});
     };
 
     const handleConfirmRefresh = async () => {
@@ -448,8 +448,9 @@ const OAuthTable = ({
                             <MenuItem
                                 key="refresh-token"
                                 onClick={() => {
+                                    const anchor = moreMenu.anchorEl;
                                     handleMoreClose();
-                                    handleRefreshClick(p.uuid);
+                                    handleRefreshClick(p.uuid, anchor);
                                 }}
                                 disabled={refreshing === p.uuid}
                             >
@@ -497,8 +498,9 @@ const OAuthTable = ({
                             <MenuItem
                                 key="delete"
                                 onClick={() => {
+                                    const anchor = moreMenu.anchorEl;
                                     handleMoreClose();
-                                    handleDeleteClick(p.uuid);
+                                    handleDeleteClick(p.uuid, anchor);
                                 }}
                                 sx={{color: "error.main"}}
                             >
@@ -509,20 +511,20 @@ const OAuthTable = ({
                 })()}
             </Menu>
             {/* Delete Confirmation */}
-            <ConfirmDialog
-                open={deleteModal.open}
+            <ConfirmPopover
+                anchorEl={deleteModal.anchorEl}
                 title="Delete OAuth Provider"
-                description={`Are you sure you want to delete the OAuth provider "${deleteModal.rowName}"? This action cannot be undone.`}
+                description={`Delete "${deleteModal.rowName}"? This cannot be undone.`}
                 confirmLabel="Delete"
                 confirmColor="error"
                 onClose={handleCloseDeleteModal}
                 onConfirm={handleConfirmDelete}
             />
             {/* Refresh Token Confirmation */}
-            <ConfirmDialog
-                open={refreshModal.open}
+            <ConfirmPopover
+                anchorEl={refreshModal.anchorEl}
                 title="Refresh OAuth Token"
-                description={`Are you sure you want to refresh the OAuth token for "${refreshModal.providerName}"? This will update the access token using the refresh token.`}
+                description={`Refresh the access token for "${refreshModal.providerName}" using its refresh token.`}
                 confirmLabel="Refresh"
                 confirmingLabel="Refreshing..."
                 confirmColor="info"

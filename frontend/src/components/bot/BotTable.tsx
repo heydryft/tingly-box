@@ -1,5 +1,5 @@
 import {ContentCopy as CopyIcon, Delete as DeleteIcon, Edit as EditIcon, RestartAlt as RestartIcon, Security} from '@/components/icons';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import ConfirmPopover from '@/components/ConfirmPopover';
 import {capabilityEnabled} from '@/types/bot';
 import type {BotSettings} from '@/types/bot';
 import {notify} from '@/utils/notify';
@@ -72,18 +72,18 @@ const BotTable: React.FC<BotTableProps> = ({
 }) => {
     const {t} = useTranslation();
 
-    const [deleteModal, setDeleteModal] = useState<{open: boolean; bot: BotSettings | null}>({
-        open: false,
+    const [deleteModal, setDeleteModal] = useState<{anchorEl: HTMLElement | null; bot: BotSettings | null}>({
+        anchorEl: null,
         bot: null,
     });
 
-    const handleDeleteClick = useCallback((bot: BotSettings) => {
-        setDeleteModal({open: true, bot});
+    const handleDeleteClick = useCallback((bot: BotSettings, anchorEl: HTMLElement) => {
+        setDeleteModal({anchorEl, bot});
     }, []);
 
     const handleConfirmDelete = useCallback(() => {
         const uuid = deleteModal.bot?.uuid;
-        setDeleteModal({open: false, bot: null});
+        setDeleteModal({anchorEl: null, bot: null});
         if (uuid) onDelete(uuid);
     }, [deleteModal.bot, onDelete]);
 
@@ -255,7 +255,7 @@ const BotTable: React.FC<BotTableProps> = ({
                                                 <IconButton
                                                     size="small"
                                                     color="error"
-                                                    onClick={() => handleDeleteClick(bot)}
+                                                    onClick={(e) => handleDeleteClick(bot, e.currentTarget)}
                                                     disabled={toggling || restarting}
                                                 >
                                                     <DeleteIcon fontSize="small"/>
@@ -305,15 +305,15 @@ const BotTable: React.FC<BotTableProps> = ({
                                 {onManageAccess && <Button size="small" startIcon={<Security fontSize="small"/>} onClick={() => onManageAccess(bot)} sx={{textTransform: 'none'}}>{t('bots.table.access', {defaultValue: 'Access'})}</Button>}
                                 <IconButton size="small" color="primary" onClick={() => onRestart(bot.uuid!)} disabled={!isActive || toggling || restarting}><RestartIcon fontSize="small"/></IconButton>
                                 <IconButton size="small" color="primary" onClick={() => onEdit(bot.uuid!, bot.platform!)} disabled={toggling || restarting}><EditIcon fontSize="small"/></IconButton>
-                                <IconButton size="small" color="error" onClick={() => handleDeleteClick(bot)} disabled={toggling || restarting}><DeleteIcon fontSize="small"/></IconButton>
+                                <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(bot, e.currentTarget)} disabled={toggling || restarting}><DeleteIcon fontSize="small"/></IconButton>
                             </Stack>
                         </Box>
                     );
                 })}
             </Stack>
 
-            <ConfirmDialog
-                open={deleteModal.open}
+            <ConfirmPopover
+                anchorEl={deleteModal.anchorEl}
                 title={t('remoteControl.card.deleteTitle', {defaultValue: 'Delete Bot Configuration'})}
                 description={t('remoteControl.card.deleteConfirm', {
                     defaultValue: 'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
@@ -321,7 +321,7 @@ const BotTable: React.FC<BotTableProps> = ({
                 })}
                 confirmLabel={t('remoteControl.card.delete', {defaultValue: 'Delete'})}
                 confirmColor="error"
-                onClose={() => setDeleteModal({open: false, bot: null})}
+                onClose={() => setDeleteModal({anchorEl: null, bot: null})}
                 onConfirm={handleConfirmDelete}
             />
         </>

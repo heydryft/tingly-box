@@ -10,7 +10,7 @@ import { useModelTestProbe } from '../probe/useModelTestProbe';
 import { ControlBar } from './ControlBar';
 import { ModelCopyButton } from './ModelCopyButton';
 import { getModelCardActiveColor, getModelCardStateStyles, modelCardTransition } from './cardStyles';
-import ConfirmDialog from '@/components/ConfirmDialog';
+import ConfirmPopover from '@/components/ConfirmPopover';
 import { fontSizes } from '@/theme/fonts';
 
 interface CustomModelCardProps {
@@ -34,7 +34,7 @@ export default function CustomModelCard({
     variant,
     loading = false,
 }: CustomModelCardProps) {
-    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteAnchor, setDeleteAnchor] = useState<HTMLElement | null>(null);
     const probe = useModelTestProbe();
 
     const handleCardClick = () => {
@@ -52,19 +52,19 @@ export default function CustomModelCard({
         e.stopPropagation();
         // Show confirmation dialog if model is selected, otherwise delete directly
         if (isSelected) {
-            setDeleteConfirmOpen(true);
+            setDeleteAnchor(e.currentTarget as HTMLElement);
         } else {
             onDelete();
         }
     };
 
     const handleConfirmDelete = () => {
-        setDeleteConfirmOpen(false);
+        setDeleteAnchor(null);
         onDelete();
     };
 
     const handleCancelDelete = () => {
-        setDeleteConfirmOpen(false);
+        setDeleteAnchor(null);
     };
 
     return (
@@ -225,8 +225,8 @@ export default function CustomModelCard({
                 initialResult={probe.result ?? undefined}
                 onResult={probe.setResult}
             />
-            <ConfirmDialog
-                open={deleteConfirmOpen}
+            <ConfirmPopover
+                anchorEl={deleteAnchor}
                 onClose={handleCancelDelete}
                 onConfirm={handleConfirmDelete}
                 confirmColor="error"

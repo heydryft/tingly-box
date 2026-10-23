@@ -20,7 +20,8 @@ export interface GraphSettingsMenuProps {
     saving: boolean;
     onExportAsJsonlToClipboard?: () => void;
     onExportAsBase64ToClipboard?: () => void;
-    onDelete: () => void;
+    /** Receives the ⋯ button so the delete confirmation can open right there. */
+    onDelete: (anchorEl: HTMLElement | null) => void;
     onToggleActive: () => void;
     onEditFlags?: () => void;
     /** Opens the plugin catalog (add / remove); `pluginsCount` is shown beside it. */
@@ -129,7 +130,7 @@ export const GraphSettingsMenu = ({
                 )}
 
                 {allowDeleteRule && (
-                    <MenuItem onClick={() => { closeMenu(); onDelete(); }} sx={{ color: 'error.main' }}>
+                    <MenuItem onClick={() => { const anchor = menuAnchorEl; closeMenu(); onDelete(anchor); }} sx={{ color: 'error.main' }}>
                         <DeleteIcon fontSize="small" sx={{ mr: 1 }} />Delete Rule
                     </MenuItem>
                 )}

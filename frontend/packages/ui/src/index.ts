@@ -7,6 +7,8 @@ export { default as Surface } from './components/Surface';
 export { default as EmptyState } from './components/EmptyState';
 export { default as DialogHeader } from './components/DialogHeader';
 export { default as ConfirmDialog } from './components/ConfirmDialog';
+export { default as ConfirmPopover } from './components/ConfirmPopover';
+export type { ConfirmPopoverProps } from './components/ConfirmPopover';
 export { CopyIconButton } from './components/CopyIconButton';
 export { useCopyFeedback } from './hooks/useCopyFeedback';
 export { writeToClipboard } from './utils/clipboard';
