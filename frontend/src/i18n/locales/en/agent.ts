@@ -101,7 +101,6 @@ export default {
     }
   },
   "scenarioPage": {
-    "slotMode": "Model mode",
     "setupGuide": "Setup Guide",
     "config": "Config",
     "autoConfig": "Auto Config",
@@ -260,26 +259,7 @@ export default {
       "mergeAll": "Merge all",
       "failed": "Failed to update the slot"
     },
-    "configModes": {
-      "unified": {
-        "label": "Unified Model",
-        "description": "Config unified model for all claude code requests"
-      },
-      "separate": {
-        "label": "Separate Model",
-        "description": "Config different models for claude code scenario, like subagent, summary, default, ..."
-      }
-    },
-    "modeChange": {
-      "title": "Change Configuration Mode?",
-      "body": "You are about to switch from {{from}} to {{to}} mode.",
-      "hint": "After changing the mode, you will need to reapply the configuration to Claude Code for the changes to take effect.",
-      "cancel": "Cancel",
-      "confirm": "Confirm",
-      "success": "Configuration mode changed to {{mode}}. Please reapply the configuration to Claude Code.",
-      "failed": "Failed to save configuration mode",
-      "applyFailed": "Failed to apply configurations"
-    },
+    "applyFailed": "Failed to apply configurations",
     "configPath": "Add env config to Claude Code config file",
     "copyConfig": "Config",
     "oneClickScript": "One-Click Script",
@@ -287,10 +267,6 @@ export default {
     "step1": "1. Configure Model",
     "step2": "2. Skip Onboarding - Make Claude Code directly usable",
     "step3": "3. Status Line Integration (Optional)",
-    "unifiedConfig": "Unified Configuration",
-    "separateConfig": "Separate Configuration",
-    "switchToSeparate": "Switch to Separate",
-    "switchToUnified": "Switch to Unified",
     "quickApply": "Auto Config",
     "quickApplyWithStatusLine": "Auto Config & Status Line",
     "statusLine": {
@@ -329,10 +305,7 @@ export default {
       "profileRenamed": "Profile renamed",
       "profileDeleted": "Profile deleted",
       "renameFailed": "Failed to rename profile",
-      "deleteFailed": "Failed to delete profile",
-      "mode": "Mode",
-      "unified": "Unified",
-      "separate": "Separate"
+      "deleteFailed": "Failed to delete profile"
     },
     "defaultModeLabel": "Default Mode"
   },

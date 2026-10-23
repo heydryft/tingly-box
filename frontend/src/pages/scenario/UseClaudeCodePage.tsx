@@ -33,14 +33,14 @@ const applyClaudeConfig = async (
         }
         return { success: false, error: result?.message || t('agentSetup.apply.failed') };
     } catch (e: any) {
-        return { success: false, error: e?.message || t('claudeCode.modeChange.applyFailed') };
+        return { success: false, error: e?.message || t('claudeCode.applyFailed') };
     }
 };
 
 // One-click apply uses prefs derived from the current rules and slot mode —
 // the same defaults the dialog seeds with.
 const derivedPrefs = ({ rules, slots }: AgentApplyContext) =>
-    derivePrefsFromRules({ rules, mode: 'unified', slots }) as Record<string, string>;
+    derivePrefsFromRules({ rules, slots }) as Record<string, string>;
 
 // A rule's 1M toggle re-applies the config the user already has: the model slots
 // and the auto-compact window follow the toggle, every other applied setting
@@ -60,7 +60,7 @@ const applyContext1M = async (
                 ? rule
                 : { ...rule, flags: { ...rule.flags, context1m: change.enabled } });
         const prefs = restoreAppliedClaudeCodePrefs({
-            generated: derivePrefsFromRules({ rules: toggled, mode: 'unified' }),
+            generated: derivePrefsFromRules({ rules: toggled }),
             applied: applied.preferences || {},
         });
         return await applyClaudeConfig(
@@ -71,7 +71,7 @@ const applyContext1M = async (
             applied.showThinkingSummaries ?? undefined,
         );
     } catch (e: any) {
-        return { success: false, error: e?.message || t('claudeCode.modeChange.applyFailed') };
+        return { success: false, error: e?.message || t('claudeCode.applyFailed') };
     }
 };
 
@@ -81,7 +81,6 @@ const ClaudeCodeSetupDialog: React.FC<{ slot: AgentPageSlot }> = ({ slot }) => {
         <ClaudeCodeConfigModal
             open={slot.dialogOpen}
             onClose={slot.closeDialog}
-            configMode="unified"
             slots={slot.slots}
             baseUrl={slot.baseUrl}
             rules={slot.rules}

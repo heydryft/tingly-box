@@ -99,7 +99,6 @@ export default {
     },
   },
   "scenarioPage": {
-    "slotMode": "模型模式",
     "setupGuide": "配置指南",
     "config": "配置",
     "autoConfig": "自动配置",
@@ -236,26 +235,7 @@ export default {
       "mergeAll": "全部合并",
       "failed": "更新槽位失败"
     },
-    "configModes": {
-      "unified": {
-        "label": "统一模型",
-        "description": "为所有 Claude Code 请求配置同一个模型"
-      },
-      "separate": {
-        "label": "分离模型",
-        "description": "为 Claude Code 的不同场景（如子代理、摘要、默认等）分别配置模型"
-      }
-    },
-    "modeChange": {
-      "title": "切换配置模式？",
-      "body": "即将从 {{from}} 切换到 {{to}} 模式。",
-      "hint": "切换模式后，需要重新将配置应用到 Claude Code 才能生效。",
-      "cancel": "取消",
-      "confirm": "确认",
-      "success": "配置模式已切换为{{mode}}，请重新应用配置到 Claude Code。",
-      "failed": "保存配置模式失败",
-      "applyFailed": "应用配置失败"
-    },
+    "applyFailed": "应用配置失败",
     "configPath": "将环境配置添加到 Claude Code 配置文件",
     "copyConfig": "配置",
     "oneClickScript": "一键脚本",
@@ -263,10 +243,6 @@ export default {
     "step1": "1. 配置模型",
     "step2": "2. 跳过入门 - 让 Claude Code 直接可用",
     "step3": "3. 状态行集成（可选）",
-    "unifiedConfig": "统一配置",
-    "separateConfig": "分离配置",
-    "switchToSeparate": "切换到分离",
-    "switchToUnified": "切换到统一",
     "quickApply": "自动配置",
     "quickApplyWithStatusLine": "自动配置和状态行",
     "statusLine": {
@@ -305,10 +281,7 @@ export default {
       "profileRenamed": "方案已重命名",
       "profileDeleted": "方案已删除",
       "renameFailed": "重命名方案失败",
-      "deleteFailed": "删除方案失败",
-      "mode": "模式",
-      "unified": "统一",
-      "separate": "分离"
+      "deleteFailed": "删除方案失败"
     },
     "defaultModeLabel": "默认权限模式"
   },

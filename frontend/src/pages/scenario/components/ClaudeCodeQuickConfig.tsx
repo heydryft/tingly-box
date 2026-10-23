@@ -865,23 +865,19 @@ const useLang = (): AppLanguage => {
 
 interface DerivePrefsInput {
     rules: any[];
-    mode: 'unified' | 'separate' | 'smart';
-    /** Unified mode: slots with a rule of their own (the rest use the unified rule). */
+    /** Slots with a rule of their own (the rest follow the default rule). */
     slots?: string[];
 }
 
-export const derivePrefsFromRules = ({ rules, mode, slots = [] }: DerivePrefsInput): ClaudeCodePrefs => {
-    const unifiedRule = rules.find((r: any) => r?.uuid === 'builtin:claude_code:cc');
-    // Unified mode: the active rule of a split slot (mirrors the backend's
-    // ClaudeCodeSlotModels), undefined when the slot uses the unified rule.
-    const splitRule = (variant: string) => (mode === 'unified' && slots.includes(variant)
+export const derivePrefsFromRules = ({ rules, slots = [] }: DerivePrefsInput): ClaudeCodePrefs => {
+    const defaultRule = rules.find((r: any) => r?.uuid === 'builtin:claude_code:cc');
+    // The active rule of a split slot (mirrors the backend's
+    // ClaudeCodeSlotModels), undefined when the slot follows the default rule.
+    const splitRule = (variant: string) => (slots.includes(variant)
         ? rules.find((r: any) => r?.uuid === `builtin:claude_code:${variant}` && r.active !== false && r.request_model)
         : undefined);
-    const modelForVariant = (variant: string, fallback: string): string => {
-        if (mode === 'unified') return splitRule(variant)?.request_model || unifiedRule?.request_model || fallback;
-        const rule = rules.find((r: any) => r?.uuid === `builtin:claude_code:${variant}`);
-        return rule?.request_model || fallback;
-    };
+    const modelForVariant = (variant: string): string =>
+        splitRule(variant)?.request_model || defaultRule?.request_model || 'tingly/cc';
 
     // Get the 1M context window flag from a specific rule. Rules here come
     // straight from the API (snake_case flags); accept the camelCase shape
@@ -891,31 +887,11 @@ export const derivePrefsFromRules = ({ rules, mode, slots = [] }: DerivePrefsInp
         return rule.flags?.context_1m || rule.flags?.context1m || false;
     };
 
-    // Get the 1M state for a specific variant (only used in separate mode)
-    const getContext1MStateForVariant = (variant: string): boolean => {
-        if (mode === 'unified') {
-            return getContext1MStateForRule(splitRule(variant) ?? unifiedRule);
-        }
-        // In separate mode, check the specific rule for this variant
-        const rule = rules.find((r: any) => r?.uuid === `builtin:claude_code:${variant}`);
-        return getContext1MStateForRule(rule);
-    };
+    const getContext1MStateForVariant = (variant: string): boolean =>
+        getContext1MStateForRule(splitRule(variant) ?? defaultRule);
 
-    // Unified mode: any slot's rule, split ones included (mirrors the
-    // backend's GenerateCCEnv).
-    const context1MEnabled = mode === 'unified'
-        ? ['default', 'haiku', 'sonnet', 'opus', 'fable', 'subagent'].some(getContext1MStateForVariant)
-        : getContext1MStateForRule(rules.find((r: any) => r?.uuid === 'builtin:claude_code:default'));
-
-
-    const isUnified = mode !== 'separate';
-    const defaultModel = isUnified ? 'tingly/cc' : 'tingly/cc-default';
-
-    // The fable tier arrived after separate mode shipped, so its rule may be
-    // missing or switched off; the bare name is not routable, so the slot
-    // follows the default tier (mirrors the backend's GenerateCCEnv).
-    const fableRule = rules.find((r: any) => r?.uuid === 'builtin:claude_code:fable');
-    const fableVariant = isUnified || (fableRule && fableRule.active !== false) ? 'fable' : 'default';
+    // Any slot's rule, split ones included (mirrors the backend's GenerateCCEnv).
+    const context1MEnabled = ['default', 'haiku', 'sonnet', 'opus', 'fable', 'subagent'].some(getContext1MStateForVariant);
 
     // Apply 1M suffix to models if their corresponding rule has context1m enabled
     const apply1MSuffix = (model: string, variant: string): string => {
@@ -924,12 +900,12 @@ export const derivePrefsFromRules = ({ rules, mode, slots = [] }: DerivePrefsInp
     };
 
     return {
-        ANTHROPIC_MODEL: apply1MSuffix(modelForVariant('default', defaultModel), 'default'),
-        ANTHROPIC_DEFAULT_HAIKU_MODEL: apply1MSuffix(modelForVariant('haiku', isUnified ? defaultModel : 'tingly/cc-haiku'), 'haiku'),
-        ANTHROPIC_DEFAULT_SONNET_MODEL: apply1MSuffix(modelForVariant('sonnet', isUnified ? defaultModel : 'tingly/cc-sonnet'), 'sonnet'),
-        ANTHROPIC_DEFAULT_OPUS_MODEL: apply1MSuffix(modelForVariant('opus', isUnified ? defaultModel : 'tingly/cc-opus'), 'opus'),
-        ANTHROPIC_DEFAULT_FABLE_MODEL: apply1MSuffix(modelForVariant(fableVariant, isUnified ? defaultModel : fableVariant === 'fable' ? 'tingly/cc-fable' : 'tingly/cc-default'), fableVariant),
-        CLAUDE_CODE_SUBAGENT_MODEL: apply1MSuffix(modelForVariant('subagent', isUnified ? defaultModel : 'tingly/cc-subagent'), 'subagent'),
+        ANTHROPIC_MODEL: apply1MSuffix(modelForVariant('default'), 'default'),
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: apply1MSuffix(modelForVariant('haiku'), 'haiku'),
+        ANTHROPIC_DEFAULT_SONNET_MODEL: apply1MSuffix(modelForVariant('sonnet'), 'sonnet'),
+        ANTHROPIC_DEFAULT_OPUS_MODEL: apply1MSuffix(modelForVariant('opus'), 'opus'),
+        ANTHROPIC_DEFAULT_FABLE_MODEL: apply1MSuffix(modelForVariant('fable'), 'fable'),
+        CLAUDE_CODE_SUBAGENT_MODEL: apply1MSuffix(modelForVariant('subagent'), 'subagent'),
 
         API_TIMEOUT_MS: '3000000',
         CLAUDE_CODE_MAX_OUTPUT_TOKENS: '32000',

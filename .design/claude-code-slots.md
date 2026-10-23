@@ -1,44 +1,39 @@
-# Claude Code: per-slot rules in unified mode
+# Claude Code: per-slot rules (no modes)
 
-> Status: implemented. Background: `claude-code-config.md` (env shape, rule ↔ slot mapping).
-
-![Slots row](images/claude-code-slots.png)
+Status: implemented (TEP #2197; #2195, #2196, #2198, #2199).
 
 ## Problem
 
-Claude Code has two modes: **unified** (every model slot requests the `cc` rule) and **separate** (every slot has its own rule). The common need sits in between — "unified, but the subagent on another model" — and used to mean switching to separate and keeping five rules identical by hand.
+Claude Code used to have two modes: **unified** (every model slot requests the `cc` rule) and **separate** (every slot has its own rule). The common need sits in between — "everything on one model, but the subagent on another" — and meant switching to separate and keeping five rules identical by hand. Two modes also meant two rule sets, two env resolvers, two UIs and a mode change that rewrote rules.
 
 ## Design
 
-The modes stay. Unified mode gains per-slot rules, and the state is the rules themselves — there is no separate slot list:
+There are no modes. The state is the rules themselves; there is no slot list and no mode flag:
 
-- The **default slot** (`ANTHROPIC_MODEL`) is the unified rule `builtin:<scenario>:cc` and is always there.
-- Each other slot — `haiku` `sonnet` `opus` `fable` `subagent` — has its own rule `builtin:<scenario>:<slot>`. **In unified mode, that rule being on means the slot has its own rule**; off means the slot follows the unified rule.
-- Routing is untouched: the env carries a rule's `request_model`, which stays the routing key.
+- The **default slot** (`ANTHROPIC_MODEL`) is the rule `builtin:<scenario>:cc` (request model `tingly/cc`) and is always on.
+- Each other slot — `haiku` `sonnet` `opus` `fable` `subagent` — has a rule `builtin:<scenario>:<slot>`. **A slot whose rule is active has its own rule**; an inactive rule means the slot follows the default slot.
+- "Separate" is just every slot split; "unified" is none split. The legacy `unified` / `separate` scenario flags survive only as shortcuts (`separate=true` splits all, `unified=true` merges all) and are read back as derived values, so old clients keep working.
 
-UI: in unified mode a **Slots** row sits under Base URL / API Key. `default` is always lit; clicking another slot gives it its own rule (the rules card then shows it) or hands it back. Separate mode, and separate-mode profiles, look and behave as before.
+UI: a **Slots** row under Base URL / API Key, for the main scenario and for profiles alike. `default` is always lit; clicking another slot gives it its own rule (the rules card then shows it) or hands it back. "Split all" / "Merge all" flip every slot at once. There is no mode switch and no mode dialog; creating a profile does not ask for a mode.
 
-## Why the rule's `Active` is enough
+## Invariants
 
-An earlier iteration kept an explicit slot list beside `Active`, because `agent apply` used to switch every Claude Code rule on and so `Active` could not mean "split". Two states then had to be kept in step (whole-record scenario writes, mode changes, profile vs. main storage). Instead the writers were fixed so `Active` is trustworthy:
+- Turning a slot on reuses its built-in rule. A rule without routing yet — or a missing rule — starts as a copy of the default rule's routing, so nothing changes until the user edits it. Turning it off only switches the rule off, so turning it on again restores it.
+- Only slot toggles touch tier rules. A whole-record scenario write never does (`SetScenarioConfig` just stores).
+- `agent apply` switches only the default rule on. Tier rules that are on (split slots) are left untouched; the others get the provider but stay off.
+- Rejected: unknown profiles and the default slot. Everything else, main scenario and profiles, is accepted.
+- `agent.ClaudeCodeSlotModels` is the one resolver behind the settings file and the tbclient env: a slot with an active rule of its own requests it, otherwise the default slot's request model. `derivePrefsFromRules({ rules, slots })` mirrors it in the frontend.
+- TUI quickstart asks only for the subagent model: another model splits the subagent slot (routed to exactly that model — no inherited smart routing or 1M), "same as the default" undoes an earlier split. It never switches tier rules on.
+- `agent apply --unified` is accepted and ignored.
 
-- Only a **mode change** touches the rules (`syncClaudeCodeRuleModeLocked`, `SetScenarioFlag`): switching to unified switches every tier rule off, i.e. merges all slots. A whole-record write or a repeated "unified" flag that doesn't change the mode leaves them alone.
-- `agent apply` in unified mode switches only the main rule on. Tier rules that are on (split slots) are left untouched; the others get the provider but stay off, so a later switch to separate mode still routes.
-- Config created before this: a one-time migration (`20261022-claude-code-unified-slot-rules`) switches the tier rules off for unified configs, since old `agent apply` had switched them on without meaning a split.
+## Migration
 
-Other rules:
+Both are one-time and idempotent through `MigrationsCompleted` markers.
 
-- Turning a slot on reuses its built-in rule. A rule without routing yet — or a missing rule — starts as a copy of the unified rule's routing, so nothing changes until the user edits it. Turning it off only switches the rule off, so turning it on again restores it.
-- Rejected: separate mode (main or profile), unknown profiles, the default slot.
-- A profile's slots are its own rules (`builtin:claude_code:<profile>:<slot>`); it never reads the main scenario's.
+- `20261022-claude-code-unified-slot-rules`: old `agent apply` switched every tier rule on regardless of mode, which would now read as "all slots split". For unified configs the tier rules are switched off. Separate configs are left alone.
+- `20261023-claude-code-fold-separate`: for a separate scenario or profile, the `default` rule's routing is copied into `cc` (which becomes active) and the `default` rule is deleted; its slot rules stay on as they were, so routing is unchanged. `Flags.Unified/Separate` are cleared and profiles are marked unified. Unified configs just lose their (unused) `default` rule.
+- Settings files written by separate mode still name `tingly/cc-default` (profile: `default`). `MatchRuleByModelAndScenario` aliases those to `tingly/cc` / `cc` **permanently**; no "separate" label is kept for migrated profiles.
 
-## Implementation
+## Left behind on purpose
 
-- `config.SetClaudeCodeSlot` / `ClaudeCodeSlots` (`internal/config/cc_slots.go`); mode sync in `scenario.go`.
-- `agent.ClaudeCodeSlotModels`: the one resolver behind the settings file and the tbclient env; a slot with an active rule of its own requests it, otherwise the unified rule.
-- `agent apply` in unified mode (see above); TUI quickstart makes the claude_code scenario follow the unified/separate answer and, in unified mode, asks for the subagent model: another model splits the subagent slot (routed to exactly that model — no inherited smart routing or 1M), "same as the default" undoes an earlier split. Back on that question returns to the unified question.
-- CLI: `profile list/show` show `unified + subagent` for split slots.
-- API: `GET /api/v1/scenario/:scenario/claude-code/slots`, `PUT …/claude-code/slots/:slot {enabled}`.
-- Frontend: `useSlotRouting` (Slots row, unified-mode rule list, fixed mode for profiles); `derivePrefsFromRules({ rules, mode, slots })`.
-
-Changing a slot changes the env: the main page's Client Config status chip offers Reapply; profile settings are rebuilt at launch.
+`RuleUUIDCCDefault`, `RuleUUIDBuiltinCCDefault`, `ScenarioFlags.Unified/Separate`, `ProfileMeta.Unified` and `constant.FlagUnified/FlagSeparate` stay: the migrations above and the legacy flag shortcuts read them. Retire them by the policy in `config-migration.md`, not ad hoc.

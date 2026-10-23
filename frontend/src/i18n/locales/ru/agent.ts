@@ -105,7 +105,6 @@ export default {
     }
   },
   "scenarioPage": {
-    "slotMode": "Режим моделей",
     "setupGuide": "Инструкция",
     "config": "Конфиг",
     "autoConfig": "Автонастройка",
@@ -266,26 +265,7 @@ export default {
       "mergeAll": "Объединить все",
       "failed": "Не удалось обновить слот"
     },
-    "configModes": {
-      "unified": {
-        "label": "Единая модель",
-        "description": "Одна модель для всех запросов Claude Code"
-      },
-      "separate": {
-        "label": "Раздельные модели",
-        "description": "Разные модели под задачи Claude Code: субагент, сводка, основная и другие"
-      }
-    },
-    "modeChange": {
-      "title": "Сменить режим конфигурации?",
-      "body": "Вы переключаетесь с режима «{{from}}» на «{{to}}».",
-      "hint": "После смены режима нужно заново применить конфигурацию к Claude Code, чтобы изменения вступили в силу.",
-      "cancel": "Отмена",
-      "confirm": "Подтвердить",
-      "success": "Режим конфигурации изменён на «{{mode}}». Примените конфигурацию к Claude Code заново.",
-      "failed": "Не удалось сохранить режим конфигурации",
-      "applyFailed": "Не удалось применить конфигурацию"
-    },
+    "applyFailed": "Не удалось применить конфигурацию",
     "configPath": "Добавьте переменные окружения в файл конфигурации Claude Code",
     "copyConfig": "Конфиг",
     "oneClickScript": "Скрипт в один клик",
@@ -293,10 +273,6 @@ export default {
     "step1": "1. Настройте модель",
     "step2": "2. Пропустите онбординг — чтобы Claude Code работал сразу",
     "step3": "3. Строка состояния (необязательно)",
-    "unifiedConfig": "Единая конфигурация",
-    "separateConfig": "Раздельная конфигурация",
-    "switchToSeparate": "Переключить на раздельный",
-    "switchToUnified": "Переключить на единый",
     "quickApply": "Автонастройка",
     "quickApplyWithStatusLine": "Автонастройка и строка состояния",
     "statusLine": {
@@ -335,10 +311,7 @@ export default {
       "profileRenamed": "Профиль переименован",
       "profileDeleted": "Профиль удалён",
       "renameFailed": "Не удалось переименовать профиль",
-      "deleteFailed": "Не удалось удалить профиль",
-      "mode": "Режим",
-      "unified": "Единый",
-      "separate": "Раздельный"
+      "deleteFailed": "Не удалось удалить профиль"
     },
     "defaultModeLabel": "Режим по умолчанию"
   },

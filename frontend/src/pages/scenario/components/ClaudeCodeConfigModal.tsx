@@ -24,12 +24,10 @@ import { fontMono, fontSizes } from '@/theme/fonts';
 const STATUSLINE_SCRIPT_URL = 'https://raw.githubusercontent.com/tingly-dev/tingly-box/refs/heads/main/internal/script/tingly-statusline.sh';
 const STATUSLINE_SCRIPT_PS1_URL = 'https://raw.githubusercontent.com/tingly-dev/tingly-box/refs/heads/main/internal/script/tingly-statusline.ps1';
 
-type ConfigMode = 'unified' | 'separate' | 'smart';
 
 interface ClaudeCodeConfigModalProps {
     open: boolean;
     onClose: () => void;
-    configMode: ConfigMode;
     /** Unified mode: slots with a rule of their own. */
     slots?: string[];
     baseUrl: string;
@@ -126,7 +124,6 @@ console.log("Config written to", targetPath);`;
 const ClaudeCodeConfigModal: React.FC<ClaudeCodeConfigModalProps> = ({
     open,
     onClose,
-    configMode,
     slots,
     baseUrl,
     rules,
@@ -152,11 +149,11 @@ const ClaudeCodeConfigModal: React.FC<ClaudeCodeConfigModalProps> = ({
     // values previously applied to ~/.claude/settings.json; first-time users
     // still start from routing-aware recommendations.
     const [prefs, setPrefs] = React.useState<ClaudeCodePrefs>(() =>
-        derivePrefsFromRules({ rules, mode: configMode, slots })
+        derivePrefsFromRules({ rules, slots })
     );
     React.useEffect(() => {
         if (!open) {
-            setPrefs(derivePrefsFromRules({ rules, mode: configMode, slots }));
+            setPrefs(derivePrefsFromRules({ rules, slots }));
             setDefaultMode('acceptEdits');
             setShowThinkingSummaries(CLAUDE_CODE_DEFAULT_SHOW_THINKING_SUMMARIES);
             setCoAuthoredBy(CLAUDE_CODE_DEFAULT_CO_AUTHORED_BY);
@@ -185,7 +182,7 @@ const ClaudeCodeConfigModal: React.FC<ClaudeCodeConfigModalProps> = ({
                 },
             };
         });
-        const generated = derivePrefsFromRules({ rules: tempRules, mode: configMode, slots });
+        const generated = derivePrefsFromRules({ rules: tempRules, slots });
 
         let active = true;
         setIsConfigLoading(true);
@@ -217,7 +214,7 @@ const ClaudeCodeConfigModal: React.FC<ClaudeCodeConfigModalProps> = ({
         return () => {
             active = false;
         };
-    }, [pendingContext1MChange, rules, configMode, slots, open]);
+    }, [pendingContext1MChange, rules, slots, open]);
 
     // Editing prefs after a previous Apply invalidates the success state —
     // hide the old alert so the user can tell their next Apply hasn't run yet.
@@ -373,11 +370,11 @@ node -e '${nodeCode.replace(/'/g, "'\\''")}'`;
     };
 
     const handleResetDefaults = React.useCallback(() => {
-        setPrefsAndClearResult(derivePrefsFromRules({ rules, mode: configMode, slots }));
+        setPrefsAndClearResult(derivePrefsFromRules({ rules, slots }));
         setDefaultModeAndClearResult('acceptEdits');
         setShowThinkingSummariesAndClearResult(CLAUDE_CODE_DEFAULT_SHOW_THINKING_SUMMARIES);
         setCoAuthoredByAndClearResult(CLAUDE_CODE_DEFAULT_CO_AUTHORED_BY);
-    }, [configMode, rules, slots, setCoAuthoredByAndClearResult, setDefaultModeAndClearResult, setPrefsAndClearResult, setShowThinkingSummariesAndClearResult]);
+    }, [rules, slots, setCoAuthoredByAndClearResult, setDefaultModeAndClearResult, setPrefsAndClearResult, setShowThinkingSummariesAndClearResult]);
 
     const canApply = !!onApplyWithPrefs;
 

@@ -310,7 +310,7 @@ func ResolveCCProfileSettings(cfg *serverconfig.Config, baseURL, apiKey, scenari
 	if snapshot.Exists {
 		baseEnv = maps.Clone(snapshot.Env)
 	} else {
-		defaults := DefaultClaudeCodePrefs(true)
+		defaults := DefaultClaudeCodePrefs()
 		defaultValues, valuesErr := defaults.Values()
 		if valuesErr != nil {
 			return CCProfileSettingsResolution{}, valuesErr

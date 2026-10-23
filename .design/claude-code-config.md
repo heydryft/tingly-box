@@ -236,15 +236,16 @@ not runtime discovery.
 
 | Rule UUID | Initial `request_model` | Maps to env slot |
 |---|---|---|
-| `builtin:claude_code:cc` | `tingly/cc` | (unified mode — all 6 slots) |
-| `builtin:claude_code:default` | `tingly/cc-default` | `ANTHROPIC_MODEL` |
+| `builtin:claude_code:cc` | `tingly/cc` | `ANTHROPIC_MODEL`, and every slot without a rule of its own |
 | `builtin:claude_code:haiku` | `tingly/cc-haiku` | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
 | `builtin:claude_code:sonnet` | `tingly/cc-sonnet` | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
 | `builtin:claude_code:opus` | `tingly/cc-opus` | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
 | `builtin:claude_code:subagent` | `tingly/cc-subagent` | `CLAUDE_CODE_SUBAGENT_MODEL` |
 | `builtin:claude_code:fable` | `tingly/cc-fable` | `ANTHROPIC_DEFAULT_FABLE_MODEL` |
 
-The `fable` tier was added after separate mode shipped. A migration
+`builtin:claude_code:default` (`tingly/cc-default`) is gone: separate mode was
+folded into per-slot rules (`claude-code-slots.md`) and `tingly/cc-default`
+stays only as an alias of `tingly/cc`. The `fable` tier was added later. A migration
 (`backfillFableRuleOnce`, once per config) seeds `builtin:claude_code:fable` for
 existing configs, copying the opus rule's services, flags, load-balancing tactic
 and active state (only when the opus rule exists, and never over a rule that
@@ -260,54 +261,25 @@ page. The Quick Config seeds its form values from whatever is currently
 in those rules, not from a hardcoded list — so the form always reflects
 the actual route topology.
 
-### 5.2 Mode-aware rule loading (page side)
+### 5.2 Rule loading (page side)
 
-`UseClaudeCodePage.tsx` fetches a different slice of rules depending on
-`configMode`:
+`useSlotRouting` hands the page the default rule `builtin:claude_code:cc`
+plus the rules of the slots that have one of their own (see
+`claude-code-slots.md`); the modal receives that slot list alongside the
+rules and does not re-filter anything.
 
-```ts
-if (configMode === 'unified') {
-    // Just the one rule
-    const result = await api.getRule("builtin:claude_code:cc");
-    setRules([result.data]);
-} else {
-    // All Claude Code rules except the unified-only one
-    const result = await api.getRules(SCENARIO);
-    setRules(result.data.filter(r => r.uuid !== 'builtin:claude_code:cc'));
-}
-```
+### 5.3 UUID lookup (modal side)
 
-The `rules` array handed to the modal is therefore pre-filtered. The
-modal does not re-filter by mode — it just sees "the rules for this
-mode".
+`derivePrefsFromRules({ rules, slots })` in `ClaudeCodeQuickConfig.tsx` uses
+the UUIDs as keys. It does not depend on array order or canonical
+`tingly/cc*` names:
 
-In unified mode the page also shows the rules of the slots that have one of
-their own (see `claude-code-slots.md`); the modal receives that slot list
-alongside the rules.
+- a slot in `slots` whose `builtin:claude_code:<slot>` rule is active
+  requests that rule's `request_model`;
+- every other slot requests the `builtin:claude_code:cc` rule's.
 
-### 5.3 UUID-suffix lookup (modal side)
-
-`derivePrefsFromRules` in `ClaudeCodeQuickConfig.tsx` uses the UUIDs as
-keys. It does not depend on array order or canonical `tingly/cc*` names:
-
-```ts
-const modelForVariant = (variant, fallback) => {
-    if (mode === 'unified') {
-        return rules.find(r => r.uuid === 'builtin:claude_code:cc')?.request_model || fallback;
-    }
-    const rule = rules.find(r => r.uuid === `builtin:claude_code:${variant}`);
-    return rule?.request_model || fallback;
-};
-```
-
-- **unified**: the `builtin:claude_code:cc` rule is found explicitly; its
-  `request_model` populates all 5 slots.
-- **separate**: each of the 5 variants (`default` / `haiku` / `sonnet` /
-  `opus` / `subagent`) does a UUID-exact `find` against
-  `builtin:claude_code:<variant>`.
-
-If a rule is missing (e.g. user deleted it manually), the slot falls back
-to the tb-canonical default string. Form remains usable.
+If the default rule is missing (e.g. user deleted it manually), the slot
+falls back to `tingly/cc`. Form remains usable.
 
 ### 5.4 The closing loop: `request_model` is the routing key
 
