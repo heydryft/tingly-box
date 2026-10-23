@@ -87,6 +87,16 @@ func builtinScenarioDescriptorFor(scenario RuleScenario) ScenarioDescriptor {
 			AllowRuleBinding:   true,
 			AllowDirectPathUse: true,
 		}
+	case ScenarioImagePrompt:
+		// The Image to Prompt page (.design/image-to-prompt.md): a picture
+		// goes to a vision chat model, a prompt comes back. Its own scenario
+		// so the rules the page's picker creates stay out of openai's.
+		return ScenarioDescriptor{
+			ID:                 scenario,
+			SupportedTransport: []ScenarioTransport{TransportOpenAI},
+			AllowRuleBinding:   true,
+			AllowDirectPathUse: true,
+		}
 	case ScenarioAnthropic:
 		return ScenarioDescriptor{
 			ID:                 scenario,

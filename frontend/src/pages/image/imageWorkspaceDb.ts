@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 // Durable copy of what the user builds on the image pages — profiles, kept
-// images, prompt snippets — so a reload does not throw it away.
+// images, prompt snippets, Image to Prompt runs — so a reload does not throw it away.
 //
 // IndexedDB for the same reason as the run history (utils/playgroundSession.ts):
 // the values carry images, far past what localStorage holds. One record per
@@ -18,11 +18,12 @@ import { useSyncExternalStore } from 'react';
 // Browser-local until the backend store lands (.design/image-profile.md §4).
 
 const DB_NAME = 'tingly-image-workspace';
-const VERSION = 1;
+// 2 added imagePrompts; onupgradeneeded only creates the stores that are missing.
+const VERSION = 2;
 const ORDER = 'order';
 
-export type Collection = 'profiles' | 'assets' | 'snippets';
-const COLLECTIONS: Collection[] = ['profiles', 'assets', 'snippets'];
+export type Collection = 'profiles' | 'assets' | 'snippets' | 'imagePrompts';
+const COLLECTIONS: Collection[] = ['profiles', 'assets', 'snippets', 'imagePrompts'];
 
 interface Identified { id: string }
 
@@ -77,7 +78,7 @@ const read = <T>(db: IDBDatabase, store: string, key: string): Promise<T | undef
 
 // What each collection's store holds right now, by id, as the very objects
 // written. `null` = unknown: the next save rewrites the collection whole.
-const stored: Record<Collection, Map<string, unknown> | null> = { profiles: null, assets: null, snippets: null };
+const stored: Record<Collection, Map<string, unknown> | null> = { profiles: null, assets: null, snippets: null, imagePrompts: null };
 
 /** The collection as the last session left it, in order; empty when nothing was kept. */
 export const loadCollection = async <T extends Identified>(name: Collection): Promise<T[]> => {
