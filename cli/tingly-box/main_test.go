@@ -292,15 +292,14 @@ func TestRemoteAddSubcommandExists(t *testing.T) {
 	}
 }
 
-// TestAgentApplyUnifiedDefaultIsTrue ensures the legacy default (--unified=true)
-// is preserved in Kong.
-func TestAgentApplyUnifiedDefaultIsTrue(t *testing.T) {
-	cli, parser := newTestParser(t)
-	if _, err := parser.Parse([]string{"agent", "apply", "claude-code"}); err != nil {
-		t.Fatalf("agent apply should parse: %v", err)
-	}
-	if !cli.Agent.Apply.Unified {
-		t.Error("Apply.Unified should default to true")
+// TestAgentApplyAcceptsDeprecatedUnifiedFlag ensures scripts that still pass
+// --unified / --unified=false keep parsing; the flag is ignored.
+func TestAgentApplyAcceptsDeprecatedUnifiedFlag(t *testing.T) {
+	for _, flag := range []string{"--unified", "--unified=false"} {
+		_, parser := newTestParser(t)
+		if _, err := parser.Parse([]string{"agent", "apply", "claude-code", flag}); err != nil {
+			t.Fatalf("agent apply %s should parse: %v", flag, err)
+		}
 	}
 }
 
