@@ -350,8 +350,11 @@ package, the way esbuild / swc / biome / sharp do it, and retire the bundle.
   registry-visibility timeout shown in `install.log` is usually npm
   read-replica lag, not a bad build, so failing the whole run outright would
   be too blunt. `publish-cli-review` runs only when `publish-cli` failed,
-  behind the `production-smoke-review` environment — required reviewers must
-  be configured there in repo Settings, that's what actually pauses the run.
+  behind the `production` environment — its required reviewers are what
+  actually pause the run. It must reuse `production`: npm's trusted publisher
+  for `tingly-box` names that environment, and a separate
+  `production-smoke-review` made the shim's publish fail with a 404 on PUT
+  (run 39923757721) while the platform packages published fine.
   Approving lets it download the artifact and run `npm publish` itself;
   rejecting (or leaving it unanswered) fails that job too, so the release
   ends in error without publishing — no separate "did review pass" branching

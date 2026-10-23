@@ -390,9 +390,10 @@ jobs:
 
   # Only runs when publish-cli above did not publish the shim (most commonly
   # one of its two smoke-test steps failed — see .design/npm.md). Sits behind the
-  # `production-smoke-review` environment, which must be configured in repo
-  # Settings -> Environments with required reviewers — that's what actually
-  # pauses the run for a human. Approve to publish the shim anyway (e.g. the
+  # `production` environment, whose required reviewers are what actually pause
+  # the run for a human. It must be `production`, not a separate environment:
+  # npm's trusted publisher for `tingly-box` is bound to that exact environment
+  # name, and any other one is rejected with a 404 on PUT. Approve to publish the shim anyway (e.g. the
   # smoke test's registry-visibility timeout was just replica lag); reject
   # (or leave it unanswered) and this job fails, so the pipeline ends in
   # error without publishing.
@@ -400,7 +401,7 @@ jobs:
     needs: [setup, publish-cli]
     name: Manual Review — Publish CLI (after smoke-test failure)
     runs-on: ubuntu-latest
-    environment: production-smoke-review
+    environment: production
     permissions:
       contents: read
       id-token: write
