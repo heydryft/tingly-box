@@ -7,5 +7,4 @@
 2-1-team.png
 3-1-image-playground.png
 4-2-dashboard.png
-5-1-remote.png
 6-1-connect-ai.png
