@@ -175,8 +175,8 @@ func TestGenerateCCEnv_MainScenario_ResolvesLegacyBuiltins(t *testing.T) {
 		t.Errorf("haiku model = %q, want %q", got, "vendor/fast")
 	}
 	// Missing rules keep the canonical tingly/* fallback.
-	if got := env["ANTHROPIC_MODEL"]; got != "tingly/cc" {
-		t.Errorf("default model = %q, want %q", got, "tingly/cc")
+	if got := env["ANTHROPIC_MODEL"]; got != "cc" {
+		t.Errorf("default model = %q, want %q", got, "cc")
 	}
 }
 
@@ -667,15 +667,15 @@ func TestUpgradeLegacyCCEnv(t *testing.T) {
 func TestGenerateCCEnv_FableFollowsDefaultWithoutActiveRule(t *testing.T) {
 	for name, fable := range map[string]*typ.Rule{
 		"missing":  nil,
-		"inactive": {UUID: "builtin:claude_code:fable", Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc-fable", Active: false},
+		"inactive": {UUID: "builtin:claude_code:fable", Scenario: typ.ScenarioClaudeCode, RequestModel: "fable", Active: false},
 	} {
 		t.Run(name, func(t *testing.T) {
-			rules := []typ.Rule{{UUID: "builtin:claude_code:cc", Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc", Active: true}}
+			rules := []typ.Rule{{UUID: "builtin:claude_code:cc", Scenario: typ.ScenarioClaudeCode, RequestModel: "cc", Active: true}}
 			if fable != nil {
 				rules = append(rules, *fable)
 			}
 			env := GenerateCCEnv(&serverconfig.Config{Rules: rules}, "http://localhost:12580", "tok", "claude_code", false)
-			if got := env["ANTHROPIC_DEFAULT_FABLE_MODEL"]; got != "tingly/cc" {
+			if got := env["ANTHROPIC_DEFAULT_FABLE_MODEL"]; got != "cc" {
 				t.Errorf("fable = %q, want it to follow the default slot", got)
 			}
 		})
@@ -735,22 +735,22 @@ func boolPtr(v bool) *bool { return &v }
 func TestGenerateCCEnv_UnifiedWithSubagentOnItsOwnRule(t *testing.T) {
 	cfg := &serverconfig.Config{
 		Rules: []typ.Rule{
-			{UUID: serverconfig.RuleUUIDCC, Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc", Active: true},
-			{UUID: serverconfig.RuleUUIDCCSubagent, Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc-subagent", Active: true},
+			{UUID: serverconfig.RuleUUIDCC, Scenario: typ.ScenarioClaudeCode, RequestModel: "cc", Active: true},
+			{UUID: serverconfig.RuleUUIDCCSubagent, Scenario: typ.ScenarioClaudeCode, RequestModel: "subagent", Active: true},
 			// Off: a slot handed back to the main rule.
-			{UUID: serverconfig.RuleUUIDCCOpus, Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc-opus", Active: false},
+			{UUID: serverconfig.RuleUUIDCCOpus, Scenario: typ.ScenarioClaudeCode, RequestModel: "opus", Active: false},
 		},
 	}
 
 	env := GenerateCCEnv(cfg, "http://localhost:12580", "tok", "claude_code", false)
 
 	for key, want := range map[string]string{
-		"ANTHROPIC_MODEL":                "tingly/cc",
-		"ANTHROPIC_DEFAULT_HAIKU_MODEL":  "tingly/cc",
-		"ANTHROPIC_DEFAULT_SONNET_MODEL": "tingly/cc",
-		"ANTHROPIC_DEFAULT_OPUS_MODEL":   "tingly/cc",
-		"ANTHROPIC_DEFAULT_FABLE_MODEL":  "tingly/cc",
-		"CLAUDE_CODE_SUBAGENT_MODEL":     "tingly/cc-subagent",
+		"ANTHROPIC_MODEL":                "cc",
+		"ANTHROPIC_DEFAULT_HAIKU_MODEL":  "cc",
+		"ANTHROPIC_DEFAULT_SONNET_MODEL": "cc",
+		"ANTHROPIC_DEFAULT_OPUS_MODEL":   "cc",
+		"ANTHROPIC_DEFAULT_FABLE_MODEL":  "cc",
+		"CLAUDE_CODE_SUBAGENT_MODEL":     "subagent",
 	} {
 		if env[key] != want {
 			t.Errorf("env[%q] = %q, want %q", key, env[key], want)
@@ -764,7 +764,7 @@ func TestGenerateCCEnv_UnifiedProfileSlot(t *testing.T) {
 			{UUID: "builtin:claude_code:p1:cc", Scenario: "claude_code:p1", RequestModel: "cc", Active: true},
 			{UUID: "builtin:claude_code:p1:haiku", Scenario: "claude_code:p1", RequestModel: "fast", Active: true},
 			// The main scenario's slot rules never leak into a profile.
-			{UUID: serverconfig.RuleUUIDCCOpus, Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc-opus", Active: true},
+			{UUID: serverconfig.RuleUUIDCCOpus, Scenario: typ.ScenarioClaudeCode, RequestModel: "opus", Active: true},
 		},
 	}
 
@@ -785,15 +785,15 @@ func TestGenerateCCEnv_UnifiedProfileSlot(t *testing.T) {
 func TestBuildClaudeCodeModelConfig_UnifiedFollowsSplitSlots(t *testing.T) {
 	cfg := &serverconfig.Config{
 		Rules: []typ.Rule{
-			{UUID: serverconfig.RuleUUIDCC, Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc", Active: true},
-			{UUID: serverconfig.RuleUUIDCCSubagent, Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc-subagent", Active: true},
+			{UUID: serverconfig.RuleUUIDCC, Scenario: typ.ScenarioClaudeCode, RequestModel: "cc", Active: true},
+			{UUID: serverconfig.RuleUUIDCCSubagent, Scenario: typ.ScenarioClaudeCode, RequestModel: "subagent", Active: true},
 		},
 	}
 	mc := BuildClaudeCodeModelConfig(cfg)
-	if mc.Default != "tingly/cc" || mc.SubAgent != "tingly/cc-subagent" || mc.Haiku != "" {
-		t.Errorf("model config = %+v, want default tingly/cc, subagent tingly/cc-subagent, the rest following default", mc)
+	if mc.Default != "cc" || mc.SubAgent != "subagent" || mc.Haiku != "" {
+		t.Errorf("model config = %+v, want default cc, subagent subagent, the rest following default", mc)
 	}
-	if got := BuildClaudeCodeModelConfig(nil); got.Default != "tingly/cc" || got.SubAgent != "" {
+	if got := BuildClaudeCodeModelConfig(nil); got.Default != "cc" || got.SubAgent != "" {
 		t.Errorf("without config = %+v", got)
 	}
 }

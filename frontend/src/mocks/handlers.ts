@@ -1802,12 +1802,12 @@ const mockClaudeCodeProfiles = [
 if (isNewcomer) mockClaudeCodeProfiles.length = 0
 
 const mockMainClaudeCodePreferences: Record<string, string> = {
-    ANTHROPIC_MODEL: 'tingly/cc',
-    ANTHROPIC_DEFAULT_HAIKU_MODEL: 'tingly/cc',
-    ANTHROPIC_DEFAULT_SONNET_MODEL: 'tingly/cc',
-    ANTHROPIC_DEFAULT_OPUS_MODEL: 'tingly/cc',
-    ANTHROPIC_DEFAULT_FABLE_MODEL: 'tingly/cc',
-    CLAUDE_CODE_SUBAGENT_MODEL: 'tingly/cc',
+    ANTHROPIC_MODEL: 'cc',
+    ANTHROPIC_DEFAULT_HAIKU_MODEL: 'cc',
+    ANTHROPIC_DEFAULT_SONNET_MODEL: 'cc',
+    ANTHROPIC_DEFAULT_OPUS_MODEL: 'cc',
+    ANTHROPIC_DEFAULT_FABLE_MODEL: 'cc',
+    CLAUDE_CODE_SUBAGENT_MODEL: 'cc',
     CLAUDE_CODE_MAX_OUTPUT_TOKENS: '32000',
     API_TIMEOUT_MS: '3000000',
     CLAUDE_CODE_AUTO_COMPACT_WINDOW: '200000',
@@ -2543,7 +2543,7 @@ export const handlers = [
                 ...structuredClone(main ?? {}),
                 uuid,
                 scenario,
-                request_model: scenario.includes(':') ? slot : `tingly/cc-${slot}`,
+                request_model: slot,
                 description: `Claude Code - ${slot} model`,
             }
             rules.push(rule)

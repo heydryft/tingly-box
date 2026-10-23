@@ -236,16 +236,17 @@ not runtime discovery.
 
 | Rule UUID | Initial `request_model` | Maps to env slot |
 |---|---|---|
-| `builtin:claude_code:cc` | `tingly/cc` | `ANTHROPIC_MODEL`, and every slot without a rule of its own |
-| `builtin:claude_code:haiku` | `tingly/cc-haiku` | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
-| `builtin:claude_code:sonnet` | `tingly/cc-sonnet` | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
-| `builtin:claude_code:opus` | `tingly/cc-opus` | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
-| `builtin:claude_code:subagent` | `tingly/cc-subagent` | `CLAUDE_CODE_SUBAGENT_MODEL` |
-| `builtin:claude_code:fable` | `tingly/cc-fable` | `ANTHROPIC_DEFAULT_FABLE_MODEL` |
+| `builtin:claude_code:cc` | `cc` | `ANTHROPIC_MODEL`, and every slot without a rule of its own |
+| `builtin:claude_code:haiku` | `haiku` | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
+| `builtin:claude_code:sonnet` | `sonnet` | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
+| `builtin:claude_code:opus` | `opus` | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
+| `builtin:claude_code:subagent` | `subagent` | `CLAUDE_CODE_SUBAGENT_MODEL` |
+| `builtin:claude_code:fable` | `fable` | `ANTHROPIC_DEFAULT_FABLE_MODEL` |
 
-`builtin:claude_code:default` (`tingly/cc-default`) is gone: separate mode was
-folded into per-slot rules (`claude-code-slots.md`) and `tingly/cc-default`
-stays only as an alias of `tingly/cc`. The `fable` tier was added later. A migration
+`builtin:claude_code:default` is gone: separate mode was folded into per-slot
+rules (`claude-code-slots.md`). Request models used to be `tingly/cc`,
+`tingly/cc-sonnet`, …; they now match profiles' short names (`cc`, `sonnet`, …)
+and the old names stay as permanent aliases. The `fable` tier was added later. A migration
 (`backfillFableRuleOnce`, once per config) seeds `builtin:claude_code:fable` for
 existing configs, copying the opus rule's services, flags, load-balancing tactic
 and active state (only when the opus rule exists, and never over a rule that
@@ -272,14 +273,14 @@ rules and does not re-filter anything.
 
 `derivePrefsFromRules({ rules, slots })` in `ClaudeCodeQuickConfig.tsx` uses
 the UUIDs as keys. It does not depend on array order or canonical
-`tingly/cc*` names:
+canonical names:
 
 - a slot in `slots` whose `builtin:claude_code:<slot>` rule is active
   requests that rule's `request_model`;
 - every other slot requests the `builtin:claude_code:cc` rule's.
 
 If the default rule is missing (e.g. user deleted it manually), the slot
-falls back to `tingly/cc`. Form remains usable.
+falls back to `cc`. Form remains usable.
 
 ### 5.4 The closing loop: `request_model` is the routing key
 
@@ -288,11 +289,11 @@ sends in API requests**:
 
 ```
 backend rule:                          frontend env:
-  builtin:claude_code:haiku                     ANTHROPIC_DEFAULT_HAIKU_MODEL=tingly/cc-haiku
-    request_model = "tingly/cc-haiku"  →
+  builtin:claude_code:haiku                     ANTHROPIC_DEFAULT_HAIKU_MODEL=haiku
+    request_model = "haiku"  →
     services      = [haiku-3-5]
                                        Claude Code sends:
-                                         { model: "tingly/cc-haiku", ... }
+                                         { model: "haiku", ... }
 
                                        tb receives, looks up by
                                        (scenario, request_model) →
@@ -328,7 +329,7 @@ URL — without forcing the form to surface concepts ("rule", "service",
 
 The profile system at `/agent/claude_code/profile/:profileId` uses the
 scenario string `claude_code:<profileId>` and its **own** set of rules
-(short names like `default`/`haiku` instead of `tingly/cc-*`). The profile page
+(short names, `cc`/`haiku`, the same ones the main scenario uses). The profile page
 shows a dedicated **Profile Overrides** card between its identity/Quick Start
 card and Model Rules. It renders only selected or persisted differences, not
 the main Auto Config form. The env is resolved by `ResolveCCProfileSettings`

@@ -198,12 +198,12 @@ func DefaultClaudeCodePrefs() ClaudeCodePrefs {
 		DisableErrorReporting:                "1",
 		ClaudeCodeDisableNonessentialTraffic: "1",
 	}
-	p.AnthropicModel = "tingly/cc"
-	p.AnthropicDefaultHaikuModel = "tingly/cc"
-	p.AnthropicDefaultSonnetModel = "tingly/cc"
-	p.AnthropicDefaultOpusModel = "tingly/cc"
-	p.AnthropicDefaultFableModel = "tingly/cc"
-	p.ClaudeCodeSubagentModel = "tingly/cc"
+	p.AnthropicModel = "cc"
+	p.AnthropicDefaultHaikuModel = "cc"
+	p.AnthropicDefaultSonnetModel = "cc"
+	p.AnthropicDefaultOpusModel = "cc"
+	p.AnthropicDefaultFableModel = "cc"
+	p.ClaudeCodeSubagentModel = "cc"
 	return p
 }
 

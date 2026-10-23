@@ -209,3 +209,32 @@ func TestLegacyDefaultRequestModelRoutesToDefaultSlot(t *testing.T) {
 	require.NotNil(t, got)
 	assert.Equal(t, BuiltinRuleUUID(profile, "cc"), got.UUID)
 }
+
+func TestShortenClaudeCodeRequestModelsOnce(t *testing.T) {
+	cfg := newSlotTestConfig(t)
+	cfg.MigrationsCompleted = nil
+	for slot, old := range map[string]string{"cc": "tingly/cc", "sonnet": "tingly/cc-sonnet", "subagent": "tingly/cc-subagent"} {
+		cfg.ccRuleLocked(typ.ScenarioClaudeCode, slot).RequestModel = old
+	}
+	// A rule the user already renamed is left alone.
+	cfg.ccRuleLocked(typ.ScenarioClaudeCode, "opus").RequestModel = "vendor/big"
+
+	require.True(t, shortenClaudeCodeRequestModelsOnce(cfg))
+
+	assert.Equal(t, "cc", cfg.ccRuleLocked(typ.ScenarioClaudeCode, "cc").RequestModel)
+	assert.Equal(t, "sonnet", cfg.ccRuleLocked(typ.ScenarioClaudeCode, "sonnet").RequestModel)
+	assert.Equal(t, "subagent", cfg.ccRuleLocked(typ.ScenarioClaudeCode, "subagent").RequestModel)
+	assert.Equal(t, "vendor/big", cfg.ccRuleLocked(typ.ScenarioClaudeCode, "opus").RequestModel)
+	assert.False(t, shortenClaudeCodeRequestModelsOnce(cfg), "once only")
+}
+
+func TestLegacyRequestModelsRouteToShortNamedRules(t *testing.T) {
+	cfg := newSlotTestConfig(t)
+	for old, slot := range map[string]string{
+		"tingly/cc": "cc", "tingly/cc[1m]": "cc", "tingly/cc-sonnet": "sonnet", "tingly/cc-subagent": "subagent",
+	} {
+		got := cfg.MatchRuleByModelAndScenario(old, typ.ScenarioClaudeCode)
+		require.NotNil(t, got, old)
+		assert.Equal(t, BuiltinRuleUUID(typ.ScenarioClaudeCode, slot), got.UUID, old)
+	}
+}

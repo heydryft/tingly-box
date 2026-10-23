@@ -74,23 +74,23 @@ func TestResolveClaudeCodeModels_UnifiedDefault(t *testing.T) {
 	client := NewTBClient(&serverconfig.Config{})
 	models := client.resolveClaudeCodeModels()
 
-	assert.Equal(t, "tingly/cc", models.def)
-	assert.Equal(t, "tingly/cc", models.haiku)
-	assert.Equal(t, "tingly/cc", models.sonnet)
-	assert.Equal(t, "tingly/cc", models.opus)
-	assert.Equal(t, "tingly/cc", models.subagent)
+	assert.Equal(t, "cc", models.def)
+	assert.Equal(t, "cc", models.haiku)
+	assert.Equal(t, "cc", models.sonnet)
+	assert.Equal(t, "cc", models.opus)
+	assert.Equal(t, "cc", models.subagent)
 }
 
 func TestResolveClaudeCodeModels_UnifiedFromRule(t *testing.T) {
 	cfg := &serverconfig.Config{
-		Rules: []typ.Rule{ccRule("built-in-cc", "tingly/cc")},
+		Rules: []typ.Rule{ccRule("built-in-cc", "cc")},
 	}
 	client := NewTBClient(cfg)
 	models := client.resolveClaudeCodeModels()
 
-	assert.Equal(t, "tingly/cc", models.def)
-	assert.Equal(t, "tingly/cc", models.opus)
-	assert.Equal(t, "tingly/cc", models.subagent)
+	assert.Equal(t, "cc", models.def)
+	assert.Equal(t, "cc", models.opus)
+	assert.Equal(t, "cc", models.subagent)
 }
 
 func TestResolveClaudeCodeModels_UnifiedCustomRequestModel(t *testing.T) {
@@ -110,7 +110,7 @@ func TestResolveClaudeCodeModels_UnifiedCustomRequestModel(t *testing.T) {
 func TestResolveClaudeCodeModels_SplitSlots(t *testing.T) {
 	cfg := &serverconfig.Config{
 		Rules: []typ.Rule{
-			ccRule("builtin:claude_code:cc", "tingly/cc"),
+			ccRule("builtin:claude_code:cc", "cc"),
 			ccRule("builtin:claude_code:haiku", "vendor/fast"),
 			ccRule("builtin:claude_code:opus", "vendor/smart"),
 		},
@@ -118,11 +118,11 @@ func TestResolveClaudeCodeModels_SplitSlots(t *testing.T) {
 	client := NewTBClient(cfg)
 	models := client.resolveClaudeCodeModels()
 
-	assert.Equal(t, "tingly/cc", models.def)
+	assert.Equal(t, "cc", models.def)
 	assert.Equal(t, "vendor/fast", models.haiku)
-	assert.Equal(t, "tingly/cc", models.sonnet, "a slot without a rule of its own follows the default")
+	assert.Equal(t, "cc", models.sonnet, "a slot without a rule of its own follows the default")
 	assert.Equal(t, "vendor/smart", models.opus)
-	assert.Equal(t, "tingly/cc", models.subagent)
+	assert.Equal(t, "cc", models.subagent)
 }
 
 func TestResolveClaudeCodeModels_ModernUUIDWinsOverLegacy(t *testing.T) {
@@ -139,13 +139,13 @@ func TestResolveClaudeCodeModels_ModernUUIDWinsOverLegacy(t *testing.T) {
 }
 
 func TestResolveClaudeCodeModels_Context1MSuffix(t *testing.T) {
-	flagged := ccRule("builtin:claude_code:cc", "tingly/cc")
+	flagged := ccRule("builtin:claude_code:cc", "cc")
 	flagged.Flags.Context1M = true
 	cfg := &serverconfig.Config{Rules: []typ.Rule{flagged}}
 	client := NewTBClient(cfg)
 
 	models := client.resolveClaudeCodeModels()
-	assert.Equal(t, "tingly/cc[1m]", models.def)
+	assert.Equal(t, "cc[1m]", models.def)
 
 	suffixed := ccRule("builtin:claude_code:cc", "team/coder[1m]")
 	suffixed.Flags.Context1M = true
@@ -161,13 +161,13 @@ func TestResolveClaudeCodeModels_InactiveRuleIgnored(t *testing.T) {
 	client := NewTBClient(cfg)
 
 	models := client.resolveClaudeCodeModels()
-	assert.Equal(t, "tingly/cc", models.def)
+	assert.Equal(t, "cc", models.def)
 }
 
 func TestGetClaudeCodeEnv_RoutesThroughGateway(t *testing.T) {
 	cfg := &serverconfig.Config{
 		ServerPort: 9000,
-		Rules:      []typ.Rule{ccRule("built-in-cc", "tingly/cc")},
+		Rules:      []typ.Rule{ccRule("built-in-cc", "cc")},
 	}
 	client := NewTBClient(cfg)
 
@@ -185,8 +185,8 @@ func TestGetClaudeCodeEnv_RoutesThroughGateway(t *testing.T) {
 	}
 
 	assert.Equal(t, "http://localhost:9000/tingly/claude_code", kv["ANTHROPIC_BASE_URL"])
-	assert.Equal(t, "tingly/cc", kv["ANTHROPIC_MODEL"])
-	assert.Equal(t, "tingly/cc", kv["ANTHROPIC_DEFAULT_OPUS_MODEL"])
+	assert.Equal(t, "cc", kv["ANTHROPIC_MODEL"])
+	assert.Equal(t, "cc", kv["ANTHROPIC_DEFAULT_OPUS_MODEL"])
 	_, hasToken := kv["ANTHROPIC_AUTH_TOKEN"]
 	assert.True(t, hasToken)
 }
@@ -269,10 +269,10 @@ func TestGetScenarioEndpointPath(t *testing.T) {
 
 func TestResolveClaudeCodeModels_FableFollowsDefaultWithoutActiveRule(t *testing.T) {
 	cfg := &serverconfig.Config{
-		Rules: []typ.Rule{ccRule("builtin:claude_code:cc", "tingly/cc")},
+		Rules: []typ.Rule{ccRule("builtin:claude_code:cc", "cc")},
 	}
 	models := NewTBClient(cfg).resolveClaudeCodeModels()
-	assert.Equal(t, "tingly/cc", models.fable)
+	assert.Equal(t, "cc", models.fable)
 }
 
 // The tbclient env and the settings file resolve the model slots through the
@@ -280,7 +280,7 @@ func TestResolveClaudeCodeModels_FableFollowsDefaultWithoutActiveRule(t *testing
 func TestResolveClaudeCodeModels_MatchesSettingsFile(t *testing.T) {
 	flagged := ccRule("builtin:claude_code:haiku", "vendor/fast")
 	flagged.Flags.Context1M = true
-	off := ccRule("builtin:claude_code:fable", "tingly/cc-fable")
+	off := ccRule("builtin:claude_code:fable", "fable")
 	off.Active = false
 	for name, cfg := range map[string]*serverconfig.Config{
 		"unified default": {},

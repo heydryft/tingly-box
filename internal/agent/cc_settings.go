@@ -112,7 +112,7 @@ func ClaudeCodeSlotModels(cfg *serverconfig.Config, scenarioPath string, isProfi
 	}
 
 	models = map[string]string{}
-	model := tierModel("cc", serverconfig.RuleUUIDBuiltinCC, "tingly/cc")
+	model := tierModel("cc", serverconfig.RuleUUIDBuiltinCC, "cc")
 	models["ANTHROPIC_MODEL"] = model
 	// A slot with a rule of its own (config.SetClaudeCodeSlot) requests that
 	// rule; every other slot follows the default slot.

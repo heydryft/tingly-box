@@ -201,7 +201,7 @@ const sessionEvents = (s: (typeof sessions)[number]) => {
             ...call('Grep', { pattern: 'prefers-color-scheme' }, 'src/theme/index.ts:14', 10, 'c2', { parent: 'agent-1' }),
             ev('tool_result', 'The theme is applied in src/theme/index.ts and read from localStorage.', 9, { request_id: 'agent-1', payload: '{"is_error":false}' }),
             ...call('Edit', { file_path: 'src/settings/Settings.tsx' }, 'Updated', 6, 'c3'),
-            ev('usage', '', 6, { payload: JSON.stringify({ model: 'tingly/cc', input_tokens: 3200, output_tokens: 1450, cache_read_tokens: 48200, cache_write_tokens: 6100, context_tokens: 57500, context_window: 200000 }) }),
+            ev('usage', '', 6, { payload: JSON.stringify({ model: 'cc', input_tokens: 3200, output_tokens: 1450, cache_read_tokens: 48200, cache_write_tokens: 6100, context_tokens: 57500, context_window: 200000 }) }),
             ev('tool_use', 'Bash', 5, { request_id: 'c-dev', payload: JSON.stringify({ command: 'npm run dev', description: 'Start the dev server', run_in_background: true }) }),
             ev('task', '', 5, { request_id: 'c-dev', payload: JSON.stringify({ event: 'task_started', task_id: 'bash-1', task_type: 'local_bash', background: true, description: 'Start the dev server' }) }),
             ev('task', '', 5, { request_id: 'c-dev', payload: JSON.stringify({ event: 'output_file', task_id: 'bash-1', output_file: '/tmp/bash-1.out' }) }),

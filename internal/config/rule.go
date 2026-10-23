@@ -282,11 +282,18 @@ func IsWildcardRuleName(name string) bool {
 	return name == WildcardRuleName
 }
 
-// legacyCCDefaultAlias maps the request model of separate mode's "default" rule
-// (main scenario, profiles) to the default slot rule that replaced it.
-var legacyCCDefaultAlias = map[string]string{
-	"tingly/cc-default": "tingly/cc",
-	"default":           "cc",
+// legacyCCRequestAlias maps the request models Claude Code settings files used
+// to name — separate mode's "default" tier and the "tingly/cc*" names — to the
+// slot rule that answers to them now ("cc", "sonnet", ...; TEP-2197).
+var legacyCCRequestAlias = map[string]string{
+	"tingly/cc":          "cc",
+	"tingly/cc-default":  "cc",
+	"default":            "cc",
+	"tingly/cc-haiku":    "haiku",
+	"tingly/cc-sonnet":   "sonnet",
+	"tingly/cc-opus":     "opus",
+	"tingly/cc-subagent": "subagent",
+	"tingly/cc-fable":    "fable",
 }
 
 // MatchRuleByModelAndScenario finds a rule by model name with wildcard support
@@ -318,10 +325,10 @@ func (c *Config) MatchRuleByModelAndScenario(requestModel string, scenario typ.R
 		}
 	}
 
-	// Separate mode's default tier is gone: settings written by it still name
-	// it, and it is the default slot now (TEP-2197).
+	// Settings written before the slot rules took their short names still
+	// name the old ones (TEP-2197).
 	if scenario.Is(typ.ScenarioClaudeCode) {
-		if alias, ok := legacyCCDefaultAlias[TrimContext1M(requestModel)]; ok {
+		if alias, ok := legacyCCRequestAlias[TrimContext1M(requestModel)]; ok {
 			for _, rule := range c.Rules {
 				if rule.RequestModel == alias && rule.GetScenario() == scenario {
 					return &rule

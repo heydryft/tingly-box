@@ -423,7 +423,7 @@ func TestNormalizeBuiltinRuleIdentity_UpgradeFromLegacyConfig(t *testing.T) {
 	}
 
 	// Legacy main rules renamed, request models (incl. user-customized) preserved.
-	if r := cfg.GetRuleByUUID(RuleUUIDCC); r == nil || r.RequestModel != "tingly/cc" {
+	if r := cfg.GetRuleByUUID(RuleUUIDCC); r == nil || r.RequestModel != "cc" {
 		t.Errorf("built-in-cc not renamed to %s: %+v", RuleUUIDCC, r)
 	}
 	if r := cfg.GetRuleByUUID(RuleUUIDCCHaiku); r == nil || r.RequestModel != "vendor/fast" {
@@ -931,7 +931,7 @@ func TestBackfillFableRuleOnce_SeedsFromOpus(t *testing.T) {
 	if !fable.Active || len(fable.Services) != 1 || fable.Services[0].Provider != "p1" || !fable.Flags.Context1M {
 		t.Errorf("fable should mirror opus active state, services and flags, got %+v", fable)
 	}
-	if fable.RequestModel != "tingly/cc-fable" {
+	if fable.RequestModel != "fable" {
 		t.Errorf("fable request model = %q", fable.RequestModel)
 	}
 
@@ -953,8 +953,8 @@ func TestBackfillFableRuleOnce_NoFableWithoutSeparateRules(t *testing.T) {
 
 func TestBackfillFableRuleOnce_DoesNotShadowUserRule(t *testing.T) {
 	c := &Config{Rules: []typ.Rule{
-		{UUID: RuleUUIDCCOpus, Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc-opus", Active: true},
-		{UUID: "user-fable", Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc-fable", Active: true},
+		{UUID: RuleUUIDCCOpus, Scenario: typ.ScenarioClaudeCode, RequestModel: "opus", Active: true},
+		{UUID: "user-fable", Scenario: typ.ScenarioClaudeCode, RequestModel: "fable", Active: true},
 	}}
 	backfillFableRuleOnce(c)
 	if c.findRuleByUUID(RuleUUIDCCFable) != nil {

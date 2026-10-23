@@ -10,7 +10,7 @@ Claude Code used to have two modes: **unified** (every model slot requests the `
 
 There are no modes. The state is the rules themselves; there is no slot list and no mode flag:
 
-- The **default slot** (`ANTHROPIC_MODEL`) is the rule `builtin:<scenario>:cc` (request model `tingly/cc`) and is always on.
+- The **default slot** (`ANTHROPIC_MODEL`) is the rule `builtin:<scenario>:cc` (request model `cc`) and is always on.
 - Each other slot — `haiku` `sonnet` `opus` `fable` `subagent` — has a rule `builtin:<scenario>:<slot>`. **A slot whose rule is active has its own rule**; an inactive rule means the slot follows the default slot.
 - "Separate" is just every slot split; "unified" is none split. The legacy `unified` / `separate` scenario flags survive only as shortcuts (`separate=true` splits all, `unified=true` merges all) and are read back as derived values, so old clients keep working.
 
@@ -32,7 +32,8 @@ Both are one-time and idempotent through `MigrationsCompleted` markers.
 
 - `20261022-claude-code-unified-slot-rules`: old `agent apply` switched every tier rule on regardless of mode, which would now read as "all slots split". For unified configs the tier rules are switched off. Separate configs are left alone.
 - `20261023-claude-code-fold-separate`: for a separate scenario or profile, the `default` rule's routing is copied into `cc` (which becomes active) and the `default` rule is deleted; its slot rules stay on as they were, so routing is unchanged. `Flags.Unified/Separate` are cleared and profiles are marked unified. Unified configs just lose their (unused) `default` rule.
-- Settings files written by separate mode still name `tingly/cc-default` (profile: `default`). `MatchRuleByModelAndScenario` aliases those to `tingly/cc` / `cc` **permanently**; no "separate" label is kept for migrated profiles.
+- `20261024-claude-code-short-request-models`: the main scenario's rules took the names profiles always had — `tingly/cc` → `cc`, `tingly/cc-sonnet` → `sonnet`, … Only a rule still carrying its seeded name is renamed, and never onto a name another rule already answers to.
+- Settings files written earlier still name `tingly/cc`, `tingly/cc-<slot>`, `tingly/cc-default` (profile: `default`). `MatchRuleByModelAndScenario` aliases all of them to the short-named slot rule (`legacyCCRequestAlias`) **permanently**; no "separate" label is kept for migrated profiles.
 
 ## Left behind on purpose
 

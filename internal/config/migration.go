@@ -60,6 +60,7 @@ var migrationSteps = []migrationStep{
 	{"20261004-claude-code-fable-rule", kindOnce, "2026-10-04", backfillFableRuleOnce},
 	{"20261022-claude-code-unified-slot-rules", kindOnce, "2026-10-22", resetUnifiedSlotRulesOnce},
 	{"20261023-claude-code-fold-separate", kindOnce, "2026-10-23", foldClaudeCodeSeparateOnce},
+	{"20261024-claude-code-short-request-models", kindOnce, "2026-10-24", shortenClaudeCodeRequestModelsOnce},
 	{"20260712-drop-unsupported-smart-routing", kindDated, "2026-07-12", migrate20260712},
 	{"20260606-xcode-skip-usage", kindOnce, "2026-06-06", defaultXcodeSkipUsageOnce},
 	{"20260610-builtin-rule-flags", kindOnce, "2026-06-10", defaultBuiltinRuleFlagsOnce},
@@ -788,7 +789,7 @@ func (c *Config) backfillFableRule() bool {
 		return false
 	}
 	for i := range c.Rules {
-		if c.Rules[i].Scenario == typ.ScenarioClaudeCode && c.Rules[i].RequestModel == fable.RequestModel {
+		if c.Rules[i].Scenario == typ.ScenarioClaudeCode && (c.Rules[i].RequestModel == fable.RequestModel || c.Rules[i].RequestModel == "tingly/cc-fable") {
 			return false
 		}
 	}
@@ -865,4 +866,39 @@ func (c *Config) foldCCDefaultRuleLocked(scenario typ.RuleScenario, wasSeparate 
 	}
 	defUUID := def.UUID
 	c.Rules = slices.DeleteFunc(c.Rules, func(r typ.Rule) bool { return r.UUID == defUUID })
+}
+
+// shortenClaudeCodeRequestModelsOnce renames the main Claude Code rules from
+// "tingly/cc", "tingly/cc-sonnet", ... to the short names profiles already use
+// ("cc", "sonnet", ...). Only a rule still carrying its seeded name is renamed,
+// and never onto a name another rule of the scenario already answers to. Old
+// settings files keep routing through legacyCCRequestAlias.
+func shortenClaudeCodeRequestModelsOnce(c *Config) bool {
+	const marker = "20261024"
+	if c.hasMigrationCompleted(marker) {
+		return false
+	}
+	for slot, old := range map[string]string{
+		"cc": "tingly/cc", "haiku": "tingly/cc-haiku", "sonnet": "tingly/cc-sonnet",
+		"opus": "tingly/cc-opus", "subagent": "tingly/cc-subagent", "fable": "tingly/cc-fable",
+	} {
+		rule := c.ccRuleLocked(typ.ScenarioClaudeCode, slot)
+		if rule == nil || rule.RequestModel != old || c.ccNameTakenLocked(slot) {
+			continue
+		}
+		rule.RequestModel = slot
+	}
+	c.markMigrationCompleted(marker)
+	return true
+}
+
+// ccNameTakenLocked reports whether a main Claude Code rule already answers to
+// the request model name.
+func (c *Config) ccNameTakenLocked(name string) bool {
+	for _, r := range c.Rules {
+		if r.GetScenario() == typ.ScenarioClaudeCode && r.RequestModel == name {
+			return true
+		}
+	}
+	return false
 }
