@@ -31,6 +31,8 @@
  *     5-1-remote.png            – Remote Control: bots and the agent each one drives
  *   6 Credential
  *     6-1-connect-ai.png        – Connect AI provider dialog
+ *   7 Projects
+ *     7-1-projects.png          – A project: coordinator chat + its threads
  *
  * Not every shot goes into output.gif — the frames are the explicit list in
  * docs/images/gif-frames.txt (read by create_gif.sh). Add a shot here first,
@@ -195,6 +197,10 @@ await shoot(browser, '/credentials', '6-1-connect-ai.png', {
         } catch (e) { console.warn('  ⚠ connect-ai dialog failed:', e.message.slice(0, 80)); }
     },
 });
+
+// ── Projects ──────────────────────────────────────────────────────────────
+// Projects is a flagged power-up, so turn it on here.
+await shoot(browser, '/projects/p-latency', '7-1-projects.png', { settle: 3500, flagsOn: ['projects'] });
 
 // ── Theme previews ────────────────────────────────────────────────────────
 for (const theme of ['light', 'dark', 'claude']) {
