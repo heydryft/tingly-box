@@ -8,39 +8,26 @@ import (
 	"github.com/tingly-dev/tingly-box/internal/typ"
 )
 
-// BuildClaudeCodeModelConfig constructs the model configuration for Claude Code.
-// This contains the business logic for unified vs separate mode: in unified
-// mode every slot uses the default model except the ones with a rule of their
-// own (config.SetClaudeCodeSlot).
+// BuildClaudeCodeModelConfig constructs the model configuration for Claude Code:
+// every slot uses the default model except the ones with a rule of their own
+// (config.SetClaudeCodeSlot).
 // Exported for use by HTTP handlers.
-func BuildClaudeCodeModelConfig(cfg *serverconfig.Config, unified bool) aiagent.ClaudeCodeModelConfig {
-	if unified {
-		m, _ := ClaudeCodeSlotModels(cfg, string(typ.ScenarioClaudeCode), true, false)
-		mc := aiagent.ClaudeCodeModelConfig{Default: m["ANTHROPIC_MODEL"]}
-		// A slot following the default stays empty ("uses Default").
-		own := func(key string) string {
-			if m[key] == mc.Default {
-				return ""
-			}
-			return m[key]
+func BuildClaudeCodeModelConfig(cfg *serverconfig.Config) aiagent.ClaudeCodeModelConfig {
+	m, _ := ClaudeCodeSlotModels(cfg, string(typ.ScenarioClaudeCode), false)
+	mc := aiagent.ClaudeCodeModelConfig{Default: m["ANTHROPIC_MODEL"]}
+	// A slot following the default stays empty ("uses Default").
+	own := func(key string) string {
+		if m[key] == mc.Default {
+			return ""
 		}
-		mc.Haiku = own(ccSlotEnvKeys["haiku"])
-		mc.Sonnet = own(ccSlotEnvKeys["sonnet"])
-		mc.Opus = own(ccSlotEnvKeys["opus"])
-		mc.Fable = own(ccSlotEnvKeys["fable"])
-		mc.SubAgent = own(ccSlotEnvKeys["subagent"])
-		return mc
+		return m[key]
 	}
-
-	// Separate mode - different models for different purposes
-	return aiagent.ClaudeCodeModelConfig{
-		Default:  "tingly/cc-default",
-		Haiku:    "tingly/cc-haiku",
-		Opus:     "tingly/cc-opus",
-		Fable:    "tingly/cc-fable",
-		Sonnet:   "tingly/cc-sonnet",
-		SubAgent: "tingly/cc-subagent",
-	}
+	mc.Haiku = own(ccSlotEnvKeys["haiku"])
+	mc.Sonnet = own(ccSlotEnvKeys["sonnet"])
+	mc.Opus = own(ccSlotEnvKeys["opus"])
+	mc.Fable = own(ccSlotEnvKeys["fable"])
+	mc.SubAgent = own(ccSlotEnvKeys["subagent"])
+	return mc
 }
 
 // openCodeModelEntry builds a single OpenCode provider model entry.

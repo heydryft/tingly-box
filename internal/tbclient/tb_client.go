@@ -164,11 +164,7 @@ type claudeCodeModels struct {
 // resolveClaudeCodeModels resolves the per-tier request models of the main
 // claude_code scenario through the same resolver as the settings file.
 func (c *TBClientImpl) resolveClaudeCodeModels() claudeCodeModels {
-	separate := false
-	if sc := c.config.GetScenarioConfig(typ.ScenarioClaudeCode); sc != nil {
-		separate = sc.GetDefaultFlags().Separate
-	}
-	m, _ := tbagent.ClaudeCodeSlotModels(c.config, string(typ.ScenarioClaudeCode), !separate, false)
+	m, _ := tbagent.ClaudeCodeSlotModels(c.config, string(typ.ScenarioClaudeCode), false)
 	return claudeCodeModels{
 		def:      m["ANTHROPIC_MODEL"],
 		haiku:    m["ANTHROPIC_DEFAULT_HAIKU_MODEL"],

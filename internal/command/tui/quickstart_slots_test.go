@@ -69,7 +69,7 @@ func TestIsClaudeCodeTierRule(t *testing.T) {
 	// Wiring up a tier rule must not switch it on: in unified mode that would
 	// give its slot a rule of its own.
 	assert.True(t, isClaudeCodeTierRule(cfg.GetRuleByUUID(serverconfig.RuleUUIDCCSubagent)))
-	assert.True(t, isClaudeCodeTierRule(cfg.GetRuleByUUID(serverconfig.RuleUUIDCCDefault)))
+	assert.True(t, isClaudeCodeTierRule(cfg.GetRuleByUUID(serverconfig.RuleUUIDCCHaiku)))
 	assert.False(t, isClaudeCodeTierRule(cfg.GetRuleByUUID(serverconfig.RuleUUIDCC)))
 	assert.False(t, isClaudeCodeTierRule(cfg.GetRuleByUUID(serverconfig.RuleUUIDOpenCode)))
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	serverconfig "github.com/tingly-dev/tingly-box/internal/config"
-	"github.com/tingly-dev/tingly-box/internal/constant"
 	"github.com/tingly-dev/tingly-box/internal/loadbalance"
 	"github.com/tingly-dev/tingly-box/internal/protocol"
 	"github.com/tingly-dev/tingly-box/internal/typ"
@@ -34,9 +33,9 @@ func TestApplyClaudeCodeRules_UnifiedKeepsSlots(t *testing.T) {
 	sub.Services = []*loadbalance.Service{{Provider: "cheap", Model: "small", Active: true}}
 	require.NoError(t, cfg.UpdateRule(sub.UUID, *sub))
 
-	_, updated, err := NewAgentApply(cfg, "localhost").createOrUpdateClaudeCodeRules(provider, "big", true)
+	_, updated, err := NewAgentApply(cfg, "localhost").createOrUpdateClaudeCodeRules(provider, "big")
 	require.NoError(t, err)
-	assert.Equal(t, 6, updated, "the main rule and every tier rule but the split subagent")
+	assert.Equal(t, 5, updated, "the main rule and every slot rule but the split subagent")
 
 	main := cfg.GetRuleByUUID(serverconfig.RuleUUIDCC)
 	assert.Equal(t, "big", main.Services[0].Model)
@@ -45,28 +44,34 @@ func TestApplyClaudeCodeRules_UnifiedKeepsSlots(t *testing.T) {
 	assert.Equal(t, []string{"subagent"}, cfg.ClaudeCodeSlots(typ.ScenarioClaudeCode))
 }
 
-func TestApplyClaudeCodeRules_SeparateUpdatesEveryRule(t *testing.T) {
+func TestApplyClaudeCodeRules_AllSlotsSplitKeepsEveryModel(t *testing.T) {
 	cfg, provider := newApplyTestConfig(t)
-	require.NoError(t, cfg.SetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagSeparate, true))
+	require.NoError(t, cfg.SetAllClaudeCodeSlots(typ.ScenarioClaudeCode, true))
+	for _, slot := range serverconfig.CCSlots {
+		r := cfg.GetRuleByUUID(cfg.ClaudeCodeRuleUUID(typ.ScenarioClaudeCode, slot))
+		r.Services = []*loadbalance.Service{{Provider: "cheap", Model: "own-" + slot, Active: true}}
+		require.NoError(t, cfg.UpdateRule(r.UUID, *r))
+	}
 
-	_, _, err := NewAgentApply(cfg, "localhost").createOrUpdateClaudeCodeRules(provider, "big", true)
+	_, _, err := NewAgentApply(cfg, "localhost").createOrUpdateClaudeCodeRules(provider, "big")
 	require.NoError(t, err)
-	for _, uuid := range []string{serverconfig.RuleUUIDCCHaiku, serverconfig.RuleUUIDCCSubagent} {
-		r := cfg.GetRuleByUUID(uuid)
-		assert.True(t, r.Active, uuid)
-		assert.Equal(t, "big", r.Services[0].Model, uuid)
+	assert.Equal(t, "big", cfg.GetRuleByUUID(serverconfig.RuleUUIDCC).Services[0].Model)
+	for _, slot := range serverconfig.CCSlots {
+		r := cfg.GetRuleByUUID(cfg.ClaudeCodeRuleUUID(typ.ScenarioClaudeCode, slot))
+		assert.True(t, r.Active, slot)
+		assert.Equal(t, "own-"+slot, r.Services[0].Model, slot)
 	}
 }
 
-func TestApplyClaudeCodeRules_UnifiedThenSeparateStillRoutes(t *testing.T) {
+func TestApplyClaudeCodeRules_ThenSplitStillRoutes(t *testing.T) {
 	cfg, provider := newApplyTestConfig(t)
-	_, _, err := NewAgentApply(cfg, "localhost").createOrUpdateClaudeCodeRules(provider, "big", true)
+	_, _, err := NewAgentApply(cfg, "localhost").createOrUpdateClaudeCodeRules(provider, "big")
 	require.NoError(t, err)
-	assert.False(t, cfg.GetRuleByUUID(serverconfig.RuleUUIDCCHaiku).Active, "unified apply leaves tier rules off")
+	assert.False(t, cfg.GetRuleByUUID(serverconfig.RuleUUIDCCHaiku).Active, "apply leaves slot rules off")
 
-	// Switching to separate later turns the tier rules on: they must route.
-	require.NoError(t, cfg.SetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagSeparate, true))
-	for _, uuid := range []string{serverconfig.RuleUUIDCCDefault, serverconfig.RuleUUIDCCHaiku, serverconfig.RuleUUIDCCSubagent} {
+	// Splitting a slot later turns its rule on: it must route.
+	require.NoError(t, cfg.SetAllClaudeCodeSlots(typ.ScenarioClaudeCode, true))
+	for _, uuid := range []string{serverconfig.RuleUUIDCCHaiku, serverconfig.RuleUUIDCCSubagent} {
 		r := cfg.GetRuleByUUID(uuid)
 		require.True(t, r.Active, uuid)
 		require.Len(t, r.Services, 1, uuid)

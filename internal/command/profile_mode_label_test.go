@@ -12,12 +12,8 @@ import (
 func TestProfileModeLabel(t *testing.T) {
 	cfg, err := config.NewConfigWithDir(t.TempDir())
 	require.NoError(t, err)
-	solo, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "solo", true)
+	solo, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "solo")
 	require.NoError(t, err)
-	multi, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "multi", false)
-	require.NoError(t, err)
-
-	require.Equal(t, "separate", profileModeLabel(cfg, multi))
 	require.Equal(t, "unified", profileModeLabel(cfg, solo))
 
 	scenario := typ.ProfiledScenarioName(typ.ScenarioClaudeCode, solo.ID)

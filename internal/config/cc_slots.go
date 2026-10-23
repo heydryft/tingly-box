@@ -7,15 +7,13 @@ import (
 	"github.com/tingly-dev/tingly-box/internal/typ"
 )
 
-// CCSlots are the Claude Code model slots that can get a rule of their own in
-// unified mode. The default slot (ANTHROPIC_MODEL) is the main rule itself.
-// See .design/claude-code-slots.md.
+// CCSlots are the Claude Code model slots that can get a rule of their own.
+// The default slot (ANTHROPIC_MODEL) is the main rule itself. See .design/claude-code-slots.md.
 var CCSlots = []string{"haiku", "sonnet", "opus", "fable", "subagent"}
 
 // ClaudeCodeSlots returns the slots that have a rule of their own in the given
-// unified-mode Claude Code scenario (main or profile), in CCSlots order: the
-// slots whose built-in rule is on. Separate mode gives every slot a rule, so it
-// reports none.
+// Claude Code scenario (main or profile), in CCSlots order: the slots whose
+// built-in rule is on.
 func (c *Config) ClaudeCodeSlots(scenario typ.RuleScenario) []string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -35,7 +33,7 @@ func (c *Config) ccSlotsLocked(scenario typ.RuleScenario) []string {
 	return slots
 }
 
-// SetClaudeCodeSlot gives a slot of a unified-mode Claude Code scenario a rule
+// SetClaudeCodeSlot gives a slot of a Claude Code scenario a rule
 // of its own (enabled) or hands it back to the main rule. Enabling switches
 // the slot's built-in rule on, creating it — or filling a seeded rule that
 // has no routing yet — from the main rule, so the slot keeps routing as before
@@ -51,11 +49,40 @@ func (c *Config) SetClaudeCodeSlot(scenario typ.RuleScenario, slot string, enabl
 	if err := c.checkCCSlotScenarioLocked(scenario); err != nil {
 		return typ.Rule{}, err
 	}
+	rule, err := c.setCCSlotLocked(scenario, slot, enabled)
+	if err != nil {
+		return typ.Rule{}, err
+	}
+	var out typ.Rule
+	if rule != nil {
+		out = *rule
+	}
+	return out, c.Save()
+}
+
+// SetAllClaudeCodeSlots splits every slot off the default rule, or hands them
+// all back: the "split all" / "merge all" shortcut.
+func (c *Config) SetAllClaudeCodeSlots(scenario typ.RuleScenario, enabled bool) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if err := c.checkCCSlotScenarioLocked(scenario); err != nil {
+		return err
+	}
+	for _, slot := range CCSlots {
+		if _, err := c.setCCSlotLocked(scenario, slot, enabled); err != nil {
+			return err
+		}
+	}
+	return c.Save()
+}
+
+// setCCSlotLocked is SetClaudeCodeSlot without the checks and the save.
+func (c *Config) setCCSlotLocked(scenario typ.RuleScenario, slot string, enabled bool) (*typ.Rule, error) {
 	main := c.ccRuleLocked(scenario, "cc")
 	if main == nil {
-		return typ.Rule{}, fmt.Errorf("scenario %q has no main Claude Code rule", scenario)
+		return nil, fmt.Errorf("scenario %q has no main Claude Code rule", scenario)
 	}
-
 	rule := c.ccRuleLocked(scenario, slot)
 	if enabled {
 		if rule == nil {
@@ -67,33 +94,21 @@ func (c *Config) SetClaudeCodeSlot(scenario typ.RuleScenario, slot string, enabl
 	} else if rule != nil {
 		rule.Active = false
 	}
-
-	var out typ.Rule
-	if rule != nil {
-		out = *rule
-	}
-	return out, c.Save()
+	return rule, nil
 }
 
 // checkCCSlotScenarioLocked accepts the main Claude Code scenario or an
-// existing profile of it, in unified mode: separate mode already gives every
-// slot its own rule.
+// existing profile of it.
 func (c *Config) checkCCSlotScenarioLocked(scenario typ.RuleScenario) error {
 	base, profileID := typ.ParseScenarioProfile(scenario)
 	if base != typ.ScenarioClaudeCode {
 		return fmt.Errorf("scenario %q has no Claude Code slots", scenario)
 	}
 	if profileID == "" {
-		if sc := c.scenarioConfigLocked(scenario); sc != nil && sc.GetDefaultFlags().Separate {
-			return fmt.Errorf("claude_code is in separate mode: every slot already has its own rule")
-		}
 		return nil
 	}
 	for _, p := range c.Profiles[string(base)] {
 		if p.ID == profileID {
-			if !p.Unified {
-				return fmt.Errorf("profile %q is in separate mode: every slot already has its own rule", profileID)
-			}
 			return nil
 		}
 	}

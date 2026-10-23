@@ -541,8 +541,7 @@ func qsRules(ctx StepContext, s quickstartState) (quickstartState, StepResult, e
 	}{
 		{serverconfig.RuleUUIDOpenAI, "OpenAI scenario"},
 		{serverconfig.RuleUIDAnthropic, "Anthropic scenario"},
-		{serverconfig.RuleUUIDCC, "Claude Code · unified"},
-		{serverconfig.RuleUUIDCCDefault, "Claude Code · default"},
+		{serverconfig.RuleUUIDCC, "Claude Code · default"},
 		{serverconfig.RuleUUIDCCHaiku, "Claude Code · haiku"},
 		{serverconfig.RuleUUIDCCOpus, "Claude Code · opus"},
 		{serverconfig.RuleUUIDCCSonnet, "Claude Code · sonnet"},

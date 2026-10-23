@@ -29,7 +29,7 @@ type ScenarioUpdateRequest struct {
 // ProfileCreateRequest represents the request to create or rename a profile
 type ProfileCreateRequest struct {
 	Name    string `json:"name" binding:"required"`
-	Unified bool   `json:"unified,omitempty"` // Optional, defaults to false (separate mode)
+	Unified bool   `json:"unified,omitempty"` // Deprecated and ignored: Claude Code has no modes (TEP-2197)
 }
 
 // ProfileUpdateRequest represents the request to update a profile

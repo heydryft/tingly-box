@@ -56,35 +56,41 @@ func TestSetClaudeCodeSlot_Rejects(t *testing.T) {
 	assert.Error(t, err, "unknown profile")
 	assert.Nil(t, cfg.GetRuleByUUID("builtin:claude_code:p99:cc"), "no orphan rules for an unknown profile")
 
-	require.NoError(t, cfg.SetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagSeparate, true))
-	_, err = cfg.SetClaudeCodeSlot(typ.ScenarioClaudeCode, "haiku", true)
-	assert.Error(t, err, "separate mode already gives every slot its own rule")
-	assert.Empty(t, cfg.ClaudeCodeSlots(typ.ScenarioClaudeCode), "separate mode reports no split slots")
+	_, err = cfg.SetClaudeCodeSlot(typ.ScenarioClaudeCode, "bogus", true)
+	assert.Error(t, err, "unknown slot")
 }
 
-func TestSetClaudeCodeSlot_ModeWrites(t *testing.T) {
+func TestSetClaudeCodeSlot_ScenarioWritesKeepSlots(t *testing.T) {
 	cfg := newSlotTestConfig(t)
 	_, err := cfg.SetClaudeCodeSlot(typ.ScenarioClaudeCode, "subagent", true)
 	require.NoError(t, err)
 
-	// Whole-record writes and flag sets that don't change the mode keep the slot.
+	// Whole-record writes and the legacy "unified" flag leave a split slot alone.
 	require.NoError(t, cfg.SetScenarioConfig(typ.ScenarioConfig{
 		Scenario: typ.ScenarioClaudeCode,
 		Flags:    typ.ScenarioFlags{Unified: true, SkipUsage: true},
 	}))
-	require.NoError(t, cfg.SetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagUnified, true))
 	assert.Equal(t, []string{"subagent"}, cfg.ClaudeCodeSlots(typ.ScenarioClaudeCode))
-
-	// Switching to separate and back merges every slot.
-	require.NoError(t, cfg.SetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagSeparate, true))
-	require.NoError(t, cfg.SetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagUnified, true))
-	assert.Empty(t, cfg.ClaudeCodeSlots(typ.ScenarioClaudeCode))
 	assert.True(t, cfg.GetRuleByUUID(RuleUUIDCC).Active)
 }
 
-func TestSetClaudeCodeSlot_UnifiedProfile(t *testing.T) {
+func TestLegacyModeFlagsAreSlotShortcuts(t *testing.T) {
 	cfg := newSlotTestConfig(t)
-	meta, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "solo", true)
+	assert.True(t, cfg.GetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagUnified))
+	assert.False(t, cfg.GetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagSeparate))
+
+	require.NoError(t, cfg.SetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagSeparate, true))
+	assert.Equal(t, CCSlots, cfg.ClaudeCodeSlots(typ.ScenarioClaudeCode), "separate splits every slot")
+	assert.True(t, cfg.GetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagSeparate))
+
+	require.NoError(t, cfg.SetScenarioFlag(typ.ScenarioClaudeCode, constant.FlagUnified, true))
+	assert.Empty(t, cfg.ClaudeCodeSlots(typ.ScenarioClaudeCode), "unified hands every slot back")
+	assert.True(t, cfg.GetRuleByUUID(RuleUUIDCC).Active)
+}
+
+func TestSetClaudeCodeSlot_Profile(t *testing.T) {
+	cfg := newSlotTestConfig(t)
+	meta, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "solo")
 	require.NoError(t, err)
 	scenario := typ.ProfiledScenarioName(typ.ScenarioClaudeCode, meta.ID)
 	cfg.findRuleByUUID(BuiltinRuleUUID(scenario, "cc")).Services = []*loadbalance.Service{{Provider: "p", Model: "big", Active: true}}
@@ -103,10 +109,6 @@ func TestSetClaudeCodeSlot_UnifiedProfile(t *testing.T) {
 	assert.Equal(t, []string{"subagent"}, cfg.ClaudeCodeSlots(scenario))
 	assert.Equal(t, []string{"haiku"}, cfg.ClaudeCodeSlots(typ.ScenarioClaudeCode))
 
-	separate, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "multi", false)
-	require.NoError(t, err)
-	_, err = cfg.SetClaudeCodeSlot(typ.ProfiledScenarioName(typ.ScenarioClaudeCode, separate.ID), "haiku", true)
-	assert.Error(t, err, "separate profiles already have a rule per slot")
 }
 
 func TestResetUnifiedSlotRulesOnce(t *testing.T) {
@@ -130,4 +132,80 @@ func TestResetUnifiedSlotRulesOnce(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, resetUnifiedSlotRulesOnce(cfg))
 	assert.Equal(t, []string{"opus"}, cfg.ClaudeCodeSlots(typ.ScenarioClaudeCode))
+}
+
+func TestFoldClaudeCodeSeparate(t *testing.T) {
+	cfg := newSlotTestConfig(t)
+	cfg.MigrationsCompleted = nil
+	routed := func(model string) []*loadbalance.Service {
+		return []*loadbalance.Service{{Provider: "p", Model: model, Active: true}}
+	}
+	// A separate-mode config: scenario flag, the old default rule, slot rules on.
+	cfg.Scenarios = []typ.ScenarioConfig{{Scenario: typ.ScenarioClaudeCode, Flags: typ.ScenarioFlags{Separate: true}}}
+	cfg.Rules = append(cfg.Rules, typ.Rule{
+		UUID: RuleUUIDCCDefault, Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc-default",
+		Services: routed("old-default"), Active: true,
+	})
+	cfg.findRuleByUUID(RuleUUIDCC).Active = false
+	for _, slot := range CCSlots {
+		r := cfg.findRuleByUUID(BuiltinRuleUUID(typ.ScenarioClaudeCode, slot))
+		r.Active = true
+		r.Services = routed("own-" + slot)
+	}
+	// A separate profile: default and haiku rules, no cc rule yet.
+	cfg.Profiles = map[string][]typ.ProfileMeta{string(typ.ScenarioClaudeCode): {{ID: "p1", Name: "multi", Unified: false}}}
+	profile := typ.ProfiledScenarioName(typ.ScenarioClaudeCode, "p1")
+	prDefault := newCCProfileRule(profile, "default", "default")
+	prDefault.Services = routed("profile-default")
+	prHaiku := newCCProfileRule(profile, "haiku", "haiku")
+	prHaiku.Services = routed("profile-haiku")
+	cfg.Rules = append(cfg.Rules, prDefault, prHaiku)
+
+	require.True(t, foldClaudeCodeSeparateOnce(cfg))
+
+	assert.Nil(t, cfg.findRuleByUUID(RuleUUIDCCDefault), "the default rule is gone")
+	cc := cfg.findRuleByUUID(RuleUUIDCC)
+	assert.True(t, cc.Active)
+	assert.Equal(t, "old-default", cc.Services[0].Model, "the default slot took the default rule's routing")
+	assert.Equal(t, CCSlots, cfg.ClaudeCodeSlots(typ.ScenarioClaudeCode), "every slot keeps its own rule")
+	assert.Equal(t, "own-haiku", cfg.findRuleByUUID(RuleUUIDCCHaiku).Services[0].Model)
+	assert.False(t, cfg.GetScenarioConfig(typ.ScenarioClaudeCode).Flags.Separate)
+
+	assert.Nil(t, cfg.findRuleByUUID(BuiltinRuleUUID(profile, "default")))
+	pcc := cfg.findRuleByUUID(BuiltinRuleUUID(profile, "cc"))
+	require.NotNil(t, pcc, "the profile gets a default slot rule")
+	assert.Equal(t, "profile-default", pcc.Services[0].Model)
+	assert.Equal(t, []string{"haiku"}, cfg.ClaudeCodeSlots(profile))
+	assert.True(t, cfg.Profiles[string(typ.ScenarioClaudeCode)][0].Unified)
+
+	// Once only.
+	assert.False(t, foldClaudeCodeSeparateOnce(cfg))
+}
+
+func TestFoldClaudeCodeSeparate_UnifiedConfigKeepsDefaultSlot(t *testing.T) {
+	cfg := newSlotTestConfig(t)
+	cfg.MigrationsCompleted = nil
+	cfg.Rules = append(cfg.Rules, typ.Rule{
+		UUID: RuleUUIDCCDefault, Scenario: typ.ScenarioClaudeCode, RequestModel: "tingly/cc-default",
+		Services: []*loadbalance.Service{{Provider: "p", Model: "stale", Active: true}},
+	})
+
+	require.True(t, foldClaudeCodeSeparateOnce(cfg))
+
+	assert.Nil(t, cfg.findRuleByUUID(RuleUUIDCCDefault))
+	assert.Equal(t, "main", cfg.findRuleByUUID(RuleUUIDCC).Services[0].Model, "an unused default rule never overrides the unified one")
+}
+
+func TestLegacyDefaultRequestModelRoutesToDefaultSlot(t *testing.T) {
+	cfg := newSlotTestConfig(t)
+	got := cfg.MatchRuleByModelAndScenario("tingly/cc-default", typ.ScenarioClaudeCode)
+	require.NotNil(t, got)
+	assert.Equal(t, RuleUUIDCC, got.UUID)
+
+	meta, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "solo")
+	require.NoError(t, err)
+	profile := typ.ProfiledScenarioName(typ.ScenarioClaudeCode, meta.ID)
+	got = cfg.MatchRuleByModelAndScenario("default", profile)
+	require.NotNil(t, got)
+	assert.Equal(t, BuiltinRuleUUID(profile, "cc"), got.UUID)
 }

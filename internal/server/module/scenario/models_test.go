@@ -52,11 +52,15 @@ func TestGetClaudeCodeModels(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	separate, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "work", false)
+	separate, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "work")
 	if err != nil {
 		t.Fatal(err)
 	}
-	unified, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "one", true)
+	// "work" has every slot split off the default; "one" keeps them all on it.
+	if err := cfg.SetAllClaudeCodeSlots(typ.ProfiledScenarioName(typ.ScenarioClaudeCode, separate.ID), true); err != nil {
+		t.Fatal(err)
+	}
+	unified, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "one")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,8 +119,11 @@ func TestGetClaudeCodeRoute(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	separate, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "work", false)
+	separate, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "work")
 	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cfg.SetAllClaudeCodeSlots(typ.ProfiledScenarioName(typ.ScenarioClaudeCode, separate.ID), true); err != nil {
 		t.Fatal(err)
 	}
 	preview := &fakePreview{}

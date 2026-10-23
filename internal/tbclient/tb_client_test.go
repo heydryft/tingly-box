@@ -70,14 +70,6 @@ func ccRule(uuid, requestModel string) typ.Rule {
 	}
 }
 
-// ccSeparateFlag returns a scenario config that puts claude_code in separate mode.
-func ccSeparateFlag() typ.ScenarioConfig {
-	return typ.ScenarioConfig{
-		Scenario: typ.ScenarioClaudeCode,
-		Flags:    typ.ScenarioFlags{Separate: true},
-	}
-}
-
 func TestResolveClaudeCodeModels_UnifiedDefault(t *testing.T) {
 	client := NewTBClient(&serverconfig.Config{})
 	models := client.resolveClaudeCodeModels()
@@ -115,42 +107,22 @@ func TestResolveClaudeCodeModels_UnifiedCustomRequestModel(t *testing.T) {
 	assert.Equal(t, "team/coder[1m]", models.subagent)
 }
 
-func TestResolveClaudeCodeModels_Separate(t *testing.T) {
+func TestResolveClaudeCodeModels_SplitSlots(t *testing.T) {
 	cfg := &serverconfig.Config{
-		Scenarios: []typ.ScenarioConfig{ccSeparateFlag()},
 		Rules: []typ.Rule{
-			ccRule("builtin:claude_code:default", "tingly/cc-default"),
+			ccRule("builtin:claude_code:cc", "tingly/cc"),
 			ccRule("builtin:claude_code:haiku", "vendor/fast"),
-			ccRule("builtin:claude_code:sonnet", "tingly/cc-sonnet"),
 			ccRule("builtin:claude_code:opus", "vendor/smart"),
-			ccRule("builtin:claude_code:subagent", "tingly/cc-subagent"),
 		},
 	}
 	client := NewTBClient(cfg)
 	models := client.resolveClaudeCodeModels()
 
-	assert.Equal(t, "tingly/cc-default", models.def)
+	assert.Equal(t, "tingly/cc", models.def)
 	assert.Equal(t, "vendor/fast", models.haiku)
-	assert.Equal(t, "tingly/cc-sonnet", models.sonnet)
+	assert.Equal(t, "tingly/cc", models.sonnet, "a slot without a rule of its own follows the default")
 	assert.Equal(t, "vendor/smart", models.opus)
-	assert.Equal(t, "tingly/cc-subagent", models.subagent)
-}
-
-func TestResolveClaudeCodeModels_SeparateMissingTierFallsBack(t *testing.T) {
-	cfg := &serverconfig.Config{
-		Scenarios: []typ.ScenarioConfig{ccSeparateFlag()},
-		Rules: []typ.Rule{
-			ccRule("built-in-cc-default", "vendor/default"),
-		},
-	}
-	client := NewTBClient(cfg)
-	models := client.resolveClaudeCodeModels()
-
-	assert.Equal(t, "vendor/default", models.def)
-	assert.Equal(t, "tingly/cc-haiku", models.haiku)
-	assert.Equal(t, "tingly/cc-sonnet", models.sonnet)
-	assert.Equal(t, "tingly/cc-opus", models.opus)
-	assert.Equal(t, "tingly/cc-subagent", models.subagent)
+	assert.Equal(t, "tingly/cc", models.subagent)
 }
 
 func TestResolveClaudeCodeModels_ModernUUIDWinsOverLegacy(t *testing.T) {
@@ -297,11 +269,10 @@ func TestGetScenarioEndpointPath(t *testing.T) {
 
 func TestResolveClaudeCodeModels_FableFollowsDefaultWithoutActiveRule(t *testing.T) {
 	cfg := &serverconfig.Config{
-		Scenarios: []typ.ScenarioConfig{ccSeparateFlag()},
-		Rules:     []typ.Rule{ccRule("builtin:claude_code:default", "tingly/cc-default")},
+		Rules: []typ.Rule{ccRule("builtin:claude_code:cc", "tingly/cc")},
 	}
 	models := NewTBClient(cfg).resolveClaudeCodeModels()
-	assert.Equal(t, "tingly/cc-default", models.fable)
+	assert.Equal(t, "tingly/cc", models.fable)
 }
 
 // The tbclient env and the settings file resolve the model slots through the
@@ -314,10 +285,9 @@ func TestResolveClaudeCodeModels_MatchesSettingsFile(t *testing.T) {
 	for name, cfg := range map[string]*serverconfig.Config{
 		"unified default": {},
 		"unified rule":    {Rules: []typ.Rule{ccRule("built-in-cc", "team/coder")}},
-		"separate": {
-			Scenarios: []typ.ScenarioConfig{ccSeparateFlag()},
+		"split slots": {
 			Rules: []typ.Rule{
-				ccRule("builtin:claude_code:default", "vendor/default"),
+				ccRule("builtin:claude_code:cc", "vendor/default"),
 				flagged,
 				ccRule("built-in-cc-opus", "vendor/smart"),
 				off,
@@ -325,8 +295,7 @@ func TestResolveClaudeCodeModels_MatchesSettingsFile(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			separate := len(cfg.Scenarios) > 0
-			env := tbagent.GenerateCCEnv(cfg, "http://localhost:12580", "tok", "claude_code", !separate, false)
+			env := tbagent.GenerateCCEnv(cfg, "http://localhost:12580", "tok", "claude_code", false)
 			m := NewTBClient(cfg).resolveClaudeCodeModels()
 			assert.Equal(t, env["ANTHROPIC_MODEL"], m.def)
 			assert.Equal(t, env["ANTHROPIC_DEFAULT_HAIKU_MODEL"], m.haiku)

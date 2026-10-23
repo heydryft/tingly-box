@@ -676,27 +676,9 @@ func TestCustomScenario_SeedsNoDefaultRule(t *testing.T) {
 }
 
 func TestNewCCProfileRules_CanonicalUUIDs(t *testing.T) {
-	separate := newCCProfileRules(typ.RuleScenario("claude_code:p3"), false)
-	wantSeparate := map[string]string{
-		"default":  "builtin:claude_code:p3:default",
-		"haiku":    "builtin:claude_code:p3:haiku",
-		"sonnet":   "builtin:claude_code:p3:sonnet",
-		"opus":     "builtin:claude_code:p3:opus",
-		"subagent": "builtin:claude_code:p3:subagent",
-		"fable":    "builtin:claude_code:p3:fable",
-	}
-	if len(separate) != len(wantSeparate) {
-		t.Fatalf("separate mode rule count = %d, want %d", len(separate), len(wantSeparate))
-	}
-	for _, r := range separate {
-		if want := wantSeparate[r.RequestModel]; r.UUID != want {
-			t.Errorf("separate rule %q UUID = %q, want %q", r.RequestModel, r.UUID, want)
-		}
-	}
-
-	unified := newCCProfileRules(typ.RuleScenario("claude_code:p3"), true)
-	if len(unified) != 1 || unified[0].UUID != "builtin:claude_code:p3:cc" {
-		t.Errorf("unified rule UUID = %+v, want builtin:claude_code:p3:cc", unified)
+	rules := newCCProfileRules(typ.RuleScenario("claude_code:p3"))
+	if len(rules) != 1 || rules[0].UUID != "builtin:claude_code:p3:cc" {
+		t.Errorf("profile rules = %+v, want only builtin:claude_code:p3:cc", rules)
 	}
 }
 

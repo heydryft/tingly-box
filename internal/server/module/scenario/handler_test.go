@@ -201,7 +201,7 @@ func TestProfileClaudeConfigLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	profile, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "work", false)
+	profile, err := cfg.CreateProfile(typ.ScenarioClaudeCode, "work")
 	if err != nil {
 		t.Fatal(err)
 	}

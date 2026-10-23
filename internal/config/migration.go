@@ -1,6 +1,7 @@
 package config
 
 import (
+	"slices"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -58,6 +59,7 @@ var migrationSteps = []migrationStep{
 	{"ensure-current-builtin-rules", kindBaseline, "", ensureCurrentBuiltinRules},
 	{"20261004-claude-code-fable-rule", kindOnce, "2026-10-04", backfillFableRuleOnce},
 	{"20261022-claude-code-unified-slot-rules", kindOnce, "2026-10-22", resetUnifiedSlotRulesOnce},
+	{"20261023-claude-code-fold-separate", kindOnce, "2026-10-23", foldClaudeCodeSeparateOnce},
 	{"20260712-drop-unsupported-smart-routing", kindDated, "2026-07-12", migrate20260712},
 	{"20260606-xcode-skip-usage", kindOnce, "2026-06-06", defaultXcodeSkipUsageOnce},
 	{"20260610-builtin-rule-flags", kindOnce, "2026-06-10", defaultBuiltinRuleFlagsOnce},
@@ -814,4 +816,53 @@ func resetUnifiedSlotRulesOnce(c *Config) bool {
 	}
 	c.markMigrationCompleted(marker)
 	return true
+}
+
+// foldClaudeCodeSeparateOnce retires Claude Code's separate mode (TEP-2197): a
+// separate scenario or profile becomes one whose slots all have a rule of their
+// own. Its slot rules stay on as they were; its "default" rule moves into the
+// default slot rule "cc", and the "default" rule goes away (a request for
+// tingly/cc-default keeps routing through the alias in MatchRuleByModelAndScenario).
+func foldClaudeCodeSeparateOnce(c *Config) bool {
+	const marker = "20261023"
+	if c.hasMigrationCompleted(marker) {
+		return false
+	}
+	separate := false
+	if sc := c.scenarioConfigLocked(typ.ScenarioClaudeCode); sc != nil {
+		separate = sc.GetDefaultFlags().Separate
+		sc.Flags.Unified, sc.Flags.Separate = false, false
+	}
+	c.foldCCDefaultRuleLocked(typ.ScenarioClaudeCode, separate)
+
+	profiles := c.Profiles[string(typ.ScenarioClaudeCode)]
+	for i := range profiles {
+		scenario := typ.ProfiledScenarioName(typ.ScenarioClaudeCode, profiles[i].ID)
+		c.foldCCDefaultRuleLocked(scenario, !profiles[i].Unified)
+		profiles[i].Unified = true
+	}
+	c.markMigrationCompleted(marker)
+	return true
+}
+
+// foldCCDefaultRuleLocked moves a scenario's separate-mode "default" rule into
+// its "cc" rule (when the scenario was separate and the default rule is
+// routed) and deletes the "default" rule.
+func (c *Config) foldCCDefaultRuleLocked(scenario typ.RuleScenario, wasSeparate bool) {
+	def := c.ccRuleLocked(scenario, "default")
+	if def == nil {
+		return
+	}
+	if wasSeparate && (len(def.Services) > 0 || def.SmartEnabled) {
+		cc := c.ccRuleLocked(scenario, "cc")
+		if cc == nil {
+			c.Rules = append(c.Rules, newCCProfileRule(scenario, "cc", "Claude Code profile - default model"))
+			def = c.ccRuleLocked(scenario, "default")
+			cc = c.ccRuleLocked(scenario, "cc")
+		}
+		copyCCRouting(cc, def)
+		cc.Active = true
+	}
+	defUUID := def.UUID
+	c.Rules = slices.DeleteFunc(c.Rules, func(r typ.Rule) bool { return r.UUID == defUUID })
 }

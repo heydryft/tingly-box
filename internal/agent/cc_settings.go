@@ -74,7 +74,7 @@ var ccSlotEnvKeys = map[string]string{
 // Reading the rule's request_model (instead of assuming the seeded name) keeps
 // the env aligned when a user renames a rule's model; the seeded name is the
 // fallback when the rule is missing or inactive.
-func ClaudeCodeSlotModels(cfg *serverconfig.Config, scenarioPath string, unified, isProfile bool) (models map[string]string, context1M bool) {
+func ClaudeCodeSlotModels(cfg *serverconfig.Config, scenarioPath string, isProfile bool) (models map[string]string, context1M bool) {
 	ruleModel := func(fallback string, uuids ...string) string {
 		if cfg != nil {
 			for _, uuid := range uuids {
@@ -112,40 +112,27 @@ func ClaudeCodeSlotModels(cfg *serverconfig.Config, scenarioPath string, unified
 	}
 
 	models = map[string]string{}
-	if unified {
-		model := tierModel("cc", serverconfig.RuleUUIDBuiltinCC, "tingly/cc")
-		models["ANTHROPIC_MODEL"] = model
-		// A slot with a rule of its own (config.SetClaudeCodeSlot) requests
-		// that rule; every other slot follows the unified rule.
-		for slot, key := range ccSlotEnvKeys {
-			own := ruleModel("", serverconfig.BuiltinRuleUUID(typ.RuleScenario(scenarioPath), slot))
-			if own == "" && !isProfile {
-				own = ruleModel("", serverconfig.LegacyCCRuleUUID(slot))
-			}
-			if own != "" {
-				models[key] = own
-			} else {
-				models[key] = model
-			}
+	model := tierModel("cc", serverconfig.RuleUUIDBuiltinCC, "tingly/cc")
+	models["ANTHROPIC_MODEL"] = model
+	// A slot with a rule of its own (config.SetClaudeCodeSlot) requests that
+	// rule; every other slot follows the default slot.
+	for slot, key := range ccSlotEnvKeys {
+		own := ruleModel("", serverconfig.BuiltinRuleUUID(typ.RuleScenario(scenarioPath), slot))
+		if own == "" && !isProfile {
+			own = ruleModel("", serverconfig.LegacyCCRuleUUID(slot))
 		}
-		return models, context1M
+		if own != "" {
+			models[key] = own
+		} else {
+			models[key] = model
+		}
 	}
-	models["ANTHROPIC_MODEL"] = tierModel("default", serverconfig.RuleUUIDBuiltinCCDefault, "tingly/cc-default")
-	models["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = tierModel("haiku", serverconfig.RuleUUIDBuiltinCCHaiku, "tingly/cc-haiku")
-	models["ANTHROPIC_DEFAULT_OPUS_MODEL"] = tierModel("opus", serverconfig.RuleUUIDBuiltinCCOpus, "tingly/cc-opus")
-	models["ANTHROPIC_DEFAULT_SONNET_MODEL"] = tierModel("sonnet", serverconfig.RuleUUIDBuiltinCCSonnet, "tingly/cc-sonnet")
-	// The fable tier arrived after separate mode shipped, so a profile or
-	// install may have no active fable rule (never seeded, or switched off);
-	// the bare tier name is not routable, so the alias follows the default
-	// tier instead.
-	models["ANTHROPIC_DEFAULT_FABLE_MODEL"] = ruleModel(models["ANTHROPIC_MODEL"], serverconfig.BuiltinRuleUUID(typ.RuleScenario(scenarioPath), "fable"))
-	models["CLAUDE_CODE_SUBAGENT_MODEL"] = tierModel("subagent", serverconfig.RuleUUIDBuiltinCCSubagent, "tingly/cc-subagent")
 	return models, context1M
 }
 
 // GenerateCCEnv builds the env map for Claude Code settings.json; the model
 // slots come from ClaudeCodeSlotModels.
-func GenerateCCEnv(cfg *serverconfig.Config, baseURL, apiKey, scenarioPath string, unified, isProfile bool) map[string]string {
+func GenerateCCEnv(cfg *serverconfig.Config, baseURL, apiKey, scenarioPath string, isProfile bool) map[string]string {
 	env := map[string]string{
 		"ANTHROPIC_BASE_URL":   baseURL + "/tingly/" + scenarioPath,
 		"ANTHROPIC_AUTH_TOKEN": apiKey,
@@ -160,7 +147,7 @@ func GenerateCCEnv(cfg *serverconfig.Config, baseURL, apiKey, scenarioPath strin
 		env["API_TIMEOUT_MS"] = "3000000"
 	}
 
-	models, context1M := ClaudeCodeSlotModels(cfg, scenarioPath, unified, isProfile)
+	models, context1M := ClaudeCodeSlotModels(cfg, scenarioPath, isProfile)
 	maps.Copy(env, models)
 
 	// Mirror the frontend quick-config: when any resolved model rule has the
@@ -323,7 +310,7 @@ func ResolveCCProfileSettings(cfg *serverconfig.Config, baseURL, apiKey, scenari
 	if snapshot.Exists {
 		baseEnv = maps.Clone(snapshot.Env)
 	} else {
-		defaults := DefaultClaudeCodePrefs(profile.Unified)
+		defaults := DefaultClaudeCodePrefs(true)
 		defaultValues, valuesErr := defaults.Values()
 		if valuesErr != nil {
 			return CCProfileSettingsResolution{}, valuesErr
@@ -333,7 +320,7 @@ func ResolveCCProfileSettings(cfg *serverconfig.Config, baseURL, apiKey, scenari
 
 	baseEnv = upgradeLegacyCCEnv(baseEnv)
 
-	generated := GenerateCCEnv(cfg, baseURL, apiKey, scenarioPath, profile.Unified, true)
+	generated := GenerateCCEnv(cfg, baseURL, apiKey, scenarioPath, true)
 	maps.Copy(baseEnv, generated)
 	basePreferences, err := ClaudeCodePrefsFromEnv(baseEnv)
 	if err != nil {
