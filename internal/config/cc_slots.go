@@ -69,12 +69,20 @@ func (c *Config) SetAllClaudeCodeSlots(scenario typ.RuleScenario, enabled bool) 
 	if err := c.checkCCSlotScenarioLocked(scenario); err != nil {
 		return err
 	}
+	if err := c.setAllCCSlotsLocked(scenario, enabled); err != nil {
+		return err
+	}
+	return c.Save()
+}
+
+// setAllCCSlotsLocked splits (or merges) every slot, without the checks and the save.
+func (c *Config) setAllCCSlotsLocked(scenario typ.RuleScenario, enabled bool) error {
 	for _, slot := range CCSlots {
 		if _, err := c.setCCSlotLocked(scenario, slot, enabled); err != nil {
 			return err
 		}
 	}
-	return c.Save()
+	return nil
 }
 
 // setCCSlotLocked is SetClaudeCodeSlot without the checks and the save.

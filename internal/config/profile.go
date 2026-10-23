@@ -161,8 +161,9 @@ func (c *Config) CreateProfile(baseScenario typ.RuleScenario, name string) (typ.
 
 	c.Profiles[base] = append(c.Profiles[base], meta)
 
-	// Create the profile's default slot rule for claude_code. It starts with empty Services/SmartRouting so the user configures the
-	// upstream providers for the new profile explicitly.
+	// A claude_code profile starts with its default slot rule, with empty
+	// Services/SmartRouting so the user configures the upstream providers
+	// explicitly.
 	profiledScenario := typ.ProfiledScenarioName(baseScenario, meta.ID)
 	if baseScenario == typ.ScenarioClaudeCode {
 		c.Rules = append(c.Rules, newCCProfileRules(profiledScenario)...)
