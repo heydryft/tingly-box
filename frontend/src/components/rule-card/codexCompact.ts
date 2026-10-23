@@ -60,3 +60,25 @@ export function lowZoneStart(window: number): number | null {
     const start = (1 - CODEX_COMPACT.minRemaining / window) * 100;
     return start < CODEX_COMPACT.max ? start : null;
 }
+
+export interface CodexCompactZones {
+    /** Values in [from, to) leave too few tokens free; null when the range is empty. */
+    low: { from: number; to: number } | null;
+    /** Values at or above this are cut down to it (the usable window); null at 100. */
+    cappedFrom: number | null;
+}
+
+/**
+ * The stretches of the slider that need a warning: the "too few tokens left"
+ * zone (only the part below the cap, since anything above is cut down to the
+ * cap anyway) and the "capped by the usable window" zone.
+ */
+export function compactZones(window: number, effectivePercent: number): CodexCompactZones {
+    const cap = Math.min(Math.max(effectivePercent, CODEX_COMPACT.min), 100);
+    const lowStart = lowZoneStart(window);
+    const lowFrom = lowStart === null ? null : Math.max(lowStart, CODEX_COMPACT.min);
+    return {
+        low: lowFrom !== null && lowFrom < cap ? { from: lowFrom, to: cap } : null,
+        cappedFrom: cap < 100 ? cap : null,
+    };
+}

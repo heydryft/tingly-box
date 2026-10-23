@@ -7,7 +7,7 @@ import { api } from '@/services/api';
 import { fontSizes } from '@/theme/fonts';
 import {
     CODEX_COMPACT,
-    lowZoneStart,
+    compactZones,
     planCodexCompact,
     trackPosition,
     type CodexCompactStatus,
@@ -37,6 +37,15 @@ const parsePercent = (raw: unknown, fallback: number): number => {
     const n = Number.parseInt(String(raw ?? ''), 10);
     return Number.isFinite(n) && n >= CODEX_COMPACT.min && n <= 100 ? n : fallback;
 };
+
+// The capped stretch is hatched: values there still work, they are only cut
+// down, so it reads as "not this far" rather than as a warning.
+const stripes = (theme: Theme) => {
+    const line = alpha(theme.palette.text.primary, theme.palette.mode === 'dark' ? 0.28 : 0.2);
+    return `repeating-linear-gradient(135deg, ${line} 0 2px, transparent 2px 5px)`;
+};
+
+const swatchSx = { width: 18, height: 8, borderRadius: 4, flexShrink: 0 } as const;
 
 const NOTE_COLOR: Record<Exclude<CodexCompactStatus, 'ok'>, 'warning' | 'info'> = {
     low: 'warning',
@@ -70,7 +79,7 @@ export const CodexCompactChip: React.FC<CodexCompactChipProps> = ({
     const shown = draft ?? (overridden ? percent : shared.percent);
     const window = context1M ? CODEX_COMPACT.window1M : CODEX_COMPACT.window;
     const plan = planCodexCompact({ window, percent: shown, effectivePercent: shared.effective });
-    const lowStart = lowZoneStart(window);
+    const zones = compactZones(window, shared.effective);
     const noteKind = plan.status === 'ok' ? null : NOTE_COLOR[plan.status];
 
     React.useEffect(() => {
@@ -118,6 +127,33 @@ export const CodexCompactChip: React.FC<CodexCompactChipProps> = ({
         flush();
         setAnchor(null);
         setDraft(null);
+    };
+
+    const railBackground = (theme: Theme) => {
+        const base = theme.palette.action.disabledBackground;
+        const layers: string[] = [];
+        const sizes: string[] = [];
+        if (zones.cappedFrom !== null) {
+            const at = trackPosition(zones.cappedFrom);
+            layers.push(stripes(theme));
+            sizes.push(`${100 - at}% 100%`);
+        }
+        const stops = [`${base} 0%`];
+        if (zones.low) {
+            const from = trackPosition(zones.low.from);
+            const to = trackPosition(zones.low.to);
+            const warn = alpha(theme.palette.warning.main, 0.55);
+            stops.push(`${base} ${from}%`, `${warn} ${from}%`, `${warn} ${to}%`, `${base} ${to}%`);
+        }
+        stops.push(`${base} 100%`);
+        layers.push(`linear-gradient(to right, ${stops.join(', ')})`);
+        sizes.push('100% 100%');
+        return {
+            backgroundImage: layers.join(', '),
+            backgroundSize: sizes.join(', '),
+            backgroundPosition: 'right center',
+            backgroundRepeat: 'no-repeat',
+        };
     };
 
     const noteText = {
@@ -169,45 +205,50 @@ export const CodexCompactChip: React.FC<CodexCompactChipProps> = ({
                     </Typography>
 
                     <Box>
-                        <Box sx={{ position: 'relative', px: 0.5 }}>
-                            {/* Rail and the "too few tokens left" zone. */}
-                            <Box sx={{ position: 'absolute', left: 4, right: 4, top: '50%', height: 4, mt: '-2px', borderRadius: 2, bgcolor: 'action.disabledBackground', overflow: 'hidden' }}>
-                                {lowStart !== null && (
-                                    <Box sx={{
-                                        position: 'absolute', top: 0, bottom: 0,
-                                        left: `${trackPosition(lowStart)}%`,
-                                        right: 0,
-                                        bgcolor: (theme) => alpha(theme.palette.warning.main, 0.55),
-                                    }} />
+                        <Slider
+                            size="small"
+                            min={CODEX_COMPACT.min}
+                            max={CODEX_COMPACT.max}
+                            step={1}
+                            value={shown}
+                            disabled={disabled}
+                            onChange={(_, v) => setDraft(v as number)}
+                            onChangeCommitted={(_, v) => {
+                                const next = v as number;
+                                setDraft(next);
+                                commit(next);
+                            }}
+                            aria-label={t('ruleHeader.compact.title')}
+                            valueLabelDisplay="off"
+                            sx={(theme) => ({
+                                display: 'block',
+                                py: 1.25,
+                                // The zones are painted on the rail itself, so they line up
+                                // with the thumb at every width.
+                                '& .MuiSlider-rail': { height: 6, opacity: 1, ...railBackground(theme) },
+                                '& .MuiSlider-track': { height: 6, border: 0 },
+                            })}
+                        />
+                        <Stack direction="row" sx={{ justifyContent: 'space-between', fontSize: fontSizes.xs, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
+                            <span>{CODEX_COMPACT.min}%</span>
+                            <span>100%</span>
+                        </Stack>
+                        {(zones.low || zones.cappedFrom !== null) && (
+                            <Stack spacing={0.5} sx={{ mt: 1, fontSize: fontSizes.xs, color: 'text.secondary', lineHeight: 1.4 }}>
+                                {zones.low && (
+                                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                                        <Box sx={{ ...swatchSx, bgcolor: (theme) => alpha(theme.palette.warning.main, 0.55) }} />
+                                        <span>{t('ruleHeader.compact.zoneLow', { from: Math.round(zones.low.from), to: zones.low.to })}</span>
+                                    </Stack>
                                 )}
-                            </Box>
-                            <Slider
-                                size="small"
-                                min={CODEX_COMPACT.min}
-                                max={CODEX_COMPACT.max}
-                                step={1}
-                                value={shown}
-                                disabled={disabled}
-                                onChange={(_, v) => setDraft(v as number)}
-                                onChangeCommitted={(_, v) => {
-                                    const next = v as number;
-                                    setDraft(next);
-                                    commit(next);
-                                }}
-                                aria-label={t('ruleHeader.compact.title')}
-                                valueLabelDisplay="off"
-                                sx={{ '& .MuiSlider-rail': { opacity: 0 }, '& .MuiSlider-track': { height: 4, border: 0 } }}
-                            />
-                        </Box>
-                        <Box sx={{ position: 'relative', height: 16, fontSize: fontSizes.xs, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}>
-                            <span style={{ position: 'absolute', left: 0 }}>{CODEX_COMPACT.min}%</span>
-                            {lowStart !== null && (
-                                <span style={{ position: 'absolute', left: `${trackPosition(lowStart)}%`, transform: 'translateX(-50%)' }}>
-                                    {Math.round(lowStart)}%
-                                </span>
-                            )}
-                            <span style={{ position: 'absolute', right: 0 }}>100%</span>
-                        </Box>
+                                {zones.cappedFrom !== null && (
+                                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                                        <Box sx={{ ...swatchSx, background: (theme) => `${stripes(theme)}, ${theme.palette.action.disabledBackground}` }} />
+                                        <span>{t('ruleHeader.compact.zoneCapped', { effective: zones.cappedFrom })}</span>
+                                    </Stack>
+                                )}
+                            </Stack>
+                        )}
                     </Box>
 
                     <Stack spacing={0.25} sx={{ fontSize: fontSizes.sm, fontVariantNumeric: 'tabular-nums' }}>
@@ -226,7 +267,7 @@ export const CodexCompactChip: React.FC<CodexCompactChipProps> = ({
                     {noteKind && (
                         <Box sx={{
                             p: 1, borderRadius: 1, fontSize: fontSizes.sm, lineHeight: 1.45,
-                            color: `${noteKind}.dark`,
+                            color: (theme) => theme.palette.mode === 'dark' ? theme.palette[noteKind].light : theme.palette[noteKind].dark,
                             bgcolor: (theme) => alpha(theme.palette[noteKind].main, 0.1),
                             border: '1px solid',
                             borderColor: (theme) => alpha(theme.palette[noteKind].main, 0.4),

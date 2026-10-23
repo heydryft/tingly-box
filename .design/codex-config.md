@@ -290,6 +290,13 @@ pipeline, so it is deliberately not in `RuleFlagRegistry` (see `rule-flags.md`).
   `Endpoint`, opens a popover with a slider (`CodexCompactChip`). Unset reads
   `Compact: Auto` and the popover shows the Auto Config value it follows; moving
   the slider sets the override, "use Auto Config value" clears it.
+- **Slider layout.** The axis is labelled only at its ends (50% / 100%); zone
+  boundaries are never placed as labels on the axis, because a boundary close to
+  an end (96.4% on 1M) collides with the end label. The zones are painted on the
+  slider's own rail so they line up with the thumb at any width: hatched from the
+  usable-window percent up (values there still work, they are cut down), amber for
+  the "too few tokens left" stretch below it (only when the usable window has been
+  raised past it). A legend under the axis names each zone with its numbers.
 - **Warning is about tokens left, not a fixed percent.** What compaction needs
   (summary request, system prompt, tool output, the reply) is roughly constant,
   so the popover warns when fewer than 36,000 tokens would remain, using the

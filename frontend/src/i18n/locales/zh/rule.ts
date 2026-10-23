@@ -306,6 +306,8 @@ export default {
       "remain": "压缩时剩余",
       "low": "压缩时仅剩约 {{remain}} tokens（建议不低于 {{min}}）。长工具输出可能撞上窗口上限，导致压缩失败。",
       "limited": "受「可用窗口 {{effective}}%」限制，实际按 {{applied}}% 生效。要更晚压缩，请先在 Auto Config 调高可用窗口。",
+      "zoneLow": "{{from}}–{{to}}%：压缩时剩余太少",
+      "zoneCapped": "超过 {{effective}}% 按 {{effective}}% 生效（可用窗口）",
       "needsApply": "改动需点 Auto Config 应用后生效。",
       "reset": "恢复为 Auto Config 的值（{{percent}}%）"
     }

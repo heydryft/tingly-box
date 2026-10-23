@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CODEX_COMPACT, lowZoneStart, planCodexCompact } from './codexCompact';
+import { CODEX_COMPACT, compactZones, lowZoneStart, planCodexCompact } from './codexCompact';
 
 const { window, window1M } = CODEX_COMPACT;
 
@@ -38,5 +38,25 @@ describe('lowZoneStart', () => {
     it('starts at 82% on 200K and at 96.4% on 1M', () => {
         expect(lowZoneStart(window)).toBeCloseTo(82);
         expect(lowZoneStart(window1M)).toBeCloseTo(96.4);
+    });
+});
+
+describe('compactZones', () => {
+    it('default headroom: only the capped zone, on both windows', () => {
+        expect(compactZones(window, 82)).toEqual({ low: null, cappedFrom: 82 });
+        expect(compactZones(window1M, 82)).toEqual({ low: null, cappedFrom: 82 });
+    });
+
+    it('a raised usable window exposes the low zone below it', () => {
+        const zones = compactZones(window, 95);
+        expect(zones.low?.from).toBeCloseTo(82);
+        expect(zones.low?.to).toBe(95);
+        expect(zones.cappedFrom).toBe(95);
+    });
+
+    it('no capped zone when the whole window is usable', () => {
+        const zones = compactZones(window1M, 100);
+        expect(zones.cappedFrom).toBeNull();
+        expect(zones.low?.from).toBeCloseTo(96.4);
     });
 });

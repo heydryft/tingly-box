@@ -306,6 +306,8 @@ export default {
       "remain": "Free when compacting",
       "low": "Only about {{remain}} tokens will be free when compacting (at least {{min}} recommended). A long tool output could overflow the window and make compaction fail.",
       "limited": "Capped by the usable window ({{effective}}%), so {{applied}}% is what takes effect. To compact later, raise Usable window in Auto Config.",
+      "zoneLow": "{{from}}–{{to}}%: too few tokens left when compacting",
+      "zoneCapped": "Above {{effective}}% counts as {{effective}}% (usable window)",
       "needsApply": "Takes effect after Auto Config is applied.",
       "reset": "Use Auto Config value ({{percent}}%)"
     }
