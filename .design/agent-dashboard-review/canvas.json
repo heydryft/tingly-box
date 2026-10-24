@@ -1,0 +1,81 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-24T03:00:00Z"
+  },
+  "title": "Agent & Dashboard design review",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "A-Overview.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1720,
+      "h": 760,
+      "title": "0 · 怎么读这份评审"
+    },
+    "B-AgentNow.dc.html": {
+      "x": 0,
+      "y": 880,
+      "w": 1720,
+      "h": 840,
+      "title": "1 · Agent 页现状：Claude Code"
+    },
+    "C-AgentStates.dc.html": {
+      "x": 0,
+      "y": 1840,
+      "w": 1720,
+      "h": 920,
+      "title": "2 · Agent 页：新手与 Profile"
+    },
+    "D-AgentProposal.dc.html": {
+      "x": 0,
+      "y": 2880,
+      "w": 1720,
+      "h": 760,
+      "title": "3 · Agent 页提案"
+    },
+    "E-DashNow.dc.html": {
+      "x": 0,
+      "y": 3760,
+      "w": 1720,
+      "h": 820,
+      "title": "4 · Dashboard 现状：Usage"
+    },
+    "F-DashSubpages.dc.html": {
+      "x": 0,
+      "y": 4700,
+      "w": 1720,
+      "h": 1110,
+      "title": "5 · Dashboard 子页与状态"
+    },
+    "G-DashProposal.dc.html": {
+      "x": 0,
+      "y": 5930,
+      "w": 1720,
+      "h": 980,
+      "title": "6 · Dashboard 提案"
+    },
+    "H-Vocabulary.dc.html": {
+      "x": 0,
+      "y": 7030,
+      "w": 1720,
+      "h": 1000,
+      "title": "7 · 跨页：同一件事的名字"
+    }
+  },
+  "order": [
+    "A-Overview.dc.html",
+    "B-AgentNow.dc.html",
+    "C-AgentStates.dc.html",
+    "D-AgentProposal.dc.html",
+    "E-DashNow.dc.html",
+    "F-DashSubpages.dc.html",
+    "G-DashProposal.dc.html",
+    "H-Vocabulary.dc.html"
+  ],
+  "notes": {}
+}

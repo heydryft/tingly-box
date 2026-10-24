@@ -2,6 +2,7 @@
 
 > 状态：**讨论中**。"已确定"一节里的三项（Star 入口、Dashboard 头部、Agent 页 v4）已定方案并有对应 PR；其余是待定或已否决的记录，不是实现计划。
 > 来源：对 mock 模式下 6 个页面的截图审计（1440×900，实验功能全开，2026-10-11）和随后的讨论。草图（线框、方案对比）保存在设计画布里，本文只记录结论与理由。
+> 后续：Agent 页与 Dashboard 的下一轮评审（A12、B7、D7、X1 起）在 [agent-dashboard-review.md](./agent-dashboard-review.md)。
 > 约定：现在处于草图阶段，**得到明确同意之前不改代码**。相关文档：[ux-principles.md](./ux-principles.md)（判断标准）、[agent-page-redesign.md](./agent-page-redesign.md)（Agent 页的既有重设计）、[ui-redesign.md](./ui-redesign.md)。
 
 ---
