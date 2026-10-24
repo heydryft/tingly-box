@@ -83,7 +83,7 @@ export function HourlyTokenHistoryChart({data}: HourlyTokenHistoryChartProps) {
                             />
                             <XAxis
                                 dataKey="time"
-                                tick={{fontSize: 12, fill: 'text.secondary', fontWeight: 500}}
+                                tick={{fontSize: 12, fill: theme.palette.text.secondary, fontWeight: 500}}
                                 tickLine={false}
                                 axisLine={{stroke: chartStyles.chart.axis, strokeWidth: 1.5}}
                                 interval={labelInterval}
@@ -91,7 +91,7 @@ export function HourlyTokenHistoryChart({data}: HourlyTokenHistoryChartProps) {
                             />
                             <YAxis
                                 tickFormatter={formatYAxis}
-                                tick={{fontSize: 12, fill: 'text.secondary', fontWeight: 500}}
+                                tick={{fontSize: 12, fill: theme.palette.text.secondary, fontWeight: 500}}
                                 tickLine={false}
                                 axisLine={{stroke: chartStyles.chart.axis, strokeWidth: 1.5}}
                                 width={60}
