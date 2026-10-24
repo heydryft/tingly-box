@@ -567,7 +567,8 @@ export default {
       "chooseOrdinary": "选择常规工具",
       "chooseServer": "选择 Server Tools",
       "chooseToolsHint": "加入当前使用路径，不改变另一条路径的用途。内置与外置来源统一从工具目录选择。",
-      "addTool": "加入工具"
+      "addTool": "加入工具",
+      "advisorTestHint": "顾问工具需要模型会话上下文。请在 MCP 路由中配置专用处理链，并通过模型请求验证。"
     },
     "routing": {
       "ordinaryTools": "常规工具",

@@ -591,7 +591,8 @@ export default {
       "chooseOrdinary": "Choose ordinary tools",
       "chooseServer": "Choose Server Tools",
       "chooseToolsHint": "Add a tool to this usage without changing its other usage. Built-in and external sources share the same tool catalog.",
-      "addTool": "Add tool"
+      "addTool": "Add tool",
+      "advisorTestHint": "Advisor requires model conversation context. Configure its special processing chain in MCP routes, then verify it with a model request."
     },
     "routing": {
       "ordinaryTools": "Ordinary tools",
