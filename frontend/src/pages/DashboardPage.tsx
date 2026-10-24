@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Box, Grid, Paper, Skeleton, Tab, Tabs } from '@mui/material';
+import { Box, Button, Grid, Paper, Skeleton, Stack, Tab, Tabs, Typography } from '@mui/material';
 import {
     StatCard,
     DailyTokenHistoryChart,
@@ -61,12 +61,12 @@ export default function DashboardPage() {
 
     const isHourlyRange = timeRange === 'today' || timeRange === 'yesterday';
 
-    // Analysis mode: token trend ('summary'), per-request list ('requests',
-    // hourly ranges only), or the fixed 12-month heatmap ('activity').
+    // Analysis mode: token trend ('summary'), per-request list ('requests'),
+    // or the fixed 12-month heatmap ('activity').
     const [viewMode, setViewMode] = useState<'summary' | 'requests' | 'activity'>('summary');
-    // "By Request" only exists for hourly ranges; fall back to the trend if a
-    // stale 'requests' selection carries into a daily range.
-    const effectiveViewMode = viewMode === 'requests' && !isHourlyRange ? 'summary' : viewMode;
+    // Single requests are only listed for hourly ranges. The tab stays put on
+    // a daily range and says so, rather than disappearing under the user.
+    const requestsUnavailable = viewMode === 'requests' && !isHourlyRange;
 
     const {
         loading,
@@ -96,14 +96,12 @@ export default function DashboardPage() {
         modelOptions,
         usageIdentities,
         selectedIdentityLabel,
-    } = useDashboardData({ timeRange, isHourlyRange, viewMode, initialScenario });
-
-    // Reset view mode when switching away from hourly ranges
-    useEffect(() => {
-        if (!isHourlyRange) {
-            setViewMode('summary');
-        }
-    }, [isHourlyRange]);
+    } = useDashboardData({
+        timeRange,
+        isHourlyRange,
+        viewMode: requestsUnavailable ? 'summary' : viewMode,
+        initialScenario,
+    });
 
     // Calculate totals from stats — single shared pass over the rows (same
     // helper the Team Usage page uses for its stat cards). The streamed rate
@@ -239,7 +237,7 @@ export default function DashboardPage() {
                     height (the Activity grid centers itself vertically in it). */}
                 <Paper variant="outlined" sx={{ flex: 1, display: 'flex', flexDirection: 'column', borderRadius: 2 }}>
                     <Tabs
-                        value={effectiveViewMode}
+                        value={viewMode}
                         onChange={(_, v) => setViewMode(v)}
                         sx={{
                             px: 1,
@@ -254,11 +252,11 @@ export default function DashboardPage() {
                         }}
                     >
                         <Tab value="summary" label={t('dashboard.overview.viewModes.summary', { defaultValue: 'Summary' })} />
-                        {isHourlyRange && <Tab value="requests" label={t('dashboard.overview.viewModes.byRequest', { defaultValue: 'By Request' })} />}
+                        <Tab value="requests" label={t('dashboard.overview.viewModes.byRequest', { defaultValue: 'By Request' })} />
                         <Tab value="activity" label={t('dashboard.overview.viewModes.activity', { defaultValue: 'Activity' })} />
                     </Tabs>
                     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5, p: 2 }}>
-                        {effectiveViewMode === 'activity' ? (
+                        {viewMode === 'activity' ? (
                             <DashboardHeatmapSection
                                 provider={selectedProvider}
                                 model={selectedModel}
@@ -266,7 +264,8 @@ export default function DashboardPage() {
                                 scenario={selectedScenario}
                                 refreshKey={heatmapRefresh}
                             />
-                        ) : effectiveViewMode === 'summary' ? (
+                        ) : viewMode === 'summary' ? (
+                            <>
                             <Box
                                 sx={{
                                     display: 'grid',
@@ -278,7 +277,8 @@ export default function DashboardPage() {
                                     alignItems: 'stretch',
                                 }}
                             >
-                                <Box sx={{ minWidth: 0, display: 'flex' }}>
+                                {/* Hug its five rows instead of stretching to the chart's height. */}
+                                <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'flex-start' }}>
                                     <PerformanceSummary queryParams={recordsParams} />
                                 </Box>
                                 <Box sx={{ minWidth: 0, display: 'flex' }}>
@@ -289,6 +289,24 @@ export default function DashboardPage() {
                                     )}
                                 </Box>
                             </Box>
+                            {/* Per-model totals belong to the summary, not to every tab. */}
+                            <ServiceStatsTable stats={stats} />
+                            </>
+                        ) : requestsUnavailable ? (
+                            <Stack spacing={1.5} sx={{ alignItems: 'center', justifyContent: 'center', py: 8, textAlign: 'center' }}>
+                                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                    {t('dashboard.overview.byRequestHourlyOnly', {
+                                        defaultValue: 'Single requests are listed for today and yesterday.',
+                                    })}
+                                </Typography>
+                                <Stack direction="row" spacing={1}>
+                                    {(['today', 'yesterday'] as const).map((range) => (
+                                        <Button key={range} variant="outlined" size="small" onClick={() => navigate(`/dashboard/${range}`)}>
+                                            {t(TIME_RANGE_CONFIG[range].labelKey)}
+                                        </Button>
+                                    ))}
+                                </Stack>
+                            </Stack>
                         ) : (
                             <RequestsView
                                 records={records}
@@ -300,8 +318,6 @@ export default function DashboardPage() {
                     </Box>
                 </Paper>
             </Box>
-            {/* Stats Table */}
-            <ServiceStatsTable stats={stats} />
         </Box>
     );
 }

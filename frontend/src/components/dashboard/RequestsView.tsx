@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import { ProviderLabel } from '@/components/ProviderLogo';
 import { WaveSine as StreamIcon } from '@/components/icons';
-import { TOKEN_COLORS, formatNumber, hasCacheWrites } from './chartStyles';
+import { formatNumber, hasCacheWrites } from './chartStyles';
 import api from '@/services/api';
 import { fontMono, fontSizes } from '@/theme/fonts';
 import { getStatusColor } from '@/theme/status';
@@ -83,10 +83,13 @@ const fmtTime = (ts: string) =>
 
 // ─── Request Table ────────────────────────────────────────────────────────────
 
-const getLatencyColor = (ms: number, theme: any) => {
+// Colour marks a slow first token only; a normal value stays body text, so the
+// eye lands on the rows that need it. (Total latency grows with the answer's
+// length, so it is not judged.)
+const getTtftColor = (ms: number, theme: any) => {
     if (ms > 2000) return theme.palette.error.main;
     if (ms > 1000) return theme.palette.warning.main;
-    return theme.palette.success.main;
+    return 'text.primary';
 };
 
 interface TableSectionProps {
@@ -225,12 +228,12 @@ function RequestTable({ records, total, page, rowsPerPage, statusFilter, loading
                                     </TableCell>
                                 )}
                                 <TableCell align="right">
-                                    <Typography sx={{ fontFamily: fontMono, fontSize: fontSizes.sm, color: TOKEN_COLORS.input.main }}>
+                                    <Typography sx={{ fontFamily: fontMono, fontSize: fontSizes.sm, color: 'text.primary' }}>
                                         {fmtTokens(r.input_tokens)}
                                     </Typography>
                                 </TableCell>
                                 <TableCell align="right">
-                                    <Typography sx={{ fontFamily: fontMono, fontSize: fontSizes.sm, color: TOKEN_COLORS.output.main }}>
+                                    <Typography sx={{ fontFamily: fontMono, fontSize: fontSizes.sm, color: 'text.primary' }}>
                                         {fmtTokens(r.output_tokens)}
                                     </Typography>
                                 </TableCell>
@@ -245,14 +248,14 @@ function RequestTable({ records, total, page, rowsPerPage, statusFilter, loading
 
                                 {/* Latency */}
                                 <TableCell align="right">
-                                    <Typography sx={{ fontFamily: fontMono, fontSize: fontSizes.sm, color: r.latency_ms > 0 ? getLatencyColor(r.latency_ms, theme) : 'text.disabled' }}>
+                                    <Typography sx={{ fontFamily: fontMono, fontSize: fontSizes.sm, color: r.latency_ms > 0 ? 'text.primary' : 'text.disabled' }}>
                                         {r.latency_ms > 0 ? fmtLatency(r.latency_ms) : '-'}
                                     </Typography>
                                 </TableCell>
 
                                 {/* TTFT */}
                                 <TableCell align="right">
-                                    <Typography sx={{ fontFamily: fontMono, fontSize: fontSizes.sm, color: (r.ttft_ms ?? 0) > 0 ? getLatencyColor(r.ttft_ms!, theme) : 'text.disabled' }}>
+                                    <Typography sx={{ fontFamily: fontMono, fontSize: fontSizes.sm, color: (r.ttft_ms ?? 0) > 0 ? getTtftColor(r.ttft_ms!, theme) : 'text.disabled' }}>
                                         {(r.ttft_ms ?? 0) > 0 ? fmtLatency(r.ttft_ms!) : '-'}
                                     </Typography>
                                 </TableCell>

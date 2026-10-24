@@ -107,9 +107,10 @@ export default function PerformanceSummary({ queryParams }: { queryParams: Perfo
                     </Box>
                 ))}
             </Box>
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', '& > * + *': { borderTop: '1px solid', borderColor: 'divider' } }}>
+            {/* Rows keep their own height rather than stretching to the chart beside them. */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', '& > * + *': { borderTop: '1px solid', borderColor: 'divider' } }}>
                 {PERCENTILES.map(({ key, label }) => (
-                    <Box key={key} sx={{ px: 2.25, py: 1.25, minWidth: 0, flex: 1, display: 'grid', gridTemplateColumns: '52px repeat(3, minmax(0, 1fr))', alignItems: 'center', columnGap: 1 }}>
+                    <Box key={key} sx={{ px: 2.25, py: 0.75, minWidth: 0, display: 'grid', gridTemplateColumns: '52px repeat(3, minmax(0, 1fr))', alignItems: 'center', columnGap: 1 }}>
                         <Typography sx={{ color: 'text.secondary', fontSize: fontSizes.xs, fontWeight: 600 }}>{label}</Typography>
                         {metrics.map((metric) => {
                             const value = formatMetricValue(metric.metric, metric.kind, key);

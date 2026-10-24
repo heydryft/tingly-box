@@ -112,10 +112,12 @@ export default function ServiceStatsTable({ stats }: ServiceStatsTableProps) {
                                 '& .MuiTableCell-root': {
                                     fontWeight: 600,
                                     fontSize: fontSizes.sm,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.05em',
+                                    // Sentence case on one line: uppercase labels wrapped
+                                    // into two ("CACHE / READ") at common widths.
+                                    whiteSpace: 'nowrap',
                                     color: 'text.secondary',
                                     py: 1.25,
+                                    px: 1.25,
                                     borderBottom: '1px solid',
                                     borderColor: 'divider',
                                 },
@@ -183,6 +185,7 @@ export default function ServiceStatsTable({ stats }: ServiceStatsTableProps) {
                                             },
                                             '& .MuiTableCell-root': {
                                                 py: 1.25,
+                                                px: 1.25,
                                                 borderBottom: '1px solid',
                                                 borderColor: 'divider',
                                             },
@@ -197,6 +200,9 @@ export default function ServiceStatsTable({ stats }: ServiceStatsTableProps) {
                                             <Typography
                                                 variant="body2"
                                                 sx={{
+                                                    // The model is what each row is about.
+                                                    color: 'text.primary',
+                                                    fontWeight: 500,
                                                     maxWidth: 200,
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',

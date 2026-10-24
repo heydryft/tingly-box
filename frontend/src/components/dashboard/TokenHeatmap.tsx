@@ -114,13 +114,26 @@ const getMonthLabel = (week: (string | null)[], locale: string): string | null =
     return new Date(`${lastDay}T00:00:00`).toLocaleString(locale, { month: 'short' });
 };
 
-// Build month labels (show only when month changes)
-const buildMonthLabels = (weeks: (string | null)[][], locale: string): (string | null)[] => {
-    return weeks.map((week, i) => {
+// A month label needs about this many week columns before the next one starts,
+// or the two run together ("OctNov").
+const MIN_LABEL_GAP_WEEKS = 3;
+
+// Build month labels (show only when month changes). A month that gets fewer
+// than MIN_LABEL_GAP_WEEKS columns before the next label (the partial month at
+// the start of the window) goes unlabelled.
+export const buildMonthLabels = (weeks: (string | null)[][], locale: string): (string | null)[] => {
+    const labels = weeks.map((week, i) => {
         const label = getMonthLabel(week, locale);
         const previous = i > 0 ? getMonthLabel(weeks[i - 1], locale) : null;
         return label !== previous ? label : null;
     });
+    let next = Infinity;
+    for (let i = labels.length - 1; i >= 0; i--) {
+        if (labels[i] === null) continue;
+        if (next - i < MIN_LABEL_GAP_WEEKS) labels[i] = null;
+        else next = i;
+    }
+    return labels;
 };
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
