@@ -50,6 +50,7 @@ interface BrandIconProps {
     size?: number;
     sx?: SxProps<Theme>;
     style?: React.CSSProperties;
+    grayscale?: boolean;
 }
 
 // Icon mapping table: maps icon identifier from provider templates to React components
@@ -192,7 +193,7 @@ const ProviderIcon = ({identifier, size = 20, sx, style}: {identifier: string} &
         return <FallbackIcon size={size} sx={sx} style={style} />;
     }
 
-    return <IconComponent size={size} sx={sx} style={style} />;
+    return <IconComponent size={size} sx={sx} style={style} grayscale={false} />;
 };
 
 export default ProviderIcon;
