@@ -159,8 +159,11 @@ export function ChartWrapper({ title, hasData, children }: ChartWrapperProps) {
     return (
         <Box
             sx={{
-                p: 3,
-                borderRadius: 3,
+                // Same frame and title as Response Performance and Usage by Model beside it.
+                px: 2.25,
+                pt: 2,
+                pb: 2,
+                borderRadius: 2,
                 border: '1px solid',
                 borderColor: 'divider',
                 flexGrow: 1,
@@ -170,16 +173,8 @@ export function ChartWrapper({ title, hasData, children }: ChartWrapperProps) {
                 flexDirection: 'column',
             }}
         >
-            <Box sx={{ mb: 2.5 }}>
-                <Typography
-                    variant="h6"
-                    sx={{
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        letterSpacing: '-0.01em',
-                        color: 'text.primary',
-                    }}
-                >
+            <Box sx={{ mb: 1.5 }}>
+                <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'text.primary' }}>
                     {title}
                 </Typography>
             </Box>
