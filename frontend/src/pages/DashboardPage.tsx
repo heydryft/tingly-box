@@ -277,8 +277,7 @@ export default function DashboardPage() {
                                     alignItems: 'stretch',
                                 }}
                             >
-                                {/* Hug its five rows instead of stretching to the chart's height. */}
-                                <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'flex-start' }}>
+                                <Box sx={{ minWidth: 0, display: 'flex' }}>
                                     <PerformanceSummary queryParams={recordsParams} />
                                 </Box>
                                 <Box sx={{ minWidth: 0, display: 'flex' }}>
