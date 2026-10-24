@@ -93,7 +93,7 @@ export default function PerformanceSummary({ queryParams }: { queryParams: Perfo
     return (
         <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, backgroundColor: 'background.paper', boxShadow: 'none', overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
             <Box sx={{ px: 2.25, pt: 2, pb: 0.75, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>{t('dashboard.performance.title', { defaultValue: 'Response Performance' })}</Typography>
+                <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'text.primary' }}>{t('dashboard.performance.title', { defaultValue: 'Response Performance' })}</Typography>
                 {loading && <CircularProgress size={18} />}
             </Box>
             <Box sx={{ px: 2.25, pb: 1, display: 'grid', gridTemplateColumns: '52px repeat(3, minmax(0, 1fr))', columnGap: 1 }}>
