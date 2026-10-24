@@ -21,7 +21,8 @@
 Agent 页、Claude Code profile、Team、Image API 四类页面共用同一个页头形状，差异只来自各自的能力：
 
 - **标题行**：`PageHeader`，布局用 `agentPageHeaderSx()`（`components/ScenarioCardHeader.tsx`）。标题后跟 ⓘ（`scenarioPage.tooltip.<scenario>`，每个页都有）；有别名的对象（profile、Team）标题是「类型 - 名称」，编辑 / 删除紧跟名称。状态行（`AgentStatusRow`）在标题右侧，放不下时折到标题下方。
-- **按钮**：Requests / Usage / Log（`AgentLooksIn`）在前，关键动作（Setup Guide / Auto Config / Quick Start）实心、最右；按钮之间不换行。按钮比 Agent 页多的页（Team、Image API）断点用 `lg`。
+- **按钮**：一个 Log（`AgentLogButton`）在前，关键动作（Setup Guide / Auto Config / Quick Start）实心、最右；按钮之间不换行。按钮比 Agent 页多的页（Team、Image API）断点用 `lg`。
+- **Log 弹窗**（`RuleLogDialog` → `LogExplorer scenario=…`）：原来的 Requests、Usage、Log 三个入口合成一个（设计评审 A12）。三个标签：Requests 只列这个 Agent 的请求（展开看请求经过，不再有 Agent 列和加载条数），Usage 是今天这个 Agent 的四张卡片和按模型用量，"在仪表盘中查看"去看别的日期和图表，System 是 Tingly Box 的系统日志。所有 Agent 的请求仍在 System → Logs，同一套工具栏：左边搜索和筛选，右边条数、自动刷新、刷新。
 - **页头下方依次**：可折叠的接入区（`AgentAccessSection`，有请求后默认折叠为一行 Base URL）→ 独立的插件卡（`AgentPluginsCard`，折叠与否都显示）→ 规则。插件不放进接入卡（`ProviderConfigCard` 传 `showPlugins={false}`）：接入是一次性的，插件是常回来改的设置。
 - 页头已有 Log，规则卡片的「…」里不再给 Troubleshoot（`hideTroubleshoot`）。
 

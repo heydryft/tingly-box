@@ -10,25 +10,13 @@ export default {
     "noRequestsFinishSetup": "No requests yet · finish the setup below",
     "stale_one": "Config out of date · {{count}} difference",
     "stale_other": "Config out of date · {{count}} differences",
-    "requests": "Requests",
-    "usage": "Usage",
     "log": "Log",
-    "logTooltip": "Open this agent's logs (AI requests and system log)",
-    "usageTooltip": "Open the Dashboard filtered to this agent"
+    "logTooltip": "This agent's requests, today's usage and the system log"
   },
   "agentAccess": {
     "title": "Connection",
     "expand": "Show connection details",
     "collapse": "Hide connection details"
-  },
-  "agentActivity": {
-    "requests": "Requests",
-    "openDashboard": "Open in Dashboard",
-    "refresh": "Refresh",
-    "ok": "OK",
-    "error": "Error",
-    "empty": "No requests from this agent yet. Once it sends one, the latest requests show up here.",
-    "loadFailed": "Couldn't load this agent's requests."
   },
   "agentSetup": {
     "profile": {

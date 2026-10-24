@@ -1,5 +1,50 @@
 // App shell and shared copy: navigation, system settings, help, login, onboarding
 export default {
+  "logViewer": {
+    "views": "Log views",
+    "tabs": {
+      "requests": "Requests",
+      "usage": "Usage",
+      "system": "System"
+    },
+    "search": "Search requests",
+    "errorsOnly": "Errors only",
+    "load": "Load",
+    "latest_one": "Latest {{count}}",
+    "latest_other": "Latest {{count}}",
+    "refreshing": "Refreshing…",
+    "count_one": "{{count}} request",
+    "count_other": "{{count}} requests",
+    "countFiltered": "{{shown}} of {{total}} requests",
+    "searchLogs": "Search logs",
+    "allLevels": "All",
+    "entries_one": "{{count}} entry",
+    "entries_other": "{{count}} entries",
+    "entriesFiltered": "{{shown}} of {{total}} entries",
+    "refreshLogs": "Refresh logs",
+    "autoRefresh": "Auto-refresh",
+    "refreshNow": "Refresh now",
+    "refreshRequests": "Refresh requests",
+    "columns": {
+      "time": "Time",
+      "agent": "Agent",
+      "model": "Model",
+      "provider": "Provider",
+      "status": "Status",
+      "latency": "Latency"
+    },
+    "loading": "Loading…",
+    "noMatch": "No requests match these filters.",
+    "empty": "No model requests in recent retained history.",
+    "emptyAgent": "No requests from this agent yet. Once it sends one, it shows up here.",
+    "loadFailed": "Failed to load requests",
+    "detailGone": "Request details are no longer available in retained history.",
+    "detailFailed": "Failed to load request detail",
+    "retryHint": "Use refresh to retry.",
+    "loadingJourney": "Loading journey...",
+    "usageHint": "Other days, charts and performance are in the Dashboard.",
+    "openDashboard": "Open in Dashboard"
+  },
   "common": {
     "back": "Back",
     "add": "Add",

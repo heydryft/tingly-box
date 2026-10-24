@@ -20,12 +20,13 @@ import {
     MenuItem,
 } from '@mui/material';
 import { Fragment, useMemo, useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { KeyboardArrowDown as KeyboardArrowDownIcon } from '@/components/icons';
 import { KeyboardArrowUp as KeyboardArrowUpIcon } from '@/components/icons';
 import { Refresh as RefreshIcon } from '@/components/icons';
 import { useAutoRefresh } from '@/hooks/useAutoRefresh';
 import { useTableSort } from '@/hooks/useTableSort';
-import { formatTimestamp } from '@/utils/datetime';
+import { formatLogTime } from '@/utils/datetime';
 import { fontMono, fontSizes } from '@/theme/fonts';
 import { alpha, useTheme } from '@mui/material/styles';
 import { getStatusColor, logLevelTone, httpStatusTone } from '@/theme/status';
@@ -51,6 +52,7 @@ type SortField = 'time' | 'level' | 'status' | 'message';
 const LOG_LEVELS = ['debug', 'info', 'warn', 'error', 'fatal', 'panic'];
 
 const SystemLogViewer = ({ getLogs }: SystemLogViewerProps) => {
+    const { t } = useTranslation();
     const [allLogs, setAllLogs] = useState<SystemLogEntry[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -150,68 +152,25 @@ const SystemLogViewer = ({ getLogs }: SystemLogViewerProps) => {
 
     return (
         <Stack spacing={1.5} sx={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {/* Toolbar */}
-            <Stack
-                direction="row"
-                spacing={1.5}
-                useFlexGap
-                sx={{
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    flexShrink: 0,
-                    minHeight: 40,
-                    py: 0.75,
-                    alignContent: 'center'
-                }}>
-                <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{
-                        alignItems: "center",
-                        minHeight: 30
-                    }}>
-                    <FormControlLabel
-                        control={(
-                            <Switch
-                                size="small"
-                                checked={autoRefresh}
-                                onChange={(_, checked) => setAutoRefresh(checked)}
-                            />
-                        )}
-                        label={<Typography variant="body2">Auto-refresh</Typography>}
-                        sx={{ m: 0, mr: 0.25 }}
-                    />
-                    <Tooltip title="Refresh now" arrow>
-                        <span>
-                            <IconButton
-                                size="small"
-                                aria-label="Refresh logs"
-                                onClick={loadLogs}
-                                disabled={loading}
-                            >
-                                <RefreshIcon fontSize="small" />
-                            </IconButton>
-                        </span>
-                    </Tooltip>
-                    <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ whiteSpace: 'nowrap' }}
+            {/* Filters on the left, liveness on the right: the same toolbar as the requests log. */}
+            <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
+                <TextField
+                    size="small"
+                    placeholder={t('logViewer.searchLogs', { defaultValue: 'Search logs' })}
+                    value={search}
+                    onChange={event => setSearch(event.target.value)}
+                    slotProps={{ htmlInput: { 'aria-label': t('logViewer.searchLogs', { defaultValue: 'Search logs' }) } }}
+                    sx={{ width: 240 }}
+                />
+                <TextField
+                        select
+                        size="small"
+                        value={limit}
+                        onChange={event => setLimit(Number(event.target.value))}
+                        slotProps={{ htmlInput: { 'aria-label': t('logViewer.load', { defaultValue: 'Load' }) } }}
                     >
-                        {loading
-                            ? 'Refreshing…'
-                            : selectedLevels.size > 0 || search.trim()
-                                ? `${logs.length} of ${allLogs.length} entries`
-                                : `${allLogs.length} entries`}
-                    </Typography>
-                </Stack>
-
-                <TextField size="small" label="Search loaded logs" value={search} onChange={event => setSearch(event.target.value)} sx={{ minWidth: 220 }} />
-                <TextField select size="small" label="Load" value={limit} onChange={event => setLimit(Number(event.target.value))} sx={{ minWidth: 95 }}>
-                    {[200, 500, 1000].map(value => <MenuItem key={value} value={value}>{value}</MenuItem>)}
+                        {[200, 500, 1000].map(value => <MenuItem key={value} value={value}>{t('logViewer.latest', { count: value, defaultValue: 'Latest {{count}}' })}</MenuItem>)}
                 </TextField>
-                <Box sx={{ flex: 1 }} />
-
                 <Stack
                     direction="row"
                     spacing={0.5}
@@ -224,7 +183,7 @@ const SystemLogViewer = ({ getLogs }: SystemLogViewerProps) => {
                     }}
                 >
                     <Chip
-                        label="All"
+                        label={t('logViewer.allLevels', { defaultValue: 'All' })}
                         size="small"
                         clickable
                         color={selectedLevels.size === 0 ? 'primary' : 'default'}
@@ -265,6 +224,31 @@ const SystemLogViewer = ({ getLogs }: SystemLogViewerProps) => {
                         );
                     })}
                 </Stack>
+                <Box sx={{ flex: 1 }} />
+                <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                    {loading
+                        ? t('logViewer.refreshing', { defaultValue: 'Refreshing…' })
+                        : selectedLevels.size > 0 || search.trim()
+                            ? t('logViewer.entriesFiltered', { shown: logs.length, total: allLogs.length, defaultValue: '{{shown}} of {{total}} entries' })
+                            : t('logViewer.entries', { count: allLogs.length, defaultValue: '{{count}} entries' })}
+                </Typography>
+                <FormControlLabel
+                    control={<Switch size="small" checked={autoRefresh} onChange={(_, checked) => setAutoRefresh(checked)} />}
+                    label={<Typography variant="body2">{t('logViewer.autoRefresh', { defaultValue: 'Auto-refresh' })}</Typography>}
+                    sx={{ m: 0 }}
+                />
+                <Tooltip title={t('logViewer.refreshNow', { defaultValue: 'Refresh now' })} arrow>
+                    <span>
+                        <IconButton
+                            size="small"
+                            aria-label={t('logViewer.refreshLogs', { defaultValue: 'Refresh logs' })}
+                            onClick={loadLogs}
+                            disabled={loading}
+                        >
+                            <RefreshIcon fontSize="small" />
+                        </IconButton>
+                    </span>
+                </Tooltip>
             </Stack>
             {/* Logs Table — fills remaining space */}
             {error && <Alert severity="error">{error}</Alert>}
@@ -354,7 +338,7 @@ const SystemLogViewer = ({ getLogs }: SystemLogViewerProps) => {
                                             </IconButton>
                                         </TableCell>
                                         <TableCell sx={{ fontSize: fontSizes.sm, color: 'text.secondary' }}>
-                                            {formatTimestamp(log.time)}
+                                            {formatLogTime(log.time)}
                                         </TableCell>
                                         <TableCell>
                                             <Chip

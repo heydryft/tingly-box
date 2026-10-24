@@ -14,8 +14,7 @@ import PageLayout from '@/components/PageLayout';
 import PageHeader from '@/components/PageHeader';
 import ScenarioLogDialog from '@/components/RuleLogDialog';
 import AgentAccessSection, {useAccessExpanded} from './components/AgentAccessSection';
-import AgentActivityDialog from './components/AgentActivityDialog';
-import AgentStatusRow, {AgentLooksIn} from './components/AgentStatusRow';
+import AgentStatusRow, {AgentLogButton} from './components/AgentStatusRow';
 import {useAgentObservation} from '@/pages/scenario/hooks/useAgentObservation';
 import ScenarioPageSkeleton from './components/ScenarioPageSkeleton';
 import { SCENARIO_HEADER_CONTENT_MAX_WIDTH, agentPageHeaderSx } from './components/ScenarioCardHeader';
@@ -46,7 +45,6 @@ const UseTeamPageContent: React.FC = () => {
 
     const observation = useAgentObservation(scenario);
     const access = useAccessExpanded(scenario, !observation.data?.lastRequestAt);
-    const [requestsOpen, setRequestsOpen] = useState(false);
     const [logOpen, setLogOpen] = useState(false);
     // The Team's keys and the actions on them (create / enable / move / delete),
     // all worked from the key card under the header.
@@ -222,11 +220,7 @@ const UseTeamPageContent: React.FC = () => {
                                         },
                                     }}
                                 />
-                                <AgentLooksIn
-                                    onOpenRequests={() => setRequestsOpen(true)}
-                                    onOpenLog={() => setLogOpen(true)}
-                                    onOpenUsage={() => navigate(`/dashboard/today?scenario=${encodeURIComponent(scenario)}`)}
-                                />
+                                <AgentLogButton onOpenLog={() => setLogOpen(true)} />
                             </>
                         )}
                         // More buttons than an Agent page, so they share the title's row from lg up.
@@ -265,7 +259,6 @@ const UseTeamPageContent: React.FC = () => {
             {keyActions.dialogs}
 
             <ScenarioLogDialog open={logOpen} onClose={() => setLogOpen(false)} scenario={scenario} title={t('agentStatus.log')} />
-            <AgentActivityDialog scenario={scenario} open={requestsOpen} onClose={() => setRequestsOpen(false)} />
             <TeamGuideDialog open={teamGuideOpen} onClose={() => setTeamGuideOpen(false)} />
 
             <Dialog open={editorOpen} onClose={() => setEditorOpen(false)} maxWidth="sm" fullWidth>

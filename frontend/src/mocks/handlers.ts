@@ -56,6 +56,29 @@ const mockModelRequests = [
         event_count: 3,
         trace_id: 'ffee1122334455667788990011223344',
     },
+    // Claude Code's own traffic, so its Log dialog has rows to show.
+    ...([
+        ['req-cc-1', 'claude-opus-4-8', 'claude-opus-4-8', 200, 4120],
+        ['req-cc-2', 'claude-sonnet-5', 'claude-sonnet-5', 200, 1630],
+        ['req-cc-3', 'claude-sonnet-5', 'claude-sonnet-5', 429, 1510],
+        ['req-cc-4', 'claude-haiku-4-5', 'claude-sonnet-5', 200, 980],
+        ['req-cc-5', 'claude-opus-4-8', 'claude-opus-4-8', 200, 3870],
+        ['req-cc-6', 'claude-sonnet-5', 'claude-sonnet-5', 200, 2240],
+    ] as const).map(([request_id, request_model, routed_model, status, latency_ms]) => ({
+        request_id,
+        time: '',
+        scenario: 'claude_code',
+        request_model,
+        routed_model,
+        provider: 'Anthropic',
+        method: 'POST',
+        path: '/tingly/claude_code/v1/messages',
+        status,
+        latency_ms,
+        has_error: status >= 400,
+        max_level: status >= 400 ? 'error' : 'info',
+        event_count: 3,
+    })),
 ]
 
 // Shared time anchor for the request-detail and trace handlers. It is

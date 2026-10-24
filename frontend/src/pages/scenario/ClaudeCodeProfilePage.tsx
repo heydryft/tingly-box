@@ -2,8 +2,7 @@ import CardGrid from "@/components/CardGrid.tsx";
 import PageLayout from '@/components/PageLayout';
 import PageHeader from '@/components/PageHeader';
 import ScenarioLogDialog from '@/components/RuleLogDialog';
-import AgentActivityDialog from './components/AgentActivityDialog';
-import AgentStatusRow, { AgentLooksIn } from './components/AgentStatusRow';
+import AgentStatusRow, { AgentLogButton } from './components/AgentStatusRow';
 import AgentAccessSection, { useAccessExpanded } from './components/AgentAccessSection';
 import ProfileSetupDialog from './components/ProfileSetupDialog';
 import { useAgentObservation } from '@/pages/scenario/hooks/useAgentObservation';
@@ -91,7 +90,6 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
     // Profile state
     const { getProfiles, refresh: refreshProfiles } = useProfileContext();
     const currentProfile = getProfiles(BASE_SCENARIO).find(p => p.id === profileId);
-    const [requestsOpen, setRequestsOpen] = useState(false);
     const [setupOpen, setSetupOpen] = useState(false);
     const [logOpen, setLogOpen] = useState(false);
     const [renameProfileOpen, setRenameProfileOpen] = useState(false);
@@ -242,11 +240,7 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
                 // (Setup Guide) filled and rightmost.
                 actions={(
                     <>
-                        <AgentLooksIn
-                            onOpenRequests={() => setRequestsOpen(true)}
-                            onOpenLog={() => setLogOpen(true)}
-                            onOpenUsage={() => navigate(`/dashboard/today?scenario=${encodeURIComponent(scenario)}`)}
-                        />
+                        <AgentLogButton onOpenLog={() => setLogOpen(true)} />
                         <Button onClick={() => setSetupOpen(true)} variant="contained" size="small">
                             {t('scenarioPage.setupGuide')}
                         </Button>
@@ -408,7 +402,6 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
                 />
 
                 <ScenarioLogDialog open={logOpen} onClose={() => setLogOpen(false)} scenario={scenario} title={t('agentStatus.log')} />
-                <AgentActivityDialog scenario={scenario} open={requestsOpen} onClose={() => setRequestsOpen(false)} />
 
                 <ProfileSetupDialog
                     open={setupOpen}

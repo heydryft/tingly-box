@@ -1,5 +1,47 @@
 // App shell and shared copy: navigation, system settings, help, login, onboarding
 export default {
+  "logViewer": {
+    "views": "日志视图",
+    "tabs": {
+      "requests": "请求",
+      "usage": "用量",
+      "system": "系统"
+    },
+    "search": "搜索请求",
+    "errorsOnly": "只看错误",
+    "load": "加载",
+    "latest_other": "最近 {{count}} 条",
+    "refreshing": "刷新中…",
+    "count_other": "{{count}} 个请求",
+    "countFiltered": "{{shown}} / {{total}} 个请求",
+    "searchLogs": "搜索日志",
+    "allLevels": "全部",
+    "entries_other": "{{count}} 条",
+    "entriesFiltered": "{{shown}} / {{total}} 条",
+    "refreshLogs": "刷新日志",
+    "autoRefresh": "自动刷新",
+    "refreshNow": "立即刷新",
+    "refreshRequests": "刷新请求",
+    "columns": {
+      "time": "时间",
+      "agent": "Agent",
+      "model": "模型",
+      "provider": "提供商",
+      "status": "状态",
+      "latency": "耗时"
+    },
+    "loading": "加载中…",
+    "noMatch": "没有符合筛选条件的请求。",
+    "empty": "最近保留的记录里没有模型请求。",
+    "emptyAgent": "这个 Agent 还没有发过请求。收到第一个请求后会显示在这里。",
+    "loadFailed": "无法加载请求",
+    "detailGone": "这条请求的详情已不在保留的记录里。",
+    "detailFailed": "无法加载请求详情",
+    "retryHint": "点刷新重试。",
+    "loadingJourney": "正在加载请求经过…",
+    "usageHint": "其他日期、图表和性能在仪表盘里。",
+    "openDashboard": "在仪表盘中查看"
+  },
   "common": {
     "back": "返回",
     "add": "添加",

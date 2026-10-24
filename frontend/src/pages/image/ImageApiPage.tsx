@@ -8,8 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import PageHeader from '@/components/PageHeader';
 import ScenarioLogDialog from '@/components/RuleLogDialog';
-import AgentActivityDialog from '@/pages/scenario/components/AgentActivityDialog';
-import { AgentStatusRow, AgentLooksIn } from '@/pages/scenario/components/AgentStatusRow';
+import { AgentStatusRow, AgentLogButton } from '@/pages/scenario/components/AgentStatusRow';
 import AgentAccessSection, { useAccessExpanded } from '@/pages/scenario/components/AgentAccessSection';
 import AgentPluginsCard from '@/pages/scenario/components/AgentPluginsCard';
 import { useAgentObservation } from '@/pages/scenario/hooks/useAgentObservation';
@@ -43,7 +42,6 @@ const ImageApiPageContent: React.FC = () => {
         loadRules,
     } = useScenarioPageInternal(scenario);
 
-    const [requestsOpen, setRequestsOpen] = useState(false);
     const [logOpen, setLogOpen] = useState(false);
     // Facts, not clicks: connected once a request has come through.
     const observation = useAgentObservation(scenario);
@@ -70,11 +68,7 @@ const ImageApiPageContent: React.FC = () => {
                     )}
                     actions={(
                         <>
-                            <AgentLooksIn
-                                onOpenRequests={() => setRequestsOpen(true)}
-                                onOpenLog={() => setLogOpen(true)}
-                                onOpenUsage={() => navigate(`/dashboard/today?scenario=${encodeURIComponent(scenario)}`)}
-                            />
+                            <AgentLogButton onOpenLog={() => setLogOpen(true)} />
                             <Button onClick={() => navigate('/image/playground')} variant="outlined" size="small">
                                 {t('image.openPlayground', { defaultValue: 'Try in Playground' })}
                             </Button>
@@ -123,7 +117,6 @@ const ImageApiPageContent: React.FC = () => {
                         onCopy={copyToClipboard}
                     />
                     <ScenarioLogDialog open={logOpen} onClose={() => setLogOpen(false)} scenario={scenario} title={t('agentStatus.log')} />
-                    <AgentActivityDialog scenario={scenario} open={requestsOpen} onClose={() => setRequestsOpen(false)} />
                 </CardGrid>
             </Stack>
         </PageLayout>

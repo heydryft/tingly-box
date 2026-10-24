@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
 import { Box, Button, Stack, Tooltip } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import ChoiceToggle from '@/components/ChoiceToggle';
@@ -20,8 +19,7 @@ import { useScenarioPageInternal } from '@/pages/scenario/hooks/useScenarioPageI
 import { useSlotRouting } from '@/pages/scenario/hooks/useSlotRouting';
 import { useAgentObservation } from '@/pages/scenario/hooks/useAgentObservation';
 import AgentAccessSection, { useAccessExpanded } from './components/AgentAccessSection';
-import AgentActivityDialog from './components/AgentActivityDialog';
-import AgentStatusRow, { AgentLooksIn } from './components/AgentStatusRow';
+import AgentStatusRow, { AgentLogButton } from './components/AgentStatusRow';
 import AgentSetupCard, {
     type AgentApplyResult,
     type AgentInstallAction,
@@ -172,11 +170,8 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
     const [isApplyLoading, setIsApplyLoading] = useState(false);
     // Whether every Quick Start step is done; null until the card has worked it out.
     const [setupDone, setSetupDone] = useState<boolean | null>(null);
-    // Requests (a dialog) and Usage (the Dashboard, filtered to this agent) are looks-in
-    // from the status row.
-    const [requestsOpen, setRequestsOpen] = useState(false);
+    // The agent's Log (requests, today's usage, system log) is the one look-in.
     const [logOpen, setLogOpen] = useState(false);
-    const navigate = useNavigate();
     const observation = useAgentObservation(scenario);
     // A finished Quick Start leaves the page; its button in the status row brings it back
     // (and resets it). `reopened` keeps it on show until it is finished again.
@@ -276,7 +271,7 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
     const access = useAccessExpanded(scenario, !connected || clientConfigStatus?.state === 'outdated');
 
     const configApplied = clientConfigStatus?.state === 'applied';
-    // Looks-in (Requests / Usage / Log) lead; the key actions (Quick Start,
+    // The Log look-in leads; the key actions (Quick Start,
     // header links, Auto Config / Setup Guide) follow, with the config button
     // always filled and rightmost so the next step is where the eye lands.
     const configButton = setup.kind !== 'none' && (
@@ -286,12 +281,7 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
     );
     const headerActions = (
         <>
-            <AgentLooksIn
-                onOpenRequests={() => setRequestsOpen(true)}
-                onOpenLog={() => setLogOpen(true)}
-                // The Dashboard already opens filtered to one agent (?scenario=).
-                onOpenUsage={() => navigate(`/dashboard/today?scenario=${encodeURIComponent(scenario)}`)}
-            />
+            <AgentLogButton onOpenLog={() => setLogOpen(true)} />
             {quickStart && quickStartHidden && (
                 // A finished Quick Start leaves the page; this brings it back (reset).
                 <Tooltip title={t('agentSetup.restartTooltip', { defaultValue: 'Run Quick Start again' })}>
@@ -415,7 +405,6 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
                 />
 
                 <ScenarioLogDialog open={logOpen} onClose={() => setLogOpen(false)} scenario={scenario} title={t('agentStatus.log')} />
-                <AgentActivityDialog scenario={scenario} open={requestsOpen} onClose={() => setRequestsOpen(false)} />
                 {setup.kind !== 'none' && setup.renderDialog(slot)}
                 {quickStart && <ConnectAIDialogs flow={connectAI} />}
             </Stack>

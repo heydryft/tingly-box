@@ -8,25 +8,13 @@ export default {
     "noRequestsYet": "尚未收到请求",
     "noRequestsFinishSetup": "尚未收到请求 · 先完成下面的接入",
     "stale_other": "配置已过期 · {{count}} 处差异",
-    "requests": "请求记录",
-    "usage": "用量",
     "log": "日志",
-    "logTooltip": "打开此 Agent 的日志（AI 请求与系统日志）",
-    "usageTooltip": "打开仪表盘，并按此 Agent 过滤"
+    "logTooltip": "此 Agent 的请求、今日用量和系统日志"
   },
   "agentAccess": {
     "title": "接入",
     "expand": "展开接入信息",
     "collapse": "收起接入信息"
-  },
-  "agentActivity": {
-    "requests": "请求",
-    "openDashboard": "在仪表盘中查看",
-    "refresh": "刷新",
-    "ok": "成功",
-    "error": "错误",
-    "empty": "这个 Agent 还没有发过请求。收到第一个请求后，最近请求会显示在这里。",
-    "loadFailed": "无法加载该 Agent 的请求。"
   },
   "agentSetup": {
     "profile": {

@@ -20,7 +20,7 @@ describe('SystemLogViewer diagnostics', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Refresh logs' }));
         await screen.findByText('new request succeeded');
         expect(screen.getByText('ERROR: provider overload')).toBeInTheDocument();
-        fireEvent.change(screen.getByLabelText('Search loaded logs'), { target: { value: 'provider overload' } });
+        fireEvent.change(screen.getByLabelText('Search logs'), { target: { value: 'provider overload' } });
         await waitFor(() => expect(screen.queryByText('new request succeeded')).not.toBeInTheDocument());
         expect(screen.getAllByText('old request failed').length).toBeGreaterThan(0);
     });
