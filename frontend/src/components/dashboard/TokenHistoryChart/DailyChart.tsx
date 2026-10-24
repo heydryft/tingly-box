@@ -116,7 +116,7 @@ export function DailyTokenHistoryChart({ data }: DailyTokenHistoryChartProps) {
                             />
                             <XAxis
                                 dataKey="time"
-                                tick={{ fontSize: 12, fill: 'text.secondary', fontWeight: 500 }}
+                                tick={{ fontSize: 12, fill: theme.palette.text.secondary, fontWeight: 500 }}
                                 tickLine={false}
                                 axisLine={{ stroke: chartStyles.chart.axis, strokeWidth: 1.5 }}
                                 interval={labelInterval}
@@ -124,7 +124,7 @@ export function DailyTokenHistoryChart({ data }: DailyTokenHistoryChartProps) {
                             />
                             <YAxis
                                 tickFormatter={formatYAxis}
-                                tick={{ fontSize: 12, fill: 'text.secondary', fontWeight: 500 }}
+                                tick={{ fontSize: 12, fill: theme.palette.text.secondary, fontWeight: 500 }}
                                 tickLine={false}
                                 axisLine={{ stroke: chartStyles.chart.axis, strokeWidth: 1.5 }}
                                 width={60}
