@@ -46,7 +46,16 @@ export default function AgentUsagePanel({ scenario }: { scenario: string }) {
         return () => window.clearInterval(timer);
     }, [load]);
 
-    const summary = computeUsageSummary(stats ?? []);
+    // Nothing until the first answer, so the cards don't flash zeros.
+    if (stats === null) {
+        return (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {t('logViewer.loading', { defaultValue: 'Loading…' })}
+            </Typography>
+        );
+    }
+
+    const summary = computeUsageSummary(stats);
     const today = t('dashboard.overview.range.today');
 
     return (
@@ -94,7 +103,7 @@ export default function AgentUsagePanel({ scenario }: { scenario: string }) {
                     />
                 </Grid>
             </Grid>
-            <ServiceStatsTable stats={stats ?? []} />
+            <ServiceStatsTable stats={stats} />
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     {t('logViewer.usageHint', { defaultValue: 'Other days, charts and performance are in the Dashboard.' })}

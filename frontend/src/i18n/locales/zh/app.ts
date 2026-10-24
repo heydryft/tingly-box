@@ -37,6 +37,7 @@ export default {
     "loadFailed": "无法加载请求",
     "detailGone": "这条请求的详情已不在保留的记录里。",
     "detailFailed": "无法加载请求详情",
+    "error": "错误",
     "retryHint": "点刷新重试。",
     "loadingJourney": "正在加载请求经过…",
     "usageHint": "其他日期、图表和性能在仪表盘里。",

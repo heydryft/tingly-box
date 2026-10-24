@@ -330,12 +330,13 @@ const AILogViewer = ({ getRequests, getRequestDetail, getTrace, scenario }: Requ
                                                     {req.provider || '-'}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {/* Colour only means trouble: a 2xx is plain text. */}
-                                                    {req.status == null ? '-' : req.status >= 400 ? (
+                                                    {/* Colour only means trouble: a clean 2xx is plain text; a request that
+                                                        failed after a 2xx (has_error, e.g. a broken stream) still shows red. */}
+                                                    {req.status == null && !req.has_error ? '-' : req.has_error || (req.status ?? 0) >= 400 ? (
                                                         <Chip
                                                             size="small"
-                                                            label={req.status}
-                                                            color={statusColor(req.status)}
+                                                            label={req.status ?? t('logViewer.error', { defaultValue: 'Error' })}
+                                                            color={req.status != null && req.status >= 400 ? statusColor(req.status) : 'error'}
                                                             sx={{ fontSize: fontSizes.micro, height: 20, fontWeight: 'bold' }}
                                                         />
                                                     ) : (

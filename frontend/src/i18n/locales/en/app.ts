@@ -40,6 +40,7 @@ export default {
     "loadFailed": "Failed to load requests",
     "detailGone": "Request details are no longer available in retained history.",
     "detailFailed": "Failed to load request detail",
+    "error": "Error",
     "retryHint": "Use refresh to retry.",
     "loadingJourney": "Loading journey...",
     "usageHint": "Other days, charts and performance are in the Dashboard.",
