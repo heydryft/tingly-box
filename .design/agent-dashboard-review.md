@@ -3,7 +3,7 @@
 状态：**评审（第 1 轮，2026-10-24）**。发现等待逐项确认；其中两个是缺陷，已修（D19、B10）。
 
 画布：[`agent-dashboard-review/`](./agent-dashboard-review/)（Tingly Design 项目，`npx tingly-design open .design/agent-dashboard-review`；
-截图在它的 `uploads/` 里）。预览：[`images/agent-dashboard-review/`](./images/agent-dashboard-review/)。
+截图在它的 `uploads/` 里）。
 判断标准：[ux-principles.md](./ux-principles.md) 的 P1–P12。编号接着 [ux-review.md](./ux-review.md) §3：
 Agent 页 A12 起，Profile 页 B7 起，Dashboard D7 起，跨页 X1 起。相关：[agent-page-redesign.md](./agent-page-redesign.md)、
 [ui-flow-analysis.md](./ui-flow-analysis.md)（Agent 页头部的八轮修正）。
