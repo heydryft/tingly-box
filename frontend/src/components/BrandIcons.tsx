@@ -46,6 +46,39 @@ import BedrockSvg from '@lobehub/icons-static-svg/icons/bedrock-color.svg?url';
 import AzureSvg from '@lobehub/icons-static-svg/icons/azure-color.svg?url';
 import VertexAISvg from '@lobehub/icons-static-svg/icons/vertexai-color.svg?url';
 
+// Single-colour twins of the brand-colour icons, for surfaces that stay
+// black and white (the routing graph).
+import ClaudeCodeMonoSvg from '@lobehub/icons-static-svg/icons/claudecode.svg?url';
+import CodexMonoSvg from '@lobehub/icons-static-svg/icons/codex.svg?url';
+import GeminiMonoSvg from '@lobehub/icons-static-svg/icons/gemini.svg?url';
+import GoogleMonoSvg from '@lobehub/icons-static-svg/icons/google.svg?url';
+import QwenMonoSvg from '@lobehub/icons-static-svg/icons/qwen.svg?url';
+import DeepSeekMonoSvg from '@lobehub/icons-static-svg/icons/deepseek.svg?url';
+import MinimaxMonoSvg from '@lobehub/icons-static-svg/icons/minimax.svg?url';
+import ZhipuMonoSvg from '@lobehub/icons-static-svg/icons/zhipu.svg?url';
+import MistralMonoSvg from '@lobehub/icons-static-svg/icons/mistral.svg?url';
+import OpenRouterMonoSvg from '@lobehub/icons-static-svg/icons/openrouter.svg?url';
+import TogetherMonoSvg from '@lobehub/icons-static-svg/icons/together.svg?url';
+import FireworksMonoSvg from '@lobehub/icons-static-svg/icons/fireworks.svg?url';
+import PerplexityMonoSvg from '@lobehub/icons-static-svg/icons/perplexity.svg?url';
+import CohereMonoSvg from '@lobehub/icons-static-svg/icons/cohere.svg?url';
+import NvidiaMonoSvg from '@lobehub/icons-static-svg/icons/nvidia.svg?url';
+import NovitaMonoSvg from '@lobehub/icons-static-svg/icons/novita.svg?url';
+import DeepInfraMonoSvg from '@lobehub/icons-static-svg/icons/deepinfra.svg?url';
+import HyperbolicMonoSvg from '@lobehub/icons-static-svg/icons/hyperbolic.svg?url';
+import ModelScopeMonoSvg from '@lobehub/icons-static-svg/icons/modelscope.svg?url';
+import SiliconFlowMonoSvg from '@lobehub/icons-static-svg/icons/siliconcloud.svg?url';
+import StepfunMonoSvg from '@lobehub/icons-static-svg/icons/stepfun.svg?url';
+import BaiduMonoSvg from '@lobehub/icons-static-svg/icons/baidu.svg?url';
+import TencentMonoSvg from '@lobehub/icons-static-svg/icons/tencent.svg?url';
+import IflytekCloudMonoSvg from '@lobehub/icons-static-svg/icons/iflytekcloud.svg?url';
+import BaichuanMonoSvg from '@lobehub/icons-static-svg/icons/baichuan.svg?url';
+import YiMonoSvg from '@lobehub/icons-static-svg/icons/yi.svg?url';
+import DoubaoMonoSvg from '@lobehub/icons-static-svg/icons/doubao.svg?url';
+import BedrockMonoSvg from '@lobehub/icons-static-svg/icons/bedrock.svg?url';
+import AzureMonoSvg from '@lobehub/icons-static-svg/icons/azure.svg?url';
+import VertexAIMonoSvg from '@lobehub/icons-static-svg/icons/vertexai.svg?url';
+
 import DingTalkSvg from '@/assets/icons/dingtalk.svg?url';
 import DiscordSvg from '@/assets/icons/discord.svg?url';
 import FeishuSvg from '@/assets/icons/feishu.svg?url';
@@ -67,19 +100,24 @@ interface BrandIconProps {
     sx?: SxProps<Theme>;
     style?: React.CSSProperties;
     grayscale?: boolean;
+    /** Single-colour rendering, black on light and white on dark. */
+    mono?: boolean;
 }
 
 // Lobehub 的品牌 SVG 用 fill="currentColor" 是单色设计，但 <img> 加载是独立文档，
 // currentColor 没有外部颜色继承，会落到默认黑色，导致暗色主题下黑图不可见。
 // 解决：暗色主题下对单色图标加 invert(1)（黑→白），亮色主题保持原样。
 // 高亮态由 Sidebar 处理（白底 + 强制清零 filter，保持黑图在白底上的效果）。
-const createBrandIcon = (src: string, alt: string, defaultGrayscale = false, monochrome = false) => {
-    return ({size = 24, sx, style, grayscale = defaultGrayscale}: BrandIconProps) => {
+const createBrandIcon = (src: string, alt: string, defaultGrayscale = false, monochrome = false, monoSrc?: string) => {
+    return ({size = 24, sx, style, grayscale = defaultGrayscale, mono = false}: BrandIconProps) => {
         const theme = useTheme();
         const isDark = theme.palette.mode === 'dark';
 
+        const useMono = mono && !!monoSrc;
         let filter = 'none';
-        if (grayscale) {
+        if (useMono) {
+            filter = isDark ? 'invert(1)' : 'none';
+        } else if (grayscale) {
             filter = isDark
                 ? 'grayscale(100%) brightness(1.6)'
                 : 'grayscale(100%) brightness(1.15) contrast(1.1)';
@@ -102,7 +140,7 @@ const createBrandIcon = (src: string, alt: string, defaultGrayscale = false, mon
             >
                 <Box
                     component="img"
-                    src={src}
+                    src={useMono ? monoSrc : src}
                     alt={alt}
                     sx={{
                         display: 'block',
@@ -121,22 +159,22 @@ const createBrandIcon = (src: string, alt: string, defaultGrayscale = false, mon
 export const OpenAI = createBrandIcon(OpenAISvg, 'OpenAI', false, true);
 export const Anthropic = createBrandIcon(AnthropicSvg, 'Anthropic', false, true);
 export const Claude = createBrandIcon(ClaudeSvg, 'Claude', true);
-export const ClaudeCode = createBrandIcon(ClaudeCodeSvg, 'Claude Code');
-export const Codex = createBrandIcon(CodexSvg, 'Codex', true);
-export const Gemini = createBrandIcon(GeminiSvg, 'Gemini');
-export const Google = createBrandIcon(GoogleSvg, 'Google');
+export const ClaudeCode = createBrandIcon(ClaudeCodeSvg, 'Claude Code', false, false, ClaudeCodeMonoSvg);
+export const Codex = createBrandIcon(CodexSvg, 'Codex', true, false, CodexMonoSvg);
+export const Gemini = createBrandIcon(GeminiSvg, 'Gemini', false, false, GeminiMonoSvg);
+export const Google = createBrandIcon(GoogleSvg, 'Google', false, false, GoogleMonoSvg);
 export const Kimi = createBrandIcon(KimiSvg, 'Kimi', false, true);
-export const Qwen = createBrandIcon(QwenSvg, 'Qwen');
+export const Qwen = createBrandIcon(QwenSvg, 'Qwen', false, false, QwenMonoSvg);
 export const OpenCode = createBrandIcon(OpenCodeSvg, 'OpenCode', false, true);
-export const DeepSeek = createBrandIcon(DeepSeekSvg, 'DeepSeek');
-export const Minimax = createBrandIcon(MinimaxSvg, 'Minimax');
-export const Zhipu = createBrandIcon(ZhipuSvg, 'Zhipu');
+export const DeepSeek = createBrandIcon(DeepSeekSvg, 'DeepSeek', true, false, DeepSeekMonoSvg);
+export const Minimax = createBrandIcon(MinimaxSvg, 'Minimax', false, false, MinimaxMonoSvg);
+export const Zhipu = createBrandIcon(ZhipuSvg, 'Zhipu', false, false, ZhipuMonoSvg);
 export const Zai = createBrandIcon(ZaiSvg, 'Z.ai', false, true);
 export const ZCode = createBrandIcon(ZCodeSvg, 'ZCode', false, true);
 export const WorkBuddy = createBrandIcon(WorkBuddySvg, 'WorkBuddy');
 export const XAI = createBrandIcon(XAISvg, 'xAI', false, true);
-export const Mistral = createBrandIcon(MistralSvg, 'Mistral');
-export const OpenRouter = createBrandIcon(OpenRouterSvg, 'OpenRouter');
+export const Mistral = createBrandIcon(MistralSvg, 'Mistral', false, false, MistralMonoSvg);
+export const OpenRouter = createBrandIcon(OpenRouterSvg, 'OpenRouter', false, false, OpenRouterMonoSvg);
 export const Xcode = createBrandIcon(XcodeSvg, 'Xcode', true);
 export const VSCode = createBrandIcon(VSCodeSvg, 'VS Code', true);
 export const Cursor = createBrandIcon(CursorSvg, 'Cursor', false, true);
@@ -164,26 +202,26 @@ export const Slack = createBrandIcon(SlackSvg, 'Slack', true);
 // rest use lobehub's `fill="currentColor"` monochrome SVGs and need mask
 // rendering so they follow text color in dark/light themes.
 export const Groq = createBrandIcon(GroqSvg, 'Groq', false, true);
-export const Together = createBrandIcon(TogetherSvg, 'Together');
-export const Fireworks = createBrandIcon(FireworksSvg, 'Fireworks');
+export const Together = createBrandIcon(TogetherSvg, 'Together', false, false, TogetherMonoSvg);
+export const Fireworks = createBrandIcon(FireworksSvg, 'Fireworks', false, false, FireworksMonoSvg);
 export const Cerebras = createBrandIcon(CerebrasSvg, 'Cerebras', false, true);
-export const Perplexity = createBrandIcon(PerplexitySvg, 'Perplexity');
-export const Cohere = createBrandIcon(CohereSvg, 'Cohere');
-export const Nvidia = createBrandIcon(NvidiaSvg, 'NVIDIA');
-export const Novita = createBrandIcon(NovitaSvg, 'Novita');
-export const DeepInfra = createBrandIcon(DeepInfraSvg, 'DeepInfra');
-export const Hyperbolic = createBrandIcon(HyperbolicSvg, 'Hyperbolic');
-export const ModelScope = createBrandIcon(ModelScopeSvg, 'ModelScope');
-export const SiliconFlow = createBrandIcon(SiliconFlowSvg, 'SiliconFlow');
-export const Stepfun = createBrandIcon(StepfunSvg, 'Stepfun');
+export const Perplexity = createBrandIcon(PerplexitySvg, 'Perplexity', false, false, PerplexityMonoSvg);
+export const Cohere = createBrandIcon(CohereSvg, 'Cohere', false, false, CohereMonoSvg);
+export const Nvidia = createBrandIcon(NvidiaSvg, 'NVIDIA', false, false, NvidiaMonoSvg);
+export const Novita = createBrandIcon(NovitaSvg, 'Novita', false, false, NovitaMonoSvg);
+export const DeepInfra = createBrandIcon(DeepInfraSvg, 'DeepInfra', false, false, DeepInfraMonoSvg);
+export const Hyperbolic = createBrandIcon(HyperbolicSvg, 'Hyperbolic', false, false, HyperbolicMonoSvg);
+export const ModelScope = createBrandIcon(ModelScopeSvg, 'ModelScope', false, false, ModelScopeMonoSvg);
+export const SiliconFlow = createBrandIcon(SiliconFlowSvg, 'SiliconFlow', false, false, SiliconFlowMonoSvg);
+export const Stepfun = createBrandIcon(StepfunSvg, 'Stepfun', false, false, StepfunMonoSvg);
 export const Xiaomimimo = createBrandIcon(XiaomimimoSvg, 'Xiaomi Mimo', false, true);
-export const Baidu = createBrandIcon(BaiduSvg, 'Baidu');
+export const Baidu = createBrandIcon(BaiduSvg, 'Baidu', false, false, BaiduMonoSvg);
 export const Aws = createBrandIcon(AwsSvg, 'AWS', false, true);
-export const Bedrock = createBrandIcon(BedrockSvg, 'Amazon Bedrock');
-export const Azure = createBrandIcon(AzureSvg, 'Azure');
-export const VertexAI = createBrandIcon(VertexAISvg, 'Vertex AI');
-export const Tencent = createBrandIcon(TencentSvg, 'Tencent');
-export const IflytekCloud = createBrandIcon(IflytekCloudSvg, 'iFlytek');
-export const Baichuan = createBrandIcon(BaichuanSvg, 'Baichuan');
-export const Yi = createBrandIcon(YiSvg, 'Lingyi Wanwu');
-export const Doubao = createBrandIcon(DoubaoSvg, 'Doubao');
+export const Bedrock = createBrandIcon(BedrockSvg, 'Amazon Bedrock', false, false, BedrockMonoSvg);
+export const Azure = createBrandIcon(AzureSvg, 'Azure', false, false, AzureMonoSvg);
+export const VertexAI = createBrandIcon(VertexAISvg, 'Vertex AI', false, false, VertexAIMonoSvg);
+export const Tencent = createBrandIcon(TencentSvg, 'Tencent', false, false, TencentMonoSvg);
+export const IflytekCloud = createBrandIcon(IflytekCloudSvg, 'iFlytek', false, false, IflytekCloudMonoSvg);
+export const Baichuan = createBrandIcon(BaichuanSvg, 'Baichuan', false, false, BaichuanMonoSvg);
+export const Yi = createBrandIcon(YiSvg, 'Lingyi Wanwu', false, false, YiMonoSvg);
+export const Doubao = createBrandIcon(DoubaoSvg, 'Doubao', false, false, DoubaoMonoSvg);

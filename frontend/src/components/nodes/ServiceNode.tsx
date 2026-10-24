@@ -351,6 +351,7 @@ export const ServiceNode: React.FC<ServiceNodeProps> = ({
                             <ProviderLabel
                                 provider={providerInfo.provider}
                                 size={14}
+                                mono
                                 gap={0.5}
                                 sx={{ maxWidth: '100%' }}
                                 leading={providerWarning ? (
