@@ -342,6 +342,7 @@ export default {
       "action": "Get started"
     },
     "noRules": "No rules yet. Click \"New Model\" to add one.",
+    "noRulesFixed": "No model rules yet.",
     "copiedToClipboard": "{{label}} copied to clipboard!"
   },
   "decisionsGuide": {

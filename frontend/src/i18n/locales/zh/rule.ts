@@ -340,6 +340,7 @@ export default {
       "action": "开始使用"
     },
     "noRules": "还没有规则。点击「新建模型」添加。",
+    "noRulesFixed": "还没有模型规则。",
     "copiedToClipboard": "{{label}} 已复制到剪贴板！"
   },
   "decisionsGuide": {

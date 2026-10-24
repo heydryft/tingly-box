@@ -381,7 +381,8 @@ const TemplatePage: React.FC<TemplatePageProps> = (props) => {
                             py: 8,
                             color: 'text.secondary'
                         }}>
-                            {t('templatePage.noRules')}
+                            {/* Without "New Model" there is nothing to click: don't point at it. */}
+                            {t(allowAddRule ? 'templatePage.noRules' : 'templatePage.noRulesFixed')}
                         </Box>
                     ) : (
                         sortedRules.map((rule, index) => {

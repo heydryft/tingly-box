@@ -346,6 +346,7 @@ export default {
       "action": "Начать"
     },
     "noRules": "Правил пока нет. Нажмите «Новая модель», чтобы добавить.",
+    "noRulesFixed": "Правил моделей пока нет.",
     "copiedToClipboard": "{{label}} скопирован в буфер обмена!"
   },
   "decisionsGuide": {
