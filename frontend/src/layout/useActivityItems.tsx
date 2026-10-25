@@ -392,11 +392,11 @@ export function useActivityItems(): ActivityItem[] {
                 defaultPath: '/mcp/server-tools',
                 children: [
                     { path: '/mcp/server-tools', label: t('mcp.workspace.serverToolsNav', { defaultValue: 'Server Tools' }), icon: <IconServer sx={{ fontSize: 20 }} />, match: (path: string) => ['/mcp/server-tools', '/tools/servertool'].includes(path) },
-                    { path: '/mcp/tools', label: t('mcp.workspace.toolsNav', { defaultValue: 'MCP Integration' }), icon: <IconTerminal sx={{ fontSize: 20 }} />, match: (path: string) => ['/mcp/tools', '/mcp/sources'].includes(path) },
+                    { path: '/mcp/tools', label: t('mcp.workspace.toolsNav', { defaultValue: 'MCP Tools' }), icon: <IconTerminal sx={{ fontSize: 20 }} />, match: (path: string) => ['/mcp/tools', '/mcp/sources'].includes(path) },
                     ...mcpProfiles.map((p): NavItem => ({
                         path: `/mcp/profile/${p.id}`,
                         // The profile is the subject of its row (ux-principles #9).
-                        label: p.id === MCP_DEFAULT_PROFILE_ID ? t('mcp.workspace.defaultProfileName', { defaultValue: 'All tools' }) : p.name || p.id,
+                        label: p.id === MCP_DEFAULT_PROFILE_ID ? t('mcp.workspace.defaultProfileName', { defaultValue: 'MCP Integration' }) : p.name || p.id,
                         subtitle: p.id === MCP_DEFAULT_PROFILE_ID ? t('mcp.workspace.defaultNavCaption', { defaultValue: 'Default profile' }) : t('mcp.workspace.profileCaption', { defaultValue: 'MCP profile' }),
                         icon: <SettingsApplications sx={{ fontSize: 20 }} />,
                     })),
