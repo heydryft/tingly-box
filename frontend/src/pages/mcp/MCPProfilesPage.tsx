@@ -248,7 +248,7 @@ export default function MCPProfilesPage() {
                     {rows.length === 0 && (
                         <Typography color="text.secondary">
                             {!custom
-                                ? label('noToolsYet', 'No tools yet. Connect one on the MCP Tools page.')
+                                ? label('noToolsYet', 'No tools yet. Connect one on the MCP Integration page.')
                                 : label('emptyProfile', 'This profile has no tools. Add the ones this agent should use.')}
                         </Typography>
                     )}
@@ -281,7 +281,7 @@ export default function MCPProfilesPage() {
                                         {globallyOff && (
                                             <Typography variant="caption" color="text.secondary">
                                                 {row.tool
-                                                    ? label('globallyOff', 'Off on the MCP Tools page, so it is unavailable here')
+                                                    ? label('globallyOff', 'Off on the MCP Integration page, so it is unavailable here')
                                                     : label('toolGone', 'This tool no longer exists')}
                                             </Typography>
                                         )}

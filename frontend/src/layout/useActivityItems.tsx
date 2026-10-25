@@ -392,7 +392,7 @@ export function useActivityItems(): ActivityItem[] {
                 defaultPath: '/mcp/server-tools',
                 children: [
                     { path: '/mcp/server-tools', label: t('mcp.workspace.serverToolsNav', { defaultValue: 'Server Tools' }), icon: <IconServer sx={{ fontSize: 20 }} />, match: (path: string) => ['/mcp/server-tools', '/tools/servertool'].includes(path) },
-                    { path: '/mcp/tools', label: t('mcp.workspace.toolsNav', { defaultValue: 'MCP Tools' }), icon: <IconTerminal sx={{ fontSize: 20 }} />, match: (path: string) => ['/mcp/tools', '/mcp/sources'].includes(path) },
+                    { path: '/mcp/tools', label: t('mcp.workspace.toolsNav', { defaultValue: 'MCP Integration' }), icon: <IconTerminal sx={{ fontSize: 20 }} />, match: (path: string) => ['/mcp/tools', '/mcp/sources'].includes(path) },
                     ...mcpProfiles.map((p): NavItem => ({
                         path: `/mcp/profile/${p.id}`,
                         // The profile is the subject of its row (ux-principles #9).

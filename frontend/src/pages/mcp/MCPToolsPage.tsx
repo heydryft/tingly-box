@@ -71,7 +71,7 @@ export default function MCPToolsPage() {
                 >
                     <Stack>
                         <Typography component="h1" variant="h5" style={{ fontWeight: 700 }}>
-                            {label('toolsTitle', 'MCP Tools')}
+                            {label('toolsTitle', 'MCP Integration')}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                             {label(
