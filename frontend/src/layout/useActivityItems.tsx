@@ -396,8 +396,8 @@ export function useActivityItems(): ActivityItem[] {
                     ...mcpProfiles.map((p): NavItem => ({
                         path: `/mcp/profile/${p.id}`,
                         // The profile is the subject of its row (ux-principles #9).
-                        label: p.name || p.id,
-                        subtitle: p.id === MCP_DEFAULT_PROFILE_ID ? t('layout.default') : t('mcp.workspace.profileCaption', { defaultValue: 'MCP profile' }),
+                        label: p.id === MCP_DEFAULT_PROFILE_ID ? t('mcp.workspace.defaultProfileName', { defaultValue: 'All tools' }) : p.name || p.id,
+                        subtitle: p.id === MCP_DEFAULT_PROFILE_ID ? t('mcp.workspace.defaultNavCaption', { defaultValue: 'Default profile' }) : t('mcp.workspace.profileCaption', { defaultValue: 'MCP profile' }),
                         icon: <SettingsApplications sx={{ fontSize: 20 }} />,
                     })),
                     { path: '/mcp/profile/new', label: t('mcp.workspace.newProfileAction', { defaultValue: 'New profile' }), icon: <IconPlus sx={{ fontSize: 20 }} /> },

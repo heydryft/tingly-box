@@ -133,7 +133,7 @@ export default function MCPProfilesPage() {
                     title={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
                             <Box component="span" sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {profile.name || profile.id}
+                                {custom ? profile.name || profile.id : label('defaultProfileName', 'All tools')}
                             </Box>
                             {custom && (
                                 <>
