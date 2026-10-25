@@ -41,7 +41,13 @@ Code simply pick one.
 ## Pages
 
 Profiles live in the sidebar, as Claude Code's and Image's do: under Tools there
-is **Server Tools**, then **MCP Tools**, then one row per profile (Default first) and "New profile".
+is **Server Tools**, then **MCP Tools**, then one row per MCP profile and "New MCP Profile".
+
+**Naming.** The `default` profile is shown as **MCP Integration** with the
+caption "Default MCP profile" (a bare "Default" in the sidebar did not say what
+it was); its id stays `default`. Copy never says just "profile": it is always
+"MCP profile", because Claude Code and Image have profiles of their own in the
+same sidebar. The page where MCPs are connected stays **MCP Tools**.
 
 - **Server Tools** (`/mcp/server-tools`): the tools Tingly Box runs itself
   (Advisor). Their own page because they are a different kind of thing: no MCP
@@ -70,7 +76,7 @@ card and filled in the Test dialog.
 
 The old Tool / MCP / Server Tool pages and the "client" concept are removed.
 `/mcp`, `/mcp/profiles`, `/mcp/clients`, `/mcp/routes` land on Default;
-`/mcp/server-tools`, `/mcp/sources` and `/tools/servertool` land on MCP Tools.
+`/mcp/sources` lands on MCP Tools and `/tools/servertool` on Server Tools.
 
 ## Identifiers
 
