@@ -23,6 +23,7 @@ func TestSpeechForwarding(t *testing.T) {
 			upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/v1/audio/speech", r.URL.Path)
 				assert.Equal(t, "Bearer test-key", r.Header.Get("Authorization"))
+				assert.Equal(t, "audio-test-client/1.0", r.UserAgent())
 				var body map[string]any
 				require.NoError(t, json.NewDecoder(r.Body).Decode(&body))
 				assert.Equal(t, "upstream-tts", body["model"])
@@ -37,6 +38,7 @@ func TestSpeechForwarding(t *testing.T) {
 			router := newDualProviderRouter(t, upstream.URL, protocol.APIStyleAnthropic, scenario, "speaker", "upstream-tts")
 			for _, version := range []string{"", "/v1"} {
 				req := httptest.NewRequest(http.MethodPost, "/tingly/"+string(scenario)+version+"/audio/speech", strings.NewReader(`{"model":"speaker","input":"hello","voice":{"id":"voice_custom"},"vendor_option":"kept"}`))
+				req.Header.Set("User-Agent", "audio-test-client/1.0")
 				w := httptest.NewRecorder()
 				router.ServeHTTP(w, req)
 				require.Equal(t, http.StatusOK, w.Code, w.Body.String())

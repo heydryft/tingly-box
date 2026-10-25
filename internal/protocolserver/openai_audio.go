@@ -47,6 +47,9 @@ func (ph *ProtocolHandler) resolveAudioRoute(c *gin.Context, scenario typ.RuleSc
 		audioBadRequest(c, http.StatusBadRequest, "provider does not support the OpenAI Audio API; configure an OpenAI-compatible API-key provider")
 		return nil, "", false
 	}
+	// Carry rule/scenario wire headers into the pooled SDK transport without
+	// applying any chat-body transforms to audio requests.
+	ResolveRuleFlagsWithScenario(c, rule, scenario, ph.deps.Config.GetScenarioConfig(scenario), "", "", provider)
 	c.Request = c.Request.WithContext(typ.WithSessionID(c.Request.Context(), resolveSessionID(c, nil)))
 	SetTrackingContext(c, rule, provider, service.Model, model, streamed)
 	return provider, service.Model, true
