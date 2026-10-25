@@ -57,6 +57,7 @@ func TestSpeechValidationAndScope(t *testing.T) {
 		status                           int
 	}{
 		{"invalid JSON", "tts", `{`, "", "JSON object", 400},
+		{"duplicate routing model", "tts", `{"model":"allowed","model":"bypass","input":"hello","voice":"alloy"}`, "", "duplicate JSON", 400},
 		{"missing input", "tts", `{"model":"m","voice":"alloy"}`, "", "input is required", 400},
 		{"missing voice", "tts", `{"model":"m","input":"hello"}`, "", "voice", 400},
 		{"invalid speed", "tts", `{"model":"m","input":"hello","voice":"alloy","speed":0}`, "", "speed", 400},

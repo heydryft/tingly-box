@@ -54,6 +54,22 @@ func validateSpeechRequest(body []byte) error {
 	if !gjson.ValidBytes(body) || !gjson.ParseBytes(body).IsObject() {
 		return errors.New("request must be a JSON object")
 	}
+	// Duplicate JSON keys have different first/last-wins semantics across
+	// parsers. Reject them so an upstream cannot see a different model than
+	// the one authorized and rewritten by the routing layer.
+	seen := make(map[string]bool)
+	duplicate := false
+	gjson.ParseBytes(body).ForEach(func(key, value gjson.Result) bool {
+		if seen[key.String()] {
+			duplicate = true
+			return false
+		}
+		seen[key.String()] = true
+		return true
+	})
+	if duplicate {
+		return errors.New("duplicate JSON fields are not allowed")
+	}
 	for _, field := range []string{"model", "input"} {
 		value := gjson.GetBytes(body, field)
 		if value.Type != gjson.String || strings.TrimSpace(value.String()) == "" {
