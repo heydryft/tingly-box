@@ -17,7 +17,7 @@ export default function MCPServerToolsPage() {
     const label = (key: string, fallback: string) => t(`mcp.workspace.${key}`, { defaultValue: fallback });
     const [search, setSearch] = useSearchParams();
     const ws = useMCPWorkspace();
-    const { config, routing, enabled, loading, checking, busy } = ws;
+    const { config, routing, loading, checking, busy } = ws;
     const sources = (config.sources || []).filter(isServerToolSource);
     const selectedId = search.get('source');
     const closeSheet = () => {
@@ -56,7 +56,7 @@ export default function MCPServerToolsPage() {
                     sources={sources}
                     routes={(routing?.sources || []).filter((route) => sources.some((source) => source.id === route.id))}
                     loading={checking}
-                    enabled={enabled}
+                    enabled
                     saveSource={ws.saveSource}
                     onConfigureSource={(id) => setSearch({ source: id })}
                 />

@@ -316,10 +316,6 @@ type MCPToolCallResponse struct {
 }
 
 func (h *Handler) CallTool(c *gin.Context) {
-	if !h.IsMCPEnabled() {
-		c.JSON(403, MCPToolCallResponse{Error: "MCP execution is disabled"})
-		return
-	}
 	if h.runtime == nil {
 		c.JSON(503, MCPToolCallResponse{Error: "runtime unavailable"})
 		return
@@ -327,6 +323,12 @@ func (h *Handler) CallTool(c *gin.Context) {
 	var req MCPToolCallRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, MCPToolCallResponse{Error: err.Error()})
+		return
+	}
+	// The MCP flag gates connected MCP tools; Server Tools run on the gateway
+	// and are testable without it.
+	if !h.IsMCPEnabled() && !h.isServerToolSource(req.SourceID) {
+		c.JSON(403, MCPToolCallResponse{Error: "MCP execution is disabled"})
 		return
 	}
 	status, err := h.runtime.DiscoverSource(c.Request.Context(), req.SourceID)
@@ -415,4 +417,21 @@ func (h *Handler) DeleteProfile(c *gin.Context) {
 		}
 		return nil
 	}, 200)
+}
+
+// isServerToolSource reports whether the source is a virtual Server Tool source.
+func (h *Handler) isServerToolSource(id string) bool {
+	if h.cfg == nil {
+		return false
+	}
+	cfg := h.cfg.GetMCPRuntimeConfig()
+	if cfg == nil {
+		return false
+	}
+	for _, source := range cfg.Sources {
+		if source.ID == id {
+			return mcpruntime.SourceImplementation(source) == typ.ToolImplementationVirtual
+		}
+	}
+	return false
 }
