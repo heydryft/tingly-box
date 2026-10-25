@@ -12,6 +12,11 @@ export const isAdvisorTool = (tool: MCPCatalogTool, source?: MCPSourceConfig) =>
 export const isBuiltinSource = (source?: MCPSourceConfig) =>
     source?.origin === 'builtin' || source?.id === 'advisor' || source?.id === 'webtools';
 
+// Server Tools are run by Tingly Box itself, on the server: no MCP connection,
+// no profile, just a switch and their own settings. Today that is Advisor.
+export const isServerToolSource = (source?: MCPSourceConfig) =>
+    source?.transport === 'advisor' || !!source?.advisor || source?.id === 'advisor';
+
 export const isToolRestricted = (tool: MCPCatalogTool, source?: MCPSourceConfig) => {
     const allowed = source?.tools || [];
     const off = source?.enabled === false && !isBuiltinSource(source);

@@ -9,27 +9,25 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    Divider,
-    Drawer,
     IconButton,
     Stack,
     TextField,
     Typography,
 } from '@mui/material';
-import { Add, Close, Refresh } from '@/components/icons';
+import { Add, Refresh } from '@/components/icons';
 import { PageLayout } from '@/components/PageLayout';
 import MCPSourceEditor from './MCPSourceEditor';
-import MCPSourceWorkspace from './MCPSourceWorkspace';
+import MCPSourceDrawer from './MCPSourceDrawer';
 import MCPToolsPanel from './MCPToolsPanel';
 import MCPWorkspaceAlerts from './MCPWorkspaceAlerts';
 import { nextMCPId } from './workspaceState';
-import { api } from '@/services/api';
 import { useMCPWorkspace } from './useMCPWorkspace';
 import { defaultMCPSourceFormValue, formValueToSource } from './types';
+import { isServerToolSource } from './toolPresentation';
 
-// Every tool in one place: connect any MCP, see its tools and Server Tools
-// together, switch each one globally. Which profile exposes a tool is decided
-// on the Profiles page.
+// Every connected MCP and its tools: connect any MCP, switch each tool globally.
+// Which profile exposes a tool is decided on the Profile pages. Tingly Box's own
+// Server Tools are not MCP and live on their own page.
 export default function MCPToolsPage() {
     const { t } = useTranslation();
     const label = (key: string, fallback: string) => t(`mcp.workspace.${key}`, { defaultValue: fallback });
@@ -37,12 +35,11 @@ export default function MCPToolsPage() {
     const [search, setSearch] = useSearchParams();
     const ws = useMCPWorkspace();
     const { config, routing, enabled, loading, checking, busy } = ws;
-    const sources = config.sources || [];
+    const sources = (config.sources || []).filter((source) => !isServerToolSource(source));
     const [adding, setAdding] = useState(false);
     const [form, setForm] = useState(defaultMCPSourceFormValue);
     const [connectionError, setConnectionError] = useState('');
     const selectedId = search.get('source');
-    const selected = selectedId ? sources.find((source) => source.id === selectedId) : undefined;
     const closeSheet = () => {
         const next = new URLSearchParams(search);
         next.delete('source');
@@ -74,12 +71,12 @@ export default function MCPToolsPage() {
                 >
                     <Stack>
                         <Typography component="h1" variant="h5" style={{ fontWeight: 700 }}>
-                            {label('toolsTitle', 'All tools')}
+                            {label('toolsTitle', 'MCP Tools')}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                             {label(
                                 'toolsHint',
-                                'Connect any MCP and manage every tool, including the ones Tingly Box provides. A tool switched off here is off everywhere.'
+                                'Connect any MCP and manage its tools. A tool switched off here is off in every profile.'
                             )}
                         </Typography>
                     </Stack>
@@ -99,7 +96,7 @@ export default function MCPToolsPage() {
                 <MCPWorkspaceAlerts ws={ws} />
                 <MCPToolsPanel
                     sources={sources}
-                    routes={routing?.sources || []}
+                    routes={(routing?.sources || []).filter((route) => sources.some((source) => source.id === route.id))}
                     loading={checking}
                     enabled={enabled}
                     saveSource={ws.saveSource}
@@ -109,50 +106,7 @@ export default function MCPToolsPage() {
                     {label('chooseProfileTools', 'Choose which tools each profile exposes')}
                 </Button>
             </Stack>
-            <Drawer
-                anchor="right"
-                open={!!selectedId}
-                onClose={closeSheet}
-                slotProps={{
-                    paper: {
-                        role: 'dialog',
-                        'aria-label': selected?.name || selected?.id || label('missingConnection', 'Connection'),
-                        sx: { width: { xs: '100%', sm: 680 }, maxWidth: '100%' },
-                    },
-                }}
-            >
-                <Stack sx={{ p: 3 }} spacing={2.5}>
-                    <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                        <Typography variant="h5" style={{ fontWeight: 600 }}>
-                            {selected?.name || selected?.id || label('missingConnection', 'Connection no longer exists')}
-                        </Typography>
-                        <IconButton aria-label={label('close', 'Close workspace panel')} onClick={closeSheet}>
-                            <Close />
-                        </IconButton>
-                    </Stack>
-                    <Divider />
-                    {selected ? (
-                        <MCPSourceWorkspace
-                            key={selected.id}
-                            source={selected}
-                            route={routing?.sources.find((source) => source.id === selected.id)}
-                            enabled={enabled}
-                            saveSource={ws.saveSource}
-                            onRefresh={async () => {
-                                const response = await api.reconnectMCPSource(selected.id!);
-                                await ws.refreshRoutes();
-                                if (!response.success) throw new Error(response.error || 'Connection check failed');
-                            }}
-                            onDelete={async () => {
-                                await ws.acceptConfig(await api.deleteMCPSource(selected.id!));
-                                closeSheet();
-                            }}
-                        />
-                    ) : (
-                        <Alert severity="info">{label('missingConnection', 'Connection no longer exists')}</Alert>
-                    )}
-                </Stack>
-            </Drawer>
+            <MCPSourceDrawer ws={ws} selectedId={selectedId} onClose={closeSheet} />
             <Dialog open={adding} onClose={() => !busy && setAdding(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>{label('connectTools', 'Connect tools')}</DialogTitle>
                 <DialogContent dividers>

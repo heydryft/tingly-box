@@ -78,8 +78,7 @@ describe('route contract', () => {
             )
         ).toEqual([]);
         const target = (path: string) => navigateTargets(matchRoutes(routes, path)!.at(-1)!.route.element);
-        expect(target('/tools/servertool')).toEqual(['/mcp/tools']);
-        expect(target('/mcp/server-tools')).toEqual(['/mcp/tools']);
+        expect(target('/tools/servertool')).toEqual(['/mcp/server-tools']);
         expect(target('/mcp/clients')).toEqual(['/mcp/profile/default']);
         expect(target('/mcp')).toEqual(['/mcp/profile/default']);
     });

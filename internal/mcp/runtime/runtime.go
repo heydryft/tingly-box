@@ -189,7 +189,31 @@ func (r *Runtime) ListServerToolsForInjection(ctx context.Context) []openai.Chat
 	if r == nil {
 		return nil
 	}
-	out := make([]openai.ChatCompletionToolUnionParam, 0, 8)
+	return append(r.ListBuiltinServerToolsForInjection(ctx), r.remoteGatewayTools(ctx)...)
+}
+
+// HasBuiltinServerTools reports whether any Tingly Box Server Tool would be
+// offered to a model right now. It lets the request path serve Server Tools
+// without the experimental MCP flag, which only governs connected MCP tools.
+func (r *Runtime) HasBuiltinServerTools() bool {
+	if r == nil || r.virtualRegistry == nil {
+		return false
+	}
+	for _, vt := range r.virtualRegistry.ListVirtualTools() {
+		if r.isVirtualServerToolInjectable(vt) {
+			return true
+		}
+	}
+	return false
+}
+
+// ListBuiltinServerToolsForInjection returns only Tingly Box's own Server
+// Tools (Advisor), which need no MCP connection.
+func (r *Runtime) ListBuiltinServerToolsForInjection(ctx context.Context) []openai.ChatCompletionToolUnionParam {
+	if r == nil {
+		return nil
+	}
+	out := make([]openai.ChatCompletionToolUnionParam, 0, 2)
 	if r.virtualRegistry != nil {
 		virtualTools := r.virtualRegistry.ListVirtualTools()
 		for _, vt := range virtualTools {
@@ -218,7 +242,7 @@ func (r *Runtime) ListServerToolsForInjection(ctx context.Context) []openai.Chat
 			out = append(out, openai.ChatCompletionFunctionTool(def))
 		}
 	}
-	return append(out, r.remoteGatewayTools(ctx)...)
+	return out
 }
 
 // remoteGatewayTools discovers gateway-eligible tools from external sources.
@@ -274,6 +298,11 @@ func (r *Runtime) isVirtualServerToolInjectable(vt coretool.VirtualTool) bool {
 				return false
 			}
 			if !IsServerVisibleSource(source) {
+				return false
+			}
+			// On by default, but without a consultation provider a call can only
+			// fail, so the tool is offered once one is chosen.
+			if source.Advisor == nil || source.Advisor.ProviderUUID == "" {
 				return false
 			}
 			enabled, usage := EffectiveToolPolicy(source, vt.Name)

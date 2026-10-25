@@ -54,11 +54,16 @@ type mcpTransformCache struct {
 func (ph *ProtocolHandler) mcpChainTransforms(stripEnabled bool) []transform.Transform {
 	ph.mcpTC.once.Do(func() {
 		rt := ph.deps.MCPRuntime
-		ph.mcpTC.injection = servertransform.NewMCPToolInjectionTransform(rt)
+		ph.mcpTC.injection = servertransform.NewMCPToolInjectionTransform(rt).WithConnectedTools(ph.mcpEnabled)
 		ph.mcpTC.strip = servertransform.NewNativeWebSearchStripTransform(rt)
 		ph.mcpTC.guardOn = servertransform.NewMCPToolStripGuardTransform(rt, true)
 		ph.mcpTC.guardOff = servertransform.NewMCPToolStripGuardTransform(rt, false)
 	})
+	// Only Server Tools are on: no connected MCP tools are offered, so there is
+	// nothing for the strip and guard transforms to protect.
+	if !ph.mcpEnabled() {
+		return []transform.Transform{ph.mcpTC.injection}
+	}
 	guard := ph.mcpTC.guardOff
 	if stripEnabled {
 		guard = ph.mcpTC.guardOn
@@ -260,7 +265,7 @@ func (ph *ProtocolHandler) targetTransforms(c *gin.Context, plan *attemptPlan) [
 		transforms = append(transforms, servertransform.NewOutputLimitTransform(plan.MaxAllowed))
 	}
 
-	if ph.mcpEnabled() {
+	if ph.serverToolsEnabled() {
 		if mcpServesPair(plan.Source, plan.Target) {
 			transforms = append(transforms, ph.mcpChainTransforms(ph.mcpStripDisabledToolsEnabled())...)
 		} else {
