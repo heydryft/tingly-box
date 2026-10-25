@@ -91,6 +91,19 @@ is registered on the user's machine under its own name (`tb` for Default,
 - UI: `frontend/src/pages/mcp/` (`MCPToolsPage`, `MCPProfilesPage`,
   `profileState.ts`, `profileStore.ts`, shared `useMCPWorkspace`).
 
+## Server Tools work without any MCP connection
+
+Advisor (and the web tools) are registered by Tingly Box itself, so they exist
+before the user connects anything. Advisor is **on by default**; its switch on the
+MCP Tools page is the whole control. A built-in source has no connection to fix,
+so switching one of its tools on also turns the source on (`toolPolicyPatch`); an
+earlier version left the switch disabled while the source was off, with nothing
+in the UI able to turn the source on. Until a consultation model is chosen the
+card says so ("Needs a consultation model"), because a call without one can only
+fail. Existing installs keep the stored `enabled: false` from the old default;
+the switch now enables it. Injection into model requests still needs the
+experimental MCP flag.
+
 ## Open (carried, not decided here)
 
 - Ordinary connected tools can currently also be injected into model requests

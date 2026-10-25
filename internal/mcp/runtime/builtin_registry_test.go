@@ -112,7 +112,7 @@ func TestRegisterBuiltinTools_RegistersWebtoolsAndAdvisor(t *testing.T) {
 	}
 	require.NotNil(t, webtools)
 	require.NotNil(t, advisor)
-	require.False(t, *advisor.Enabled)
+	require.True(t, *advisor.Enabled, "the Server Tool is on by default")
 	require.NotNil(t, advisor.Advisor)
 	// No placeholder strings — fields are empty by default
 	require.Empty(t, advisor.Advisor.ProviderUUID)

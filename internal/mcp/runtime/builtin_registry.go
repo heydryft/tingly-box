@@ -106,7 +106,7 @@ func RegisterBuiltinTools(getConfig func() *typ.MCPRuntimeConfig, setConfig func
 	}
 
 	// Create advisor configuration and register as virtual tool.
-	advisorEnabled := typ.BoolPtr(false) // default: disabled
+	advisorEnabled := typ.BoolPtr(true) // default: on; it is only offered once a consultation provider is set
 	advisorVisibility := typ.ToolVisibilityServer
 	advisorTools := mcptools.DefaultBuiltinAdvisorToolNames()
 	advisorEnv := map[string]string{}

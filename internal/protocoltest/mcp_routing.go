@@ -85,7 +85,14 @@ func routingMCPCase(t flagTB, transport, state string) ([]string, string) {
 		}
 		return n
 	}
-	if (count(body.Routing.ServerTools) > 0) != wantServer {
+	// Advisor is on by default and is not the source under test.
+	var remoteServer []mcpruntime.RouteSource
+	for _, r := range body.Routing.ServerTools {
+		if r.ID == "remote" {
+			remoteServer = append(remoteServer, r)
+		}
+	}
+	if (count(remoteServer) > 0) != wantServer {
 		failures = append(failures, "server-tool graph differs from effective policy")
 	}
 	reader := routeProfile(body.Routing, "reader")
