@@ -8,6 +8,12 @@ export const zh: Dict<typeof en> = {
         copy: '复制', copied: '已复制', more: '更多', star: '收藏', unstar: '取消收藏', retry: '重试',
         tokensApprox: '≈ {{value}} tokens',
     },
+    threadSettings: {
+        model: '模型', permissions: '权限', projectDefault: '项目默认', defaultModel: '默认模型', defaultPermissions: '默认权限',
+        defaults: '项目线程默认设置', defaultsHelp: '新线程及未设置覆盖的已有线程使用这些默认值。单个线程的选择不会修改这里。',
+        nextTurn: '启动设置在下一次开启轮次时应用。立即发送会加入当前轮；需要新设置时请选择“本轮结束后发送”或“停止并发送”。',
+        lastModel: '上次使用的模型', configuredModel: '配置的模型',
+    },
     nav: {
         newChat: '新对话', chats: '对话', projects: '项目', recentChats: '最近对话',
         settings: '设置', noChats: '还没有对话', collapse: '收起侧栏', expand: '展开侧栏',
@@ -202,7 +208,7 @@ export const zh: Dict<typeof en> = {
     projectSettings: {
         title: '项目设置', tabGeneral: '通用', tabMemory: '记忆', tabEnvironment: '环境', tabUsage: '用量',
         coordinatorModel: '协调者模型', coordinatorModelHelp: '负责项目对话：路由与更新。留空使用连接的默认模型。',
-        threadModel: '线程模型', threadModelHelp: '所有线程使用（Claude Code --model）。留空使用连接的默认模型。这里换成更便宜的模型最省额度。',
+        threadModel: '线程默认模型', threadModelHelp: '新线程及未设置模型覆盖的线程使用（Claude Code --model）。留空使用宿主默认模型。单个线程的选择保持独立。',
         modelDefault: '连接默认',
         permissionMode: '线程权限',
         mode: {

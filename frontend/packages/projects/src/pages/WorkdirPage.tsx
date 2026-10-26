@@ -6,7 +6,9 @@ import { fontMono, fontSizes } from '@tingly/ui/theme/fonts';
 import { api, unwrap, type Attachment, type BackgroundTask, type Project, type Thread, type ThreadEvent } from '../client';
 import { AddWorkdirDialog } from '../components/workdir/AddWorkdirDialog';
 import { NewSessionView } from '../components/workdir/NewSessionView';
-import { loadPermissionModes, PermissionModeSelect } from '../components/workdir/PermissionModeSelect';
+import { loadPermissionModes } from '../components/workdir/PermissionModeSelect';
+import { ThreadSettingsPickers } from '../components/ThreadSettingsPickers';
+import { mergeThreadSettings, useThreadSettings } from '../hooks/useThreadSettings';
 import { uploadAttachments } from '../components/attachments';
 import { ProjectImTags, useProjectIm } from '../components/im/ProjectImBindings';
 import { IM_BINDINGS_CHANGED } from '../components/im/useImBindings';
@@ -197,6 +199,9 @@ export default function WorkdirPage() {
     });
 
     const selected = sessions?.find((s) => s.id === sessionId);
+    const selectedFolder = folders?.find((f) => f.id === selected?.project_id);
+    const settings = useThreadSettings(selected, true, (saved) => setSessions((list) => list?.map((th) => th.id === saved.id ? mergeThreadSettings(th, saved, true) : th) ?? null));
+    const threadBlocked = !!selectedFolder && (selectedFolder.paused || !!selectedFolder.archived_at);
     // The open thread's project stream (the all-projects one never carries thread_event). It reconnects on its own;
     // on a reconnect the thread is re-read for anything missed.
     useProjectEvents(sessionId ? (selected?.project_id ?? folder?.id ?? '') : '', (ev) => onThreadEvent.current(ev), () => {
@@ -264,36 +269,6 @@ export default function WorkdirPage() {
         } catch (e) {
             notify((e as Error).message, 'error');
             return false;
-        }
-    };
-
-    const setMode = async (mode: string) => {
-        if (!selected) return;
-        try {
-            const s = await unwrap(api.PUT('/api/v1/threads/{id}/permission-mode', { params: { path: { id: selected.id } }, body: { permission_mode: mode } }));
-            setSessions((list) => upsert(list ?? [], s));
-        } catch (e) {
-            notify((e as Error).message, 'error');
-        }
-    };
-
-    // A profile change goes first: it may clear a model the profile cannot run.
-    const setLaunch = async (next: SessionLaunch) => {
-        if (!selected) return;
-        const path = { params: { path: { id: selected.id } } };
-        try {
-            let s = selected;
-            if (next.profile !== (s.profile ?? '')) {
-                // The server resets the model with the profile.
-                s = await unwrap(api.PUT('/api/v1/threads/{id}/profile', { ...path, body: { profile: next.profile } }));
-                setSessions((list) => upsert(list ?? [], s));
-            }
-            if (next.model !== (s.model ?? '')) {
-                s = await unwrap(api.PUT('/api/v1/threads/{id}/model', { ...path, body: { model: next.model } }));
-                setSessions((list) => upsert(list ?? [], s));
-            }
-        } catch (e) {
-            notify((e as Error).message, 'error');
         }
     };
 
@@ -390,7 +365,10 @@ export default function WorkdirPage() {
                         thread={selected}
                         events={events}
                         running={running}
-                        disabled={false}
+                        disabled={threadBlocked}
+                        settingsSaving={settings.saving}
+                        canSend={settings.canSend}
+                        permissionLabel={selected?.permission_mode ? t(`session.mode.${selected.permission_mode}`, { defaultValue: selected.permission_mode }) : `${t('threadSettings.defaultPermissions')} · ${t(`session.mode.${selectedFolder?.thread_permission_mode || 'acceptEdits'}`)}`}
                         onBack={() => openNew()}
                         liveTasks={liveTasks}
                         railTop={merged ? sessionList : undefined}
@@ -403,10 +381,10 @@ export default function WorkdirPage() {
                             transcript.catchUp().catch(() => undefined);
                         }}
                         composerContext={selected && (
-                            <>
-                                {slots?.launchPickers?.({ value: { profile: selected.profile ?? '', model: selected.model ?? '' }, onChange: (n) => void setLaunch(n) })}
-                                <PermissionModeSelect value={selected.permission_mode ?? ''} modes={modes} onChange={(m) => void setMode(m)} />
-                            </>
+                            <ThreadSettingsPickers folder value={{ profile: selected.profile ?? '', model: selected.model ?? '' }}
+                                permissionMode={selected.permission_mode ?? ''} modes={modes} defaultPermissionMode={selectedFolder?.thread_permission_mode || 'acceptEdits'}
+                                disabled={threadBlocked || selected.status === 'resolved' || settings.saving}
+                                onLaunchChange={(next) => void settings.setLaunch(next)} onPermissionChange={(mode) => void settings.setPermission(mode)} />
                         )}
                         belowComposer={selected && events && slots?.statusLine?.({ session: selected, events })}
                     />

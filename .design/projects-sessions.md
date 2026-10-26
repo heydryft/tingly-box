@@ -61,6 +61,17 @@ Event     线程里的一步（消息、工具调用、审批……）；来源�
 
 界面上：主线程叫“项目对话”，其余都叫“线程”，文件夹页里也是“线程”。
 
+### 线程模型与权限的作用域
+
+- 项目 worker 的 `model_override` 保存用户选择，空值动态继承 `Project.thread_model`，再回落到宿主默认；`model` 继续记录上次实际回答模型，不能回填为覆盖。旧库升级只新增空覆盖列，不固定历史模型。
+- 文件夹 thread 保留原有 `model` / `profile` 启动选择及宿主校验（嵌入版为 profile 的模型档位，独立版为模型 ID）。新建和继续使用同一组选择器；宿主不提供 slots 时也能选模型。
+- `permission_mode` 为空时继承项目的 `thread_permission_mode`，最终为 `acceptEdits`；显式 `default` 是一个权限模式，不是“恢复继承”。项目默认只允许项目 API 的四种模式，不能提交空值；单个 thread 使用 `/threads/permission-modes` 的列表。
+- 项目对话输入框的“项目线程默认设置”只修改项目默认，影响新线程及没有覆盖的已有线程；worker 面板只调用该 thread 的模型/权限 PUT，不 PATCH 项目。主线程的协调者模型仍是项目配置，不提供无效的 worker 权限。
+- `/threads/:id/model` 对 worker 保存 `model_override`，对文件夹保存 `model`；空值恢复对应默认。设置持久化，刷新或切换布局从服务器值恢复，不跨 thread 共用草稿选择。
+- 继续消息仍是独立的 messages POST，不带每消息设置快照。前端保存设置时锁住其他选择和发送（可继续编辑草稿）；保存成功后才发送，失败保留已确认值。控制器位于布局分支之上，换停靠/浮窗不会丢掉保存锁；迟到响应只合并原 thread 的设置字段，不回退实时状态/用量。
+- 启动参数在下一次显式 engine Start 时应用；运行中“立即发送”加入当前轮，不重新应用设置，需要新设置时用“本轮结束后发送”或“停止并发送”。保持既有 engine 语义：CLI 自发后台轮次的宿主审批包装读取最新权限，CLI 本身的模式则在显式 Start 更新；不承诺每消息原子设置。
+
+
 ### Event
 
 `ProjectMessage` 并入 `thread_events`（`ThreadEvent` 的列不变：`kind`、`content`、`payload`、`request_id`、`parent`、`created_at`），

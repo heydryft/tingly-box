@@ -1,0 +1,35 @@
+import { useTranslation } from 'react-i18next';
+import { useProjectsHost, type SessionLaunch } from '../host/ProjectsHost';
+import { ModelPicker } from './ModelPicker';
+import { PermissionModeSelect } from './workdir/PermissionModeSelect';
+
+interface Props {
+    value: SessionLaunch;
+    permissionMode: string;
+    modes: string[];
+    onLaunchChange: (next: SessionLaunch) => void;
+    onPermissionChange: (mode: string) => void;
+    disabled?: boolean;
+    folder?: boolean;
+    defaultModel?: string;
+    defaultPermissionMode?: string;
+}
+
+/** The same independent choices for a new folder thread and every open thread. */
+export function ThreadSettingsPickers({ value, permissionMode, modes, onLaunchChange, onPermissionChange, disabled, folder = false, defaultModel, defaultPermissionMode = 'acceptEdits' }: Props) {
+    const { t } = useTranslation('projects');
+    const { session } = useProjectsHost();
+    const modelDefault = folder ? t('threadSettings.defaultModel')
+        : `${t('threadSettings.projectDefault')} · ${defaultModel || t('threadSettings.defaultModel')}`;
+    const permissionDefault = `${t(folder ? 'threadSettings.defaultPermissions' : 'threadSettings.projectDefault')} · ${t(`session.mode.${defaultPermissionMode}`, { defaultValue: defaultPermissionMode })}`;
+    return (
+        <>
+            {folder && session?.launchPickers ? session.launchPickers({ value, onChange: onLaunchChange, disabled }) : (
+                <ModelPicker source="projects" value={value.model} label={t('threadSettings.model')} defaultLabel={modelDefault}
+                    disabled={disabled} onChange={(model) => onLaunchChange({ ...value, model })} />
+            )}
+            <PermissionModeSelect value={permissionMode} modes={modes} disabled={disabled} defaultLabel={permissionDefault}
+                label={t('threadSettings.permissions')} onChange={onPermissionChange} />
+        </>
+    );
+}

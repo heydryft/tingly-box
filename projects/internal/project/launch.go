@@ -38,8 +38,8 @@ var (
 	ErrBusy       = errors.New("stop or wait for the current turn first")
 )
 
-// folderThread loads a thread of a folder project: profile and model are a
-// folder thread's own choice, while a project's threads run the project's.
+// folderThread loads a thread of a folder project, whose launch profile is
+// supplied by the host rather than the project's shared environment.
 func (m *Threads) folderThread(id string) (*db.Thread, error) {
 	t, err := m.store.GetThread(id)
 	if err != nil {
@@ -89,20 +89,30 @@ func (m *Threads) SetProfile(ctx context.Context, id, profile string) (*db.Threa
 	return out, err
 }
 
-// SetModel sets the model the session's next turn asks for ("" for the
-// profile's default).
+// SetModel sets the model the thread's next turn asks for. Empty restores
+// the project's model for a worker, or the host profile's default for a folder.
 func (m *Threads) SetModel(ctx context.Context, id, model string) (*db.Thread, error) {
 	model = strings.TrimSpace(model)
-	t, err := m.folderThread(id)
+	t, err := m.store.GetThread(id)
 	if err != nil {
 		return nil, err
 	}
-	if l, ok := m.env.(Launcher); ok && model != "" {
+	if t.Agent == db.AgentLLM {
+		return nil, errors.New("not available on a project's main thread; use the project's own settings")
+	}
+	folder := m.isFolder(t.ProjectID)
+	if l, ok := m.env.(Launcher); folder && ok && model != "" {
 		if err := l.CheckLaunch(ctx, t.Profile, model); err != nil {
 			return nil, err
 		}
 	}
-	out, err := m.update(id, func(t *db.Thread) { t.Model = model })
+	out, err := m.update(id, func(t *db.Thread) {
+		if folder {
+			t.Model = model
+		} else {
+			t.ModelOverride = model
+		}
+	})
 	if err == nil {
 		m.addEvent(out, &db.ThreadEvent{Kind: db.EvSystem, Content: "model: " + orDefault(model)})
 	}

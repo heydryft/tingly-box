@@ -71,6 +71,11 @@ interface Props {
     actions?: React.ReactNode;
     /** Pickers shown above the message box (a folder session's permission mode, a host's own). */
     composerContext?: React.ReactNode;
+    settingsSaving?: boolean;
+    canSend?: () => boolean;
+    /** Resolved configuration labels; not the last observed response model. */
+    configuredModel?: string;
+    permissionLabel?: string;
     /** Under the message box (a host's status line). */
     belowComposer?: React.ReactNode;
     /** What a folder session's process runs in the background now. */
@@ -90,7 +95,7 @@ const anchorSelector = (anchor: TrajectoryAnchor): string => {
     return `[data-block="${anchor.block}"]`;
 };
 
-export function ThreadPanel({ projectId, folder = false, threadId, thread, events, more = false, onLoadEarlier, subagents, running, disabled, onBack, hideTitle, actions, composerContext, belowComposer, liveTasks = [], onRefresh, railTop, railMinPanel = RAIL_MIN_PANEL }: Props) {
+export function ThreadPanel({ projectId, folder = false, threadId, thread, events, more = false, onLoadEarlier, subagents, running, disabled, onBack, hideTitle, actions, composerContext, settingsSaving = false, canSend, configuredModel, permissionLabel, belowComposer, liveTasks = [], onRefresh, railTop, railMinPanel = RAIL_MIN_PANEL }: Props) {
     const { t } = useTranslation('projects');
     const notify = useNotify();
     const [diffOpen, setDiffOpen] = useState(false);
@@ -426,6 +431,7 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
                 {(view === 'chat' || focused) && <MessageDetailControl detail={detail} onChange={setDetail} surface="thread" />}
                 <ComposerStrip thread={thread} folder={session} autoAt={pendingAutoAt} onAutoAnswer={(mode) => { void act(() => ops.setAutoAnswer(mode)).then((ok) => ok && onRefresh?.()); }} />
                 <HeldMessages held={held} onEdit={(h) => void takeBack([h.id], true)} onRemove={(h) => void takeBack([h.id], false)} />
+                {running && composerContext && <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5 }}>{t('threadSettings.nextTurn')}</Typography>}
                 <ThreadComposer
                     ref={composer}
                     draftKey={threadId}
@@ -441,10 +447,12 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
                         }
                         void act(ops.stop);
                     }}
+                    canSubmit={!settingsSaving}
                     disabled={disabled || thread.status === 'resolved'}
                     placeholder={thread.status === 'resolved' ? t(session ? 'session.archivedPlaceholder' : 'thread.resolvedPlaceholder') : running ? t(session ? 'session.queuePlaceholder' : 'thread.queuePlaceholder') : t(session ? 'session.placeholder' : 'thread.placeholder')}
                     attach={(files) => uploadAttachments(owner, files)}
                     onSend={async (text, attachments, mode) => {
+                        if (settingsSaving || (canSend && !canSend())) return false;
                         try {
                             await ops.send(text, attachments, mode);
                             stick.current = true;
@@ -492,7 +500,8 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
                 onChanged={() => onRefresh?.()}
                 onReveal={(call) => void openInChat({ call })}
                 top={railTop}
-                permission={session ? (thread.permission_mode || t('session.permissionDefault')) : undefined}
+                configuredModel={configuredModel}
+                permission={permissionLabel || (session ? (thread.permission_mode || t('session.permissionDefault')) : undefined)}
             />
         )}
         </Box>

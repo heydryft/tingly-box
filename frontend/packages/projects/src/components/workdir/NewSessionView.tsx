@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import type { Attachment } from '../../client';
 import { Composer } from '../Composer';
 import { FolderPicker } from './FolderPicker';
-import { PermissionModeSelect } from './PermissionModeSelect';
-import { useProjectsHost, type SessionLaunch } from '../../host/ProjectsHost';
+import { ThreadSettingsPickers } from '../ThreadSettingsPickers';
+import type { SessionLaunch } from '../../host/ProjectsHost';
 
 interface Props {
     /** The folder the page is scoped to; the last used one when empty. */
@@ -26,7 +26,8 @@ interface Props {
  */
 export function NewSessionView({ initialFolder, folders, permissionModes, onCreate, onAddFolder, onAttach }: Props) {
     const { t } = useTranslation('projects');
-    const { session: slots } = useProjectsHost();
+    const creatingRef = useRef(false);
+    const [creating, setCreating] = useState(false);
     const [launch, setLaunch] = useState<SessionLaunch>({ profile: '', model: '' });
     const [picked, setPicked] = useState<string | null>(null);
     const [mode, setMode] = useState('');
@@ -43,19 +44,29 @@ export function NewSessionView({ initialFolder, folders, permissionModes, onCrea
                     keysHint
                     minRows={3}
                     placeholder={t('session.promptPlaceholder')}
-                    canSubmit={folder.trim() !== ''}
+                    canSubmit={folder.trim() !== '' && !creating}
                     text={text}
                     onTextChange={setText}
                     onAccepted={(sent) => setText((prev) => (prev === sent ? '' : prev))}
                     attach={(files) => onAttach(folder.trim(), files)}
                     // Files are stored under the folder's project, so there must be a folder first.
                     attachBlocked={folder.trim() === '' ? t('session.attachNeedsFolder') : undefined}
-                    onSend={(prompt, attachments) => onCreate(folder.trim(), prompt, mode, launch, attachments)}
+                    onSend={async (prompt, attachments) => {
+                        if (creatingRef.current) return false;
+                        creatingRef.current = true;
+                        setCreating(true);
+                        try {
+                            return await onCreate(folder.trim(), prompt, mode, { ...launch }, attachments);
+                        } finally {
+                            creatingRef.current = false;
+                            setCreating(false);
+                        }
+                    }}
                     leftSlot={(
                         <>
-                            <FolderPicker value={folder} onChange={setPicked} folders={folders} onAddFolder={onAddFolder} />
-                            {slots?.launchPickers?.({ value: launch, onChange: setLaunch })}
-                            <PermissionModeSelect value={mode} modes={permissionModes} onChange={setMode} />
+                            <FolderPicker value={folder} onChange={setPicked} folders={folders} onAddFolder={onAddFolder} disabled={creating} />
+                            <ThreadSettingsPickers folder value={launch} permissionMode={mode} modes={permissionModes}
+                                disabled={creating} onLaunchChange={setLaunch} onPermissionChange={setMode} />
                         </>
                     )}
                 />

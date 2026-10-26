@@ -145,9 +145,8 @@ func (m *Threads) StartFolderThread(spec FolderThreadSpec) (*db.Thread, error) {
 	return t, nil
 }
 
-// SetPermissionMode sets the mode the session's next turn runs in. A
-// resident process keeps the mode it was launched with, and the engine
-// reopens it with --resume when the mode differs.
+// SetPermissionMode saves the mode for the thread's next started turn.
+// The engine applies it live then, or reopens with --resume if that fails.
 func (m *Threads) SetPermissionMode(id, mode string) (*db.Thread, error) {
 	if !ValidPermissionMode(mode) {
 		return nil, ErrBadPermission

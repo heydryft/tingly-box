@@ -37,6 +37,17 @@ it('uses the host model list in project composers and worker pickers', async () 
     expect(fetchModels).toHaveBeenCalledOnce();
 });
 
+it('can restore the inherited model without confusing an explicit matching model', async () => {
+    const choose = vi.fn();
+    render(<ModelPicker source="projects" value="host-model" defaultLabel="Project default · host-model" onChange={choose} />);
+    fireEvent.click(screen.getByRole('button', { name: 'host-model' }));
+    const reset = await screen.findByRole('menuitem', { name: 'Project default · host-model' });
+    expect(reset).not.toHaveClass('Mui-selected');
+    expect(screen.getByRole('menuitem', { name: 'host-model' })).toHaveClass('Mui-selected');
+    fireEvent.click(reset);
+    expect(choose).toHaveBeenCalledWith('');
+});
+
 it('keeps standalone Chats on their connection and allows custom model IDs', async () => {
     const choose = vi.fn();
     render(<Composer model="" onModelChange={choose} onSend={vi.fn()} />);

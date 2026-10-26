@@ -618,14 +618,19 @@ func (m *Threads) begin(threadID string, a *activeThread) {
 	if fresh, err := m.store.GetThread(threadID); err == nil {
 		t = fresh
 	}
+	if fresh, err := m.store.GetProject(t.ProjectID); err == nil {
+		p = fresh
+	}
 
 	env, defModel, settings := m.launchEnv(ctx, t, folder)
-	// A project thread runs the project's model. A folder thread runs the one
-	// its owner picked; a project thread's Model is only what the API reported,
-	// and launching with it would restart the resident process each turn.
+	// A worker's observed Model is history, not its launch choice. Only an
+	// explicit override pins it instead of following the project's default.
 	model := t.Model
 	if !folder {
-		model = p.ThreadModel
+		model = t.ModelOverride
+		if model == "" {
+			model = p.ThreadModel
+		}
 	}
 	if model == "" {
 		model = defModel

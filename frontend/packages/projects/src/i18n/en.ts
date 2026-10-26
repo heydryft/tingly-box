@@ -4,6 +4,12 @@ export const en = {
         copy: 'Copy', copied: 'Copied', more: 'More', star: 'Star', unstar: 'Unstar', retry: 'Retry',
         tokensApprox: '≈ {{value}} tokens',
     },
+    threadSettings: {
+        model: 'Model', permissions: 'Permissions', projectDefault: 'Project default', defaultModel: 'Default model', defaultPermissions: 'Default permissions',
+        defaults: 'Project thread defaults', defaultsHelp: 'Used by new threads and existing threads without an override. Individual thread choices do not change these defaults.',
+        nextTurn: 'Launch settings apply on the next started turn. Send now joins the current turn; use After this turn or Stop and send for a new turn.',
+        lastModel: 'Last used model', configuredModel: 'Configured model',
+    },
     nav: {
         newChat: 'New chat', chats: 'Chats', projects: 'Projects', recentChats: 'Recent chats',
         settings: 'Settings', noChats: 'No chats yet', collapse: 'Close sidebar', expand: 'Open sidebar',
@@ -197,7 +203,7 @@ export const en = {
     projectSettings: {
         title: 'Project settings', tabGeneral: 'General', tabMemory: 'Memory', tabEnvironment: 'Environment', tabUsage: 'Usage',
         coordinatorModel: 'Coordinator model', coordinatorModelHelp: 'Runs the project conversation: routing, updates. Empty uses the connection default.',
-        threadModel: 'Thread model', threadModelHelp: 'Runs every thread (Claude Code --model). Empty uses the connection default. A cheaper model here saves the most.',
+        threadModel: 'Default thread model', threadModelHelp: 'Used by new threads and threads without a model override (Claude Code --model). Empty uses the host default. Individual thread choices stay independent.',
         modelDefault: 'Connection default',
         permissionMode: 'Thread permissions',
         mode: {

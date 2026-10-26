@@ -805,8 +805,8 @@ export interface paths {
         };
         get?: never;
         /**
-         * Set the model of a folder thread's next turn
-         * @description Set the model of a folder thread's next turn
+         * Set the model of the thread's next turn; empty restores its project or host profile default
+         * @description Set the model of the thread's next turn; empty restores its project or host profile default
          */
         put: operations["apiV1ThreadsIdModelPut"];
         post?: never;
@@ -1640,6 +1640,8 @@ export interface components {
             merged_at?: string;
             /** @description Field model */
             model?: string;
+            /** @description Field model_override */
+            model_override?: string;
             /** @description Field origin */
             origin: string;
             /**

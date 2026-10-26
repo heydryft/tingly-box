@@ -14,6 +14,7 @@ interface Props {
     folders: string[];
     /** Shows "Add working folder" at the end of the list. */
     onAddFolder?: () => void;
+    disabled?: boolean;
 }
 
 /**
@@ -22,13 +23,13 @@ interface Props {
  * known folder or type a path. There is deliberately no server-side directory
  * browser: it would be an API that lists arbitrary paths on request.
  */
-export function FolderPicker({ value, onChange, folders, onAddFolder }: Props) {
+export function FolderPicker({ value, onChange, folders, onAddFolder, disabled }: Props) {
     const { t } = useTranslation('projects');
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
     const [typed, setTyped] = useState('');
     const close = () => setAnchor(null);
     const pick = (path: string) => {
-        onChange(path);
+        if (!disabled) onChange(path);
         close();
     };
     const label = value ? folderName(value) : t('session.chooseFolder');
@@ -36,6 +37,7 @@ export function FolderPicker({ value, onChange, folders, onAddFolder }: Props) {
     return (
         <>
             <ButtonBase
+                disabled={disabled}
                 onClick={(e) => {
                     setTyped(value);
                     setAnchor(e.currentTarget);
@@ -51,7 +53,7 @@ export function FolderPicker({ value, onChange, folders, onAddFolder }: Props) {
             </ButtonBase>
             <Menu
                 anchorEl={anchor}
-                open={!!anchor}
+                open={!!anchor && !disabled}
                 onClose={close}
                 anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
                 transformOrigin={{ vertical: 'bottom', horizontal: 'left' }}

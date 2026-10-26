@@ -13,6 +13,8 @@ interface Props {
     /** What the model is for, shown before it when a box holds more than one picker. */
     label?: string;
     source?: ModelSource;
+    /** Empty is inheritance, distinct from explicitly choosing the same model. */
+    defaultLabel?: string;
 }
 
 /**
@@ -20,7 +22,7 @@ interface Props {
  * user switch. When the endpoint cannot list models, a free-text field takes
  * over so chatting is never blocked on discovery.
  */
-export function ModelPicker({ value, onChange, disabled, label, source = 'connection' }: Props) {
+export function ModelPicker({ value, onChange, disabled, label, defaultLabel, source = 'connection' }: Props) {
     const { t } = useTranslation('projects');
     const { models, error } = useModels(source);
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -38,19 +40,23 @@ export function ModelPicker({ value, onChange, disabled, label, source = 'connec
                 sx={{ color: 'text.secondary', fontWeight: 500, fontSize: fontSizes.sm, maxWidth: 260, px: 0.75, minWidth: 0, borderRadius: radius.row }}
             >
                 <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {label ? `${label} · ` : ''}{value || t('model.auto')}
+                    {label ? `${label} · ` : ''}{value || defaultLabel || t('model.auto')}
                 </Box>
             </Button>
             <Menu
                 anchorEl={anchor}
-                open={!!anchor}
+                open={!!anchor && !disabled}
                 onClose={close}
                 anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
                 transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 slotProps={{ paper: { sx: { maxHeight: 420, minWidth: 280 } } }}
             >
+                <MenuItem selected={value === ''} onClick={() => { if (!disabled) onChange(''); close(); }}>
+                    <ListItemText primary={defaultLabel || t('model.auto')} />
+                    {value === '' && <Check fontSize="small" color="primary" sx={{ ml: 1 }} />}
+                </MenuItem>
                 {models.map((m) => (
-                    <MenuItem key={m.id} selected={m.id === value} onClick={() => { onChange(m.id); close(); }}>
+                    <MenuItem key={m.id} selected={m.id === value} onClick={() => { if (!disabled) onChange(m.id); close(); }}>
                         <ListItemText
                             primary={m.id}
                             secondary={m.display_name && m.display_name !== m.id ? m.display_name : undefined}
@@ -75,7 +81,7 @@ export function ModelPicker({ value, onChange, disabled, label, source = 'connec
                     sx={{ px: 2, py: 1 }}
                     onSubmit={(e) => {
                         e.preventDefault();
-                        if (custom.trim()) {
+                        if (!disabled && custom.trim()) {
                             onChange(custom.trim());
                             setCustom('');
                             close();

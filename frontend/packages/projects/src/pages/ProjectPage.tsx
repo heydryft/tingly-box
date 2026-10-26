@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Box, Button, IconButton, Link, Skeleton, Tooltip, Typography } from '@mui/material';
 import { Link as RouterLink, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +6,9 @@ import { api, isFolder, type components, unwrap, type Project, type Thread, type
 import { ConversationPane } from '../components/project/ConversationPane';
 import { OverviewPane } from '../components/project/OverviewPane';
 import { ModelPicker } from '../components/ModelPicker';
-import { PermissionModeSelect } from '../components/workdir/PermissionModeSelect';
+import { loadPermissionModes, PermissionModeSelect } from '../components/workdir/PermissionModeSelect';
+import { ThreadSettingsPickers } from '../components/ThreadSettingsPickers';
+import { mergeThreadSettings, useThreadSettings } from '../hooks/useThreadSettings';
 import { ProjectSettingsDialog, type SettingsTab } from '../components/project/ProjectSettingsDialog';
 import { ProjectImTags, useProjectIm } from '../components/im/ProjectImBindings';
 import { IM_BINDINGS_CHANGED } from '../components/im/useImBindings';
@@ -75,6 +77,10 @@ export default function ProjectPage() {
     const [settingsTab, setSettingsTab] = useState<SettingsTab | null>(null);
     const [memoryKey, setMemoryKey] = useState(0);
     const [libraryKey, setLibraryKey] = useState(0);
+    const [modes, setModes] = useState<string[]>([]);
+    const projectSaving = useRef(false);
+    const [savingDefaults, setSavingDefaults] = useState(false);
+    useEffect(() => { loadPermissionModes().then(setModes).catch(() => undefined); }, []);
 
     const mainThreadId = project?.main_thread_id ?? '';
     // The conversation (the main thread) and the open thread: their latest
@@ -162,6 +168,7 @@ export default function ProjectPage() {
     });
 
     const selected = threads.find((th) => th.id === threadId);
+    const settings = useThreadSettings(selected, false, (saved) => setThreads((list) => list.map((th) => th.id === saved.id ? mergeThreadSettings(th, saved, false) : th)));
     // A turn is in flight while the thread works or waits on a request it
     // raised (approvals only exist inside a running turn).
     const threadRunning = selected?.status === 'working'
@@ -190,13 +197,20 @@ export default function ProjectPage() {
         return p;
     });
     const patch = async (body: Pick<components['schemas']['UpdateProjectRequest'], 'starred' | 'paused' | 'archived' | 'coordinator_model' | 'thread_model' | 'thread_permission_mode'>) => {
+        if (projectSaving.current) return;
+        projectSaving.current = true;
+        setSavingDefaults(true);
         try {
-            setProject(await unwrap(api.PATCH('/api/v1/projects/{id}', { params: { path: { id } }, body })));
+            const saved = await unwrap(api.PATCH('/api/v1/projects/{id}', { params: { path: { id } }, body }));
+            setProject((current) => current?.id === saved.id ? saved : current);
             // Archiving unbinds the project's IM chats.
             if (body.archived) window.dispatchEvent(new Event(IM_BINDINGS_CHANGED));
             refresh();
         } catch (e) {
             notify((e as Error).message, 'error');
+        } finally {
+            projectSaving.current = false;
+            setSavingDefaults(false);
         }
     };
 
@@ -235,6 +249,16 @@ export default function ProjectPage() {
             subagents={opened.subagents}
             running={threadRunning}
             disabled={blocked}
+            settingsSaving={settings.saving}
+            canSend={settings.canSend}
+            configuredModel={selected?.model_override || `${t('threadSettings.projectDefault')} · ${project?.thread_model || t('threadSettings.defaultModel')}`}
+            permissionLabel={selected?.permission_mode ? t(`session.mode.${selected.permission_mode}`, { defaultValue: selected.permission_mode }) : `${t('threadSettings.projectDefault')} · ${t(`session.mode.${project?.thread_permission_mode || 'acceptEdits'}`)}`}
+            composerContext={selected && (
+                <ThreadSettingsPickers value={{ profile: '', model: selected.model_override ?? '' }} permissionMode={selected.permission_mode ?? ''}
+                    modes={modes} disabled={blocked || selected.status === 'resolved' || settings.saving}
+                    defaultModel={project?.thread_model} defaultPermissionMode={project?.thread_permission_mode || 'acceptEdits'}
+                    onLaunchChange={(next) => void settings.setLaunch(next)} onPermissionChange={(mode) => void settings.setPermission(mode)} />
+            )}
             onBack={closeThread}
             hideTitle={threadAt === 'float'}
             actions={canPlace && overviewAt !== 'top' && (
@@ -321,25 +345,28 @@ export default function ProjectPage() {
                         onLoadEarlier={conversation.loadEarlier}
                         threads={threadMap}
                         busy={busy}
-                        disabled={blocked || !project}
+                        disabled={blocked || !project || savingDefaults}
                         disabledReason={banner}
                         threadId={mainThreadId}
                         model={project?.coordinator_model}
                         onModelChange={(m) => void patch({ coordinator_model: m })}
                         composerContext={project && (
-                            // What the threads it starts run with; the coordinator's own model sits beside Send.
+                            // Defaults stay project-scoped; the selected worker's overrides are in its own panel.
                             <>
+                                <Typography variant="caption" color="text.secondary" title={t('threadSettings.defaultsHelp')}>{t('threadSettings.defaults')}</Typography>
                                 <PermissionModeSelect
                                     value={project.thread_permission_mode || 'acceptEdits'}
                                     modes={THREAD_MODES}
-                                    disabled={blocked}
+                                    allowInherit={false}
+                                    label={t('threadSettings.defaultPermissions')}
+                                    disabled={blocked || savingDefaults}
                                     onChange={(m) => void patch({ thread_permission_mode: m as ThreadMode })}
                                 />
                                 <ModelPicker
                                     source="projects"
                                     label={t('conversation.threadModel')}
                                     value={project.thread_model}
-                                    disabled={blocked}
+                                    disabled={blocked || savingDefaults}
                                     onChange={(m) => void patch({ thread_model: m })}
                                 />
                             </>
@@ -347,6 +374,7 @@ export default function ProjectPage() {
                         onOpenThread={openThread}
                         chatTitle={im?.chatTitle}
                         onSend={async (text, attachments) => {
+                            if (projectSaving.current) return false;
                             try {
                                 await unwrap(api.POST('/api/v1/threads/{id}/messages', { params: { path: { id: mainThreadId } }, body: { content: text, attachments: attachments.map((a) => a.path) } }));
                                 setBusy(true);

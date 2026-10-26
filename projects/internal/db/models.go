@@ -104,7 +104,12 @@ type Thread struct {
 	// project directory for a main thread.
 	Cwd       string `gorm:"type:text" json:"cwd"`
 	SessionID string `gorm:"size:64" json:"session_id,omitempty"`
-	Model     string `gorm:"size:200" json:"model,omitempty"`
+	// Model is the observed model for a project worker, or a folder thread's
+	// selected launch model. Never use a worker's observation as its choice.
+	Model string `gorm:"size:200" json:"model,omitempty"`
+	// ModelOverride is a project worker's requested model; empty inherits the
+	// project's thread model. Folder threads keep their choice in Model.
+	ModelOverride string `gorm:"size:200" json:"model_override,omitempty"`
 	// PermissionMode overrides the project's permission mode for this
 	// thread; a folder has no project mode, so it is a folder thread's only mode.
 	PermissionMode string `gorm:"size:40" json:"permission_mode,omitempty"`

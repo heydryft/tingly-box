@@ -110,7 +110,8 @@ type ProfileRequest struct {
 	Profile string `json:"profile"`
 }
 
-// ModelRequest sets the model of a folder thread's next turn ("" for the default).
+// ModelRequest sets the model of the thread's next turn. Empty restores the
+// project default for a worker, or the host profile's default for a folder.
 type ModelRequest struct {
 	Model string `json:"model"`
 }
@@ -219,7 +220,7 @@ func (h *Handler) RegisterRoutes(r *module.Routes) {
 		swagger.WithRequestModel(ProfileRequest{}),
 		swagger.WithResponseModel(db.Thread{}))
 	api.PUT("/threads/:id/model", h.setModel, tag,
-		swagger.WithDescription("Set the model of a folder thread's next turn"),
+		swagger.WithDescription("Set the model of the thread's next turn; empty restores its project or host profile default"),
 		swagger.WithRequestModel(ModelRequest{}),
 		swagger.WithResponseModel(db.Thread{}))
 	api.POST("/threads/:id/handoff", h.handoff, tag,

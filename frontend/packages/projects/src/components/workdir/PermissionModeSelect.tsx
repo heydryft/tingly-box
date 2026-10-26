@@ -9,15 +9,18 @@ interface Props {
     modes: string[];
     onChange: (mode: string) => void;
     disabled?: boolean;
+    allowInherit?: boolean;
+    defaultLabel?: string;
+    label?: string;
 }
 
 /**
  * The permission mode of a session, as a quiet picker in the message box's
  * strip. Empty means the default (edits run, anything else asks).
  */
-export function PermissionModeSelect({ value, modes, onChange, disabled }: Props) {
+export function PermissionModeSelect({ value, modes, onChange, disabled, allowInherit = true, defaultLabel, label }: Props) {
     const { t } = useTranslation('projects');
-    const inherit = t('session.permissionDefault');
+    const inherit = defaultLabel || t('session.permissionDefault');
     return (
         <Select
             disabled={disabled}
@@ -26,9 +29,9 @@ export function PermissionModeSelect({ value, modes, onChange, disabled }: Props
             disableUnderline
             IconComponent={ExpandMore}
             displayEmpty
-            inputProps={{ 'aria-label': t('session.permissions') }}
+            inputProps={{ 'aria-label': label || t('session.permissions') }}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => { if (!disabled) onChange(e.target.value); }}
             renderValue={(v) => (
                 <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                     <Lock />
@@ -37,7 +40,7 @@ export function PermissionModeSelect({ value, modes, onChange, disabled }: Props
             )}
             sx={composerPickerSx}
         >
-            <MenuItem value="">{inherit}</MenuItem>
+            {allowInherit && <MenuItem value="">{inherit}</MenuItem>}
             {modes.map((m) => <MenuItem key={m} value={m}>{t(`session.mode.${m}`, { defaultValue: m })}</MenuItem>)}
         </Select>
     );

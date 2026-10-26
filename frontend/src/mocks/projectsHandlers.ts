@@ -314,10 +314,12 @@ export const projectsHandlers = [
         return HttpResponse.json(s)
     }),
     http.put('/api/v1/threads/:tid/model', async ({ params, request }) => {
-        const s = sessions.find((x) => x.id === params.tid)
-        if (!s) return HttpResponse.json({ error: 'thread not found' }, { status: 404 })
-        s.model = ((await request.json()) as { model: string }).model
-        return HttpResponse.json(s)
+        const th = findThread(params.tid as string) as Record<string, unknown> | undefined
+        if (!th) return HttpResponse.json({ error: 'thread not found' }, { status: 404 })
+        const model = ((await request.json()) as { model: string }).model
+        if (th.parent_id) th.model_override = model
+        else th.model = model
+        return HttpResponse.json(th)
     }),
     http.post('/api/v1/threads/:tid/handoff', ({ params }) => {
         const s = sessions.find((x) => x.id === params.tid)
@@ -337,10 +339,10 @@ export const projectsHandlers = [
         return HttpResponse.json(th)
     }),
     http.put('/api/v1/threads/:tid/permission-mode', async ({ params, request }) => {
-        const s = sessions.find((x) => x.id === params.tid)
-        if (!s) return HttpResponse.json({ error: 'thread not found' }, { status: 404 })
-        s.permission_mode = ((await request.json()) as { permission_mode: string }).permission_mode
-        return HttpResponse.json(s)
+        const th = findThread(params.tid as string) as Record<string, unknown> | undefined
+        if (!th) return HttpResponse.json({ error: 'thread not found' }, { status: 404 })
+        th.permission_mode = ((await request.json()) as { permission_mode: string }).permission_mode
+        return HttpResponse.json(th)
     }),
     http.get('/api/v1/projects', ({ request }) => {
         const url = new URL(request.url)

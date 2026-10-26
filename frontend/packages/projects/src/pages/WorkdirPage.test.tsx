@@ -7,7 +7,7 @@ import WorkdirPage from './WorkdirPage';
 
 type Frame = { type: string; data: unknown };
 const m = vi.hoisted(() => ({
-    get: vi.fn(), del: vi.fn(), post: vi.fn(), folders: [] as unknown[], reload: vi.fn(),
+    get: vi.fn(), del: vi.fn(), post: vi.fn(), put: vi.fn(), folders: [] as unknown[], reload: vi.fn(),
     // The two streams, split the way the real hub splits them.
     listCb: null as null | ((ev: Frame) => void),
     projectUrls: [] as string[],
@@ -16,7 +16,7 @@ const m = vi.hoisted(() => ({
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({ t: (key: string, o?: Record<string, unknown>) => (o ? `${key} ${JSON.stringify(o)}` : key), i18n: { language: 'en' } }),
 }));
-vi.mock('../client', async (actual) => ({ ...(await actual<typeof import('../client')>()), api: { GET: m.get, DELETE: m.del, POST: m.post } }));
+vi.mock('../client', async (actual) => ({ ...(await actual<typeof import('../client')>()), api: { GET: m.get, DELETE: m.del, POST: m.post, PUT: m.put } }));
 vi.mock('../hooks/useProjectList', () => ({
     useProjectList: (_on: boolean, onEvent: (ev: Frame) => void) => {
         m.listCb = onEvent;
@@ -50,7 +50,7 @@ beforeEach(() => {
 afterEach(() => {
     cleanup();
     forgetTranscripts();
-    for (const f of [m.get, m.del, m.post, m.reload]) f.mockReset();
+    for (const f of [m.get, m.del, m.post, m.put, m.reload]) f.mockReset();
 });
 
 describe('WorkdirPage removing a folder', () => {
@@ -95,6 +95,28 @@ describe('WorkdirPage live transcript', () => {
                         : { threads: [thread] };
             return { data, response: new Response() };
         });
+    });
+
+    it('saves thread permissions before continuing and never sends while that save is pending', async () => {
+        let finish!: (value: unknown) => void;
+        m.put.mockReturnValue(new Promise((r) => { finish = r; }));
+        m.post.mockResolvedValue({ data: thread, response: new Response() });
+        const oldGet = m.get.getMockImplementation()!;
+        m.get.mockImplementation((url: string, options: unknown) => url.endsWith('permission-modes')
+            ? Promise.resolve({ data: { modes: ['plan'] }, response: new Response() }) : oldGet(url, options));
+        show('/?path=%2Fhome%2Fme%2Fapp&session=t1');
+        const permissions = await screen.findByRole('combobox', { name: 'threadSettings.permissions' });
+        const input = screen.getByPlaceholderText('session.queuePlaceholder');
+        fireEvent.change(input, { target: { value: 'continue' } });
+        fireEvent.mouseDown(permissions);
+        fireEvent.click(await screen.findByRole('option', { name: /session.mode.plan/ }));
+        expect(m.put).toHaveBeenCalledWith('/api/v1/threads/{id}/permission-mode', { params: { path: { id: 't1' } }, body: { permission_mode: 'plan' } });
+        fireEvent.keyDown(input, { key: 'Enter' });
+        expect(m.post).not.toHaveBeenCalled();
+        expect(input).toHaveValue('continue');
+        await act(async () => finish({ data: { ...thread, permission_mode: 'plan' }, response: new Response() }));
+        fireEvent.keyDown(input, { key: 'Enter', altKey: true });
+        await waitFor(() => expect(m.post).toHaveBeenCalledWith('/api/v1/threads/{id}/messages', { params: { path: { id: 't1' } }, body: { content: 'continue', attachments: [], mode: 'queue' } }));
     });
 
     // The real hub sends thread_event only on /projects/{id}/events; the

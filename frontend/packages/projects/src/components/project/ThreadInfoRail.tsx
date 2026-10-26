@@ -111,6 +111,7 @@ interface Props {
     onReveal: (callId: string) => void;
     /** The permission mode's display name (the picker sits at the message box). */
     permission?: string;
+    configuredModel?: string;
     /** A card above the rest, folded into the rail from the page (a folder's sessions). */
     top?: ReactNode;
 }
@@ -121,7 +122,7 @@ interface Props {
  * answers one question and folds; the numbers are the ones the thread
  * already carries.
  */
-export function ThreadInfoRail({ thread, folder, tasks, canReview, onReview, onChanged, onReveal, permission, top }: Props) {
+export function ThreadInfoRail({ thread, folder, tasks, canReview, onReview, onChanged, onReveal, permission, configuredModel, top }: Props) {
     const { t } = useTranslation('projects');
     const [showFinished, setShowFinished] = useState(false);
     const running = tasks.filter(isRunning);
@@ -139,7 +140,8 @@ export function ThreadInfoRail({ thread, folder, tasks, canReview, onReview, onC
             <RailCard id="env" title={t('rail.environment')}>
                 <Fact label={t('rail.folder')}>{thread.cwd}</Fact>
                 {branch && <Fact label={t('rail.branch')}>{branch}</Fact>}
-                {thread.model && <Fact label={t('rail.model')}>{[thread.profile, thread.model].filter(Boolean).join(' · ')}</Fact>}
+                {configuredModel && <Fact label={t('threadSettings.configuredModel')}>{configuredModel}</Fact>}
+                {thread.model && <Fact label={t(folder ? 'rail.model' : 'threadSettings.lastModel')}>{[thread.profile, thread.model].filter(Boolean).join(' · ')}</Fact>}
                 {permission && <Fact label={t('rail.permissions')}>{permission}</Fact>}
             </RailCard>
             {(hasTokens || thread.turns > 0) && (

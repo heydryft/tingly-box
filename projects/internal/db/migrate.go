@@ -147,6 +147,7 @@ func migrate(g *gorm.DB, o openOptions) (err error) {
 		"UPDATE threads SET agent = '' WHERE agent IS NULL",
 		"UPDATE threads SET seq = 0 WHERE seq IS NULL",
 		"UPDATE threads SET cwd = '' WHERE cwd IS NULL",
+		"UPDATE threads SET model_override = '' WHERE model_override IS NULL",
 		"UPDATE thread_events SET source = '' WHERE source IS NULL",
 		"UPDATE thread_events SET source_ref = '' WHERE source_ref IS NULL",
 		"UPDATE thread_events SET source_platform = '' WHERE source_platform IS NULL",

@@ -1820,8 +1820,8 @@
         "tags": [
           "threads"
         ],
-        "summary": "Set the model of a folder thread's next turn",
-        "description": "Set the model of a folder thread's next turn",
+        "summary": "Set the model of the thread's next turn; empty restores its project or host profile default",
+        "description": "Set the model of the thread's next turn; empty restores its project or host profile default",
         "operationId": "apiV1ThreadsIdModelPut",
         "parameters": [
           {
@@ -3695,6 +3695,10 @@
           "model": {
             "type": "string",
             "description": "Field model"
+          },
+          "model_override": {
+            "type": "string",
+            "description": "Field model_override"
           },
           "origin": {
             "type": "string",
