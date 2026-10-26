@@ -1,6 +1,5 @@
-import { Box, Button, CircularProgress, Popover, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Chip, CircularProgress, Popover, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { KeyboardArrowDown as IconChevronDown } from '@/components/icons';
 import { api } from '../services/api';
 import { ConfigRow } from './ConfigRow';
 import { VisionProxyControl } from './flags';
@@ -8,8 +7,6 @@ import type { VisionService } from './flags';
 import { normalizePoints, RECORDING_POINTS } from './flags/RecordingV2Control';
 import { EFFORT_LEVELS } from './flags/ThinkingEffortControl';
 import type { Provider } from '@/types/provider';
-import { controlHeight } from '@/theme/controls';
-import { fontSizes } from '@/theme/fonts';
 
 interface PluginFeaturesProps {
     scenario: string;
@@ -178,30 +175,22 @@ const PluginFeatures: React.FC<PluginFeaturesProps> = ({ scenario }) => {
                         </Box>
                     ) : (
                         <>
-                            <Button
-                                variant="outlined"
-                                color="inherit"
-                                size="small"
-                                endIcon={<IconChevronDown sx={{ fontSize: 18 }} />}
-                                onClick={(e) => setPanelAnchor(e.currentTarget)}
-                                sx={{ textTransform: 'none', borderColor: 'divider', maxWidth: '100%', height: controlHeight, py: 0, pl: 0.5, fontSize: fontSizes.sm, justifyContent: 'space-between' }}
-                            >
-                                <Box component="span" sx={{ display: 'flex', alignItems: 'center', minWidth: 0, overflow: 'hidden' }}>
-                                    {summary.map((item, i) => (
-                                        <Box
-                                            component="span"
-                                            key={item.key}
-                                            sx={{
-                                                display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1, whiteSpace: 'nowrap',
-                                                borderLeft: i > 0 ? 1 : 0, borderColor: 'divider',
-                                            }}
-                                        >
-                                            <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>{item.label}</Box>
-                                            <Box component="span" sx={{ fontWeight: 600, color: item.active ? 'primary.main' : 'text.secondary' }}>{item.value}</Box>
-                                        </Box>
-                                    ))}
-                                </Box>
-                            </Button>
+                            {/* One chip per plugin, in the slots row's style:
+                                filled when the plugin is on, outlined when at
+                                its default. Any chip opens the plugin panel. */}
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                                {summary.map((item) => (
+                                    <Tooltip key={item.key} arrow title={`${item.label}: ${item.value}`}>
+                                        <Chip
+                                            size="small"
+                                            label={`${item.label} ${item.value}`}
+                                            color={item.active ? 'primary' : 'default'}
+                                            variant={item.active ? 'filled' : 'outlined'}
+                                            onClick={(e) => setPanelAnchor(e.currentTarget)}
+                                        />
+                                    </Tooltip>
+                                ))}
+                            </Box>
                             <Popover
                                 open={panelAnchor !== null}
                                 anchorEl={panelAnchor}
