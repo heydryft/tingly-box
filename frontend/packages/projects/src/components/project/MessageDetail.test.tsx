@@ -71,6 +71,32 @@ describe('manager message detail', () => {
         expect(screen.getByText('Worker report')).toBeInTheDocument();
     });
 
+    it('retains every multi-sentence manager reply in order across cards, updates and detail switches', () => {
+        const replies = ['First manager reply. Its second sentence remains.', 'Second manager reply. Still complete.', 'Third manager reply. Nothing is collapsed.'];
+        const p = props();
+        const initial = [event('a1', 'assistant', replies[0]), messages[3], event('a2', 'assistant', replies[1]), messages[4], messages[2]];
+        const view = render(<MemoryRouter><ConversationPane {...p} messages={initial} /></MemoryRouter>);
+        fireEvent.click(screen.getByRole('button', { name: 'messageDetail.concise' }));
+        const updated = [...initial, event('a3', 'assistant', replies[2])];
+        view.rerender(<MemoryRouter><ConversationPane {...p} messages={updated} /></MemoryRouter>);
+        const assertReplies = () => {
+            const nodes = replies.map((reply) => screen.getByText(reply));
+            expect(nodes[0].compareDocumentPosition(screen.getByText('Worker title')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+            expect(screen.getByText('Worker title').compareDocumentPosition(nodes[1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+            expect(nodes[1].compareDocumentPosition(screen.getByText('Worker report')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+            expect(screen.getByText('Worker report').compareDocumentPosition(nodes[2]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        };
+        assertReplies();
+        expect(screen.queryByText('Peer message')).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'messageDetail.detailed' }));
+        assertReplies();
+        fireEvent.click(screen.getByRole('button', { name: 'messageDetail.concise' }));
+        assertReplies();
+        view.unmount();
+        render(<MemoryRouter><ConversationPane {...p} messages={updated} /></MemoryRouter>);
+        assertReplies();
+    });
+
     it('restores concise after remount and migrates old hidden-report settings', () => {
         writeLocal('conversation.threadReports', '0');
         const first = show();

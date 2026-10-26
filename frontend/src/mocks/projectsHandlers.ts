@@ -156,9 +156,11 @@ const messages = [
     msg('m4', 'thread_update', '', 60 * 20, { thread_id: 't-trace', title: 'Add tracing spans to /charge', kind: 'finished' }),
     // Written from the bound Telegram chat (TEP #2143): the conversation shows where it came from.
     msg('m5', 'user', 'Also make sure SDK retries cannot pile onto an outage.', 30, undefined, { source: 'im', source_platform: 'telegram', source_chat_id: 'telegram:123456789' }),
+    msg('m5a', 'assistant', 'I will add a retry budget in the SDK so an outage cannot amplify traffic. The pool benchmark still needs your approval; that thread remains available below.', 29.5),
     msg('m6', 'thread_started', '', 29, { thread_ids: ['t-sdk'] }),
     msg('m7', 'thread_update', '', 18, { thread_id: 't-cache', title: 'Cache idempotency keys in Redis', kind: 'finished' }),
     msg('m8', 'thread_update', '', 4, { thread_id: 't-pool', title: 'Tune the DB connection pool', kind: 'needs_input' }),
+    msg('m9', 'assistant', 'The Redis change is ready for review, and the tracing work is merged. Next, approve or deny the staging benchmark in the pool thread; I will keep the retry-budget work separate until its tests finish.', 3),
 ]
 
 const library = [
