@@ -18,7 +18,8 @@ import AgentStatusRow, {AgentLogButton} from './components/AgentStatusRow';
 import {useAgentObservation} from '@/pages/scenario/hooks/useAgentObservation';
 import ScenarioPageSkeleton from './components/ScenarioPageSkeleton';
 import { SCENARIO_HEADER_CONTENT_MAX_WIDTH, agentPageHeaderSx } from './components/ScenarioCardHeader';
-import AgentPluginsCard from './components/AgentPluginsCard';
+import { usePluginsActive } from '@/hooks/usePluginsActive';
+import PluginFeatures from '@/components/PluginFeatures';
 import TemplatePage from './components/TemplatePage.tsx';
 import TeamKeysOverview, {useTeamKeysOverviewExpanded} from './components/TeamKeysOverview';
 import {useSharingKeyActions} from '@/hooks/useSharingKeyActions';
@@ -45,6 +46,10 @@ const UseTeamPageContent: React.FC = () => {
 
     const observation = useAgentObservation(scenario);
     const access = useAccessExpanded(scenario, !observation.data?.lastRequestAt);
+    // Whether any plugin is on, independent of the connection card's fold
+    // state, so the folded card can surface the row only when it matters.
+    const pluginsActive = usePluginsActive(scenario);
+    const pluginsRow = <PluginFeatures scenario={scenario} />;
     const [logOpen, setLogOpen] = useState(false);
     // The Team's keys and the actions on them (create / enable / move / delete),
     // all worked from the key card under the header.
@@ -238,17 +243,18 @@ const UseTeamPageContent: React.FC = () => {
                     />
                     {!currentTeam.enabled && <Alert severity="warning">{t('teams.disabledHint')}</Alert>}
                     {/* Folds to one Base URL line, like the Agent pages; open until the first request. */}
-                    <AgentAccessSection expanded={access.expanded} onToggle={access.toggle} url={`${baseUrl}/tingly/team`}>
+                    <AgentAccessSection expanded={access.expanded} onToggle={access.toggle} url={`${baseUrl}/tingly/team`}
+                        foldedExtras={pluginsActive && pluginsRow}
+                    >
                         <Box sx={{maxWidth: SCENARIO_HEADER_CONTENT_MAX_WIDTH}}>
                             {/* No API Key row: that is this instance's own key; Team members
                                 connect with their Team Key (listed above), never this one. */}
                             <ProviderConfigCard title={t('teams.accessTitle')} baseUrlPath="/tingly/team" baseUrl={baseUrl}
                                                 onCopy={copyToClipboard} compact scenario={scenario} showPlugins={false}
                                                 showApiKeyRow={false} />
+                            <Box sx={{ px: 2, pt: 1 }}>{pluginsRow}</Box>
                         </Box>
                     </AgentAccessSection>
-
-                    <AgentPluginsCard scenario={scenario} />
 
                     <CardGrid>
                     <TemplatePage key={scenario} scenario={scenario} collapsible allowDeleteRule hideTroubleshoot />

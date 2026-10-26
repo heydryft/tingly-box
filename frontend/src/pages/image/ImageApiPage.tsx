@@ -10,7 +10,8 @@ import PageHeader from '@/components/PageHeader';
 import ScenarioLogDialog from '@/components/RuleLogDialog';
 import { AgentStatusRow, AgentLogButton } from '@/pages/scenario/components/AgentStatusRow';
 import AgentAccessSection, { useAccessExpanded } from '@/pages/scenario/components/AgentAccessSection';
-import AgentPluginsCard from '@/pages/scenario/components/AgentPluginsCard';
+import { usePluginsActive } from '@/hooks/usePluginsActive';
+import PluginFeatures from '@/components/PluginFeatures';
 import { useAgentObservation } from '@/pages/scenario/hooks/useAgentObservation';
 import ScenarioPageSkeleton from '@/pages/scenario/components/ScenarioPageSkeleton';
 import TemplatePage from '@/pages/scenario/components/TemplatePage.tsx';
@@ -47,6 +48,10 @@ const ImageApiPageContent: React.FC = () => {
     const observation = useAgentObservation(scenario);
     const launched = !!observation.data?.lastRequestAt;
     const access = useAccessExpanded(scenario, !launched);
+    // Whether any plugin is on, independent of the connection card's fold
+    // state, so the folded card can surface the row only when it matters.
+    const pluginsActive = usePluginsActive(scenario);
+    const pluginsRow = <PluginFeatures scenario={scenario} />;
 
     const firstModel = rules.find((rule) => rule.active !== false && rule.request_model)?.request_model;
 
@@ -80,7 +85,12 @@ const ImageApiPageContent: React.FC = () => {
                     // One more button than an Agent page, so they share the title's row from lg up.
                     sx={agentPageHeaderSx('lg')}
                 />
-                <AgentAccessSection expanded={access.expanded} onToggle={access.toggle} url={`${baseUrl}/tingly/${scenario}`}>
+                <AgentAccessSection
+                    expanded={access.expanded}
+                    onToggle={access.toggle}
+                    url={`${baseUrl}/tingly/${scenario}`}
+                    foldedExtras={pluginsActive && pluginsRow}
+                >
                     <Box sx={{ maxWidth: SCENARIO_HEADER_CONTENT_MAX_WIDTH }}>
                         <ProviderConfigCard
                             title="Image API"
@@ -90,9 +100,9 @@ const ImageApiPageContent: React.FC = () => {
                             scenario={scenario}
                             showPlugins={false}
                         />
+                        <Box sx={{ px: 2, pt: 1 }}>{pluginsRow}</Box>
                     </Box>
                 </AgentAccessSection>
-                <AgentPluginsCard scenario={scenario} />
                 <CardGrid>
                     <TemplatePage
                         scenario={scenario}
