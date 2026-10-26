@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { IconButton, Stack, Typography } from '@mui/material';
+import { IconButton, Stack } from '@mui/material';
 import { Refresh } from '@/components/icons';
 import { PageLayout } from '@/components/PageLayout';
 import MCPSourceDrawer from './MCPSourceDrawer';
@@ -24,31 +24,24 @@ export default function MCPServerToolsPage() {
         setSearch(next, { replace: true });
     };
     return (
-        <PageLayout loading={loading}>
-            <Stack spacing={3}>
-                <Stack
-                    direction="row"
-                    sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}
+        <PageLayout
+            loading={loading}
+            title={label('serverToolsTitle', 'Server Tools')}
+            subtitle={label(
+                'serverToolsHint',
+                'Provided and run by Tingly Box on the server. Configure each service and enable its tools; no MCP connection or profile is needed.'
+            )}
+            rightAction={
+                <IconButton
+                    aria-label={label('refresh', 'Refresh connections')}
+                    disabled={busy || checking}
+                    onClick={() => void ws.run(ws.reload)}
                 >
-                    <Stack>
-                        <Typography component="h1" variant="h5" style={{ fontWeight: 700 }}>
-                            {label('serverToolsTitle', 'Server Tools')}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            {label(
-                                'serverToolsHint',
-                                'Provided and run by Tingly Box on the server. Configure each service and enable its tools; no MCP connection or profile is needed.'
-                            )}
-                        </Typography>
-                    </Stack>
-                    <IconButton
-                        aria-label={label('refresh', 'Refresh connections')}
-                        disabled={busy || checking}
-                        onClick={() => void ws.run(ws.reload)}
-                    >
-                        <Refresh />
-                    </IconButton>
-                </Stack>
+                    <Refresh />
+                </IconButton>
+            }
+        >
+            <Stack spacing={2}>
                 <MCPWorkspaceAlerts ws={ws} serverTools />
                 <MCPToolsPanel
                     sources={sources}

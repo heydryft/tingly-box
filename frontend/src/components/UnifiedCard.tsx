@@ -45,6 +45,8 @@ interface UnifiedCardProps {
   // Header actions
   leftAction?: ReactNode;
   rightAction?: ReactNode;
+  /** Opt-in header layout overrides, for example stacking actions on narrow screens. */
+  headerSx?: SxProps<Theme>;
   sx?: SxProps<Theme>;
   // DOM id forwarded to the root Card — useful as a scroll/anchor target
   id?: string;
@@ -147,6 +149,7 @@ export const UnifiedCard = forwardRef<HTMLDivElement, UnifiedCardProps>(({
   onClearMessage,
   leftAction,
   rightAction,
+  headerSx = EMPTY_SX,
   sx = EMPTY_SX,
   id,
   grid,
@@ -182,7 +185,10 @@ export const UnifiedCard = forwardRef<HTMLDivElement, UnifiedCardProps>(({
       >
         {title && (
           <Box sx={{ mb: titleMarginBottom, flexShrink: 0 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: subtitle ? 1 : 0 }}>
+            <Box sx={[
+              { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: subtitle ? 1 : 0 },
+              ...(Array.isArray(headerSx) ? headerSx : [headerSx]),
+            ]}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
                 {typeof title === 'string' || typeof title === 'number' ? (
                   <Typography

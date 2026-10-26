@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MCPToolsPanel from './MCPToolsPanel';
 import type { MCPRouteSource, MCPSourceConfig } from './types';
@@ -46,6 +46,29 @@ beforeEach(() => {
 });
 
 describe('tool list', () => {
+    it('uses the shared card chrome and heading hierarchy for each source', () => {
+        render(<MCPToolsPanel {...props} />);
+        const connection = screen.getByRole('article', { name: 'Remote docs' });
+        expect(connection.querySelector('.MuiCard-root > .MuiCardContent-root')).not.toBeNull();
+        expect(within(connection).getByRole('heading', { level: 2, name: 'Remote docs' })).toBeInTheDocument();
+        expect(within(connection).getByText('Connected')).toBeInTheDocument();
+        expect(within(connection).getByRole('button', { name: 'Configure this connection' })).toBeEnabled();
+    });
+    it('retains loading, off, empty-discovery and save-error states', async () => {
+        const view = render(<MCPToolsPanel {...props} loading />);
+        expect(screen.getByRole('progressbar')).toBeInTheDocument();
+        expect(screen.getByText('Checking…')).toBeInTheDocument();
+        expect(screen.getByRole('switch', { name: 'On' })).toBeDisabled();
+        view.rerender(<MCPToolsPanel {...props} sources={[{ ...source, enabled: false }]} />);
+        expect(screen.getByText('Off')).toBeInTheDocument();
+        view.rerender(<MCPToolsPanel {...props} routes={[{ ...route, tools: [] }]} />);
+        expect(screen.getByText('The connection returned no tools.')).toBeInTheDocument();
+        mocks.save.mockRejectedValueOnce(new Error('Could not save tool'));
+        view.rerender(<MCPToolsPanel {...props} />);
+        fireEvent.click(screen.getByRole('switch', { name: 'On' }));
+        expect(await screen.findByRole('alert')).toHaveTextContent('Could not save tool');
+        await waitFor(() => expect(screen.getByRole('switch', { name: 'On' })).toBeEnabled());
+    });
     it('shows one configure action per connection and every tool in the applied snapshot', () => {
         const configure = vi.fn();
         render(

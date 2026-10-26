@@ -63,36 +63,29 @@ export default function MCPToolsPage() {
         setAdding(true);
     };
     return (
-        <PageLayout loading={loading}>
-            <Stack spacing={3}>
-                <Stack
-                    direction="row"
-                    sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}
-                >
-                    <Stack>
-                        <Typography component="h1" variant="h5" style={{ fontWeight: 700 }}>
-                            {label('toolsTitle', 'MCP Tools')}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                            {label(
-                                'toolsHint',
-                                'Connect any MCP and manage its tools. A tool switched off here is off in every profile.'
-                            )}
-                        </Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={1}>
-                        <IconButton
-                            aria-label={label('refresh', 'Refresh connections')}
-                            disabled={busy || checking}
-                            onClick={() => void ws.run(ws.reload)}
-                        >
-                            <Refresh />
-                        </IconButton>
-                        <Button startIcon={<Add />} variant="contained" disabled={busy} onClick={beginConnection}>
-                            {label('connectTools', 'Connect tools')}
-                        </Button>
-                    </Stack>
-                </Stack>
+        <PageLayout
+            loading={loading}
+            title={label('toolsTitle', 'MCP Tools')}
+            subtitle={label(
+                'toolsHint',
+                'Connect any MCP and manage its tools. A tool switched off here is off in every profile.'
+            )}
+            rightAction={
+                <>
+                    <IconButton
+                        aria-label={label('refresh', 'Refresh connections')}
+                        disabled={busy || checking}
+                        onClick={() => void ws.run(ws.reload)}
+                    >
+                        <Refresh />
+                    </IconButton>
+                    <Button startIcon={<Add />} variant="contained" disabled={busy} onClick={beginConnection}>
+                        {label('connectTools', 'Connect tools')}
+                    </Button>
+                </>
+            }
+        >
+            <Stack spacing={2}>
                 <MCPWorkspaceAlerts ws={ws} />
                 <MCPToolsPanel
                     sources={sources}

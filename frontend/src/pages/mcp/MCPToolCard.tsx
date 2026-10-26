@@ -36,11 +36,11 @@ export default function MCPToolCard({
             sx={{ p: 1.75, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
         >
             <Stack spacing={1}>
-                <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, overflowWrap: 'anywhere', minWidth: 0 }}>
                         {tool.name}
                     </Typography>
-                    <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
+                    <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexShrink: 0 }}>
                         {onTest && (
                             <Button
                                 size="small"
