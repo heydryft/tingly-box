@@ -106,10 +106,12 @@ describe('conversation presentation', () => {
         expect(screen.queryByText('Report details')).toBeNull();
         fireEvent.click(screen.getByRole('button', { expanded: false }));
         expect(screen.getByText('Report details')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: 'conversation.hideReports' }));
+        fireEvent.click(screen.getByRole('button', { name: 'messageDetail.concise' }));
         expect(screen.queryByText('Task report')).toBeNull();
-        expect(localStorage.getItem('tingly-project.conversation.threadReports')).toBe('0');
-        fireEvent.click(screen.getByRole('button', { name: 'conversation.showReports' }));
+        expect(screen.getByRole('button', { name: /Live task/ })).toBeInTheDocument();
+        expect(screen.getByText('Next task')).toBeInTheDocument();
+        expect(localStorage.getItem('tingly-project.conversation.messageDetail')).toBe('concise');
+        fireEvent.click(screen.getByRole('button', { name: 'messageDetail.detailed' }));
         expect(screen.getByText('Task report')).toBeInTheDocument();
     });
 
