@@ -128,7 +128,7 @@ export const en = {
     },
     messageDetail: {
         label: 'Message detail', detailed: 'Detailed', concise: 'Concise',
-        managerHint: 'Concise keeps the coordinator’s messages and all cards and controls. Other conversational text is hidden. Display only — work keeps running.',
+        managerHint: 'Concise keeps user messages, the coordinator’s own replies and every card/control, including finished threads. Only cross-thread conversational text is hidden. Display only — work keeps running.',
         threadHint: 'Concise hides ordinary tool calls and results, not cards or controls. Display only — work keeps running.',
     },
     conversation: {

@@ -12,10 +12,12 @@ inspection action, not a third detail level.
   stay actionable; settled decisions stay as request rows when their normal tool
   row is hidden. In Concise, Agent cards start open while a request is pending,
   so nested interactions remain discoverable without replacing their card.
-- Project main thread (the manager/coordinator conversation): Concise keeps the
-  manager's own assistant speech and **all cards and controls**. Only user and
-  peer conversational text is filtered. Thread lifecycle cards, report rows,
-  suggestions and error alerts remain, with their original expansion and actions.
+- Project main thread (the manager/coordinator conversation): Concise keeps all
+  human input (Web and IM), the manager model's own replies and **all cards and
+  controls**. Only conversational text with `source=thread` is filtered, whether
+  its event kind is `user` or `assistant`: role is not provenance. Thread lifecycle
+  cards (including ready/resolved/failed threads), report rows, suggestions and
+  error alerts remain, with their original expansion and actions.
   The composer, model/switch controls, Overview and waiting signals are unchanged.
   This main-thread renderer does not have approval/ask response controls; worker
   controls remain in the shared transcript.

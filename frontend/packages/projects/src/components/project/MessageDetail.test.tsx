@@ -34,6 +34,25 @@ const props = () => ({
 const show = (p = props()) => render(<MemoryRouter><ConversationPane {...p} /></MemoryRouter>);
 
 describe('manager message detail', () => {
+    it.each(['user', 'assistant'])('filters cross-thread %s text by provenance, not role', (kind) => {
+        for (const source of [undefined, '', 'im', 'system']) {
+            expect(showManagerMessage(event('local', kind, 'Keep', { source }), 'concise')).toBe(true);
+        }
+        const peer = event('peer', kind, 'Peer', { source: 'thread', source_ref: 'worker' });
+        expect(showManagerMessage(peer, 'concise')).toBe(false);
+        expect(showManagerMessage(peer, 'detailed')).toBe(true);
+    });
+    it.each(['ready', 'resolved', 'failed'])('retains ended %s thread cards, report bodies and navigation in concise mode', (status) => {
+        writeLocal('conversation.messageDetail', 'concise');
+        const p = props();
+        p.threads.set('worker', { ...worker, status });
+        show(p);
+        expect(screen.getByText('User request')).toBeInTheDocument();
+        fireEvent.click(screen.getByText('Worker title'));
+        expect(p.onOpenThread).toHaveBeenCalledWith('worker');
+        fireEvent.click(screen.getByText('Worker report'));
+        expect(screen.getByText('Thread report')).toBeInTheDocument();
+    });
     it.each(['thread_started', 'thread_update', 'suggestions', 'switch', 'approval', 'ask', 'error', 'future_card'])('does not pre-filter structured %s entries, regardless of source', (kind) => {
         expect(showManagerMessage(event('card', kind, 'Card', { source: 'thread' }), 'concise')).toBe(true);
     });
@@ -49,7 +68,8 @@ describe('manager message detail', () => {
         expect(screen.getByText('Thread failed')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'messageDetail.concise' }));
         expect(screen.getByText('Manager reply')).toBeInTheDocument();
-        for (const text of ['User request', 'Peer message']) expect(screen.queryByText(text)).toBeNull();
+        expect(screen.getByText('User request')).toBeInTheDocument();
+        expect(screen.queryByText('Peer message')).toBeNull();
         for (const text of ['Worker title', 'Worker report', 'Proposed task', 'Thread failed']) expect(screen.getByText(text)).toBeInTheDocument();
         fireEvent.click(screen.getByText('Worker title'));
         expect(p.onOpenThread).toHaveBeenCalledWith('worker');

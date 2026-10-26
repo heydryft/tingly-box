@@ -159,6 +159,7 @@ const messages = [
     msg('m5a', 'assistant', 'I will add a retry budget in the SDK so an outage cannot amplify traffic. The pool benchmark still needs your approval; that thread remains available below.', 29.5),
     msg('m6', 'thread_started', '', 29, { thread_ids: ['t-sdk'] }),
     msg('m7', 'thread_update', '', 18, { thread_id: 't-cache', title: 'Cache idempotency keys in Redis', kind: 'finished' }),
+    msg('m7a', 'user', 'Cross-thread message: Redis validation finished; load-test details are in the thread report.', 17, undefined, { source: 'thread', source_ref: 't-cache' }),
     msg('m8', 'thread_update', '', 4, { thread_id: 't-pool', title: 'Tune the DB connection pool', kind: 'needs_input' }),
     msg('m9', 'assistant', 'The Redis change is ready for review, and the tracing work is merged. Next, approve or deny the staging benchmark in the pool thread; I will keep the retry-budget work separate until its tests finish.', 3),
 ]
