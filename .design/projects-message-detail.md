@@ -14,9 +14,11 @@ inspection action, not a third detail level.
   so nested interactions remain discoverable without replacing their card.
 - Project main thread (the manager/coordinator conversation): Concise keeps all
   human input (Web and IM), the manager model's own replies and **all cards and
-  controls**. Only conversational text with `source=thread` is filtered, whether
-  its event kind is `user` or `assistant`: role is not provenance. Thread lifecycle
-  cards (including ready/resolved/failed threads), report rows, suggestions and
+  controls**. Conversational text with `source=thread` is filtered, whether
+  its event kind is `user` or `assistant`: role is not provenance. Redundant
+  `thread_update` notifications with payload `kind=finished` are also hidden;
+  these are not the thread cards. Thread lifecycle cards (including ready,
+  resolved and failed threads), needs-input/failed report rows, suggestions and
   error alerts remain, with their original expansion and actions.
   The composer, model/switch controls, Overview and waiting signals are unchanged.
   This main-thread renderer does not have approval/ask response controls; worker

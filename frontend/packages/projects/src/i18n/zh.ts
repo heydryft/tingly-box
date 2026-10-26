@@ -133,7 +133,7 @@ export const zh: Dict<typeof en> = {
     },
     messageDetail: {
         label: '消息详细度', detailed: '详细', concise: '简洁',
-        managerHint: '简洁保留用户消息、管理者主动回复及所有卡片和控件（包括已结束线程），仅隐藏跨线程对话文本。仅影响展示，不影响任务执行。',
+        managerHint: '简洁保留用户消息、管理者主动回复及所有卡片和控件（包括已结束线程），仅隐藏跨线程对话文本和线程完成通知。仅影响展示，不影响任务执行。',
         threadHint: '简洁隐藏普通工具调用及结果，不隐藏卡片或控件。仅影响展示，不影响任务执行。',
     },
     conversation: {

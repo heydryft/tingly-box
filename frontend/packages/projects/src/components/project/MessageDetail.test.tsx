@@ -21,7 +21,7 @@ const messages = [
     event('a', 'assistant', 'Manager reply'),
     event('peer', 'assistant', 'Peer message', { source: 'thread' }),
     event('start', 'thread_started', '', { payload: JSON.stringify({ thread_ids: ['worker'] }) }),
-    event('report', 'thread_update', 'Thread report', { payload: JSON.stringify({ thread_id: 'worker', title: 'Worker report', kind: 'finished', status: 'ready' }) }),
+    event('report', 'thread_update', 'Thread report', { payload: JSON.stringify({ thread_id: 'worker', title: 'Worker report', kind: 'needs_input', status: 'waiting' }) }),
     event('suggest', 'suggestions', '', { payload: JSON.stringify({ suggestions: [{ title: 'Proposed task', task: 'Do it' }] }) }),
     event('err', 'error', 'Thread failed'),
 ];
@@ -34,6 +34,31 @@ const props = () => ({
 const show = (p = props()) => render(<MemoryRouter><ConversationPane {...p} /></MemoryRouter>);
 
 describe('manager message detail', () => {
+    it('hides finished notifications, not ended thread cards, and restores them in Detailed', () => {
+        const p = props();
+        p.threads.set('worker', { ...worker, status: 'resolved' });
+        p.messages = [...messages, event('finish', 'thread_update', 'Finished report body', {
+            payload: JSON.stringify({ thread_id: 'worker', title: 'Finished notification', kind: 'finished', status: 'resolved' }),
+        })];
+        const original = JSON.stringify(p.messages);
+        show(p);
+        expect(screen.getByText('Finished notification')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'messageDetail.concise' }));
+        expect(screen.queryByText('Finished notification')).toBeNull();
+        expect(screen.getByText('Worker report')).toBeInTheDocument();
+        expect(screen.getByText('User request')).toBeInTheDocument();
+        expect(screen.getByText('Manager reply')).toBeInTheDocument();
+        fireEvent.click(screen.getByText('Worker title'));
+        expect(p.onOpenThread).toHaveBeenCalledWith('worker');
+        fireEvent.click(screen.getByRole('button', { name: 'messageDetail.detailed' }));
+        fireEvent.click(screen.getByText('Finished notification'));
+        expect(screen.getByText('Finished report body')).toBeInTheDocument();
+        expect(JSON.stringify(p.messages)).toBe(original);
+    });
+    it.each(['needs_input', 'failed', 'unknown'])('keeps %s notifications and malformed payloads eligible', (kind) => {
+        expect(showManagerMessage(event('update', 'thread_update', '', { payload: JSON.stringify({ kind }) }), 'concise')).toBe(true);
+        expect(showManagerMessage(event('broken', 'thread_update', '', { payload: '{' }), 'concise')).toBe(true);
+    });
     it.each(['user', 'assistant'])('filters cross-thread %s text by provenance, not role', (kind) => {
         for (const source of [undefined, '', 'im', 'system']) {
             expect(showManagerMessage(event('local', kind, 'Keep', { source }), 'concise')).toBe(true);
