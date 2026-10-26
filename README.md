@@ -511,3 +511,17 @@ If Tingly Box has been useful to you, consider supporting its development.
 | <img src="docs/donation/wechat.jpg" width="220" alt="WeChat Pay"> | <img src="docs/donation/alipay.jpg" width="220" alt="Alipay"> |
 
 </div>
+
+
+## ❤️ Thanks to Sponsors
+
+<div align="left">
+
+|   Sponsor   |                Details                |
+| :---------: | :-----------------------------------: |
+| 0xbeekeeper |             First Sponsor             |
+|  richardxx  | Long Term Claude Subscription Support |
+| huajiankan  |      Figma Subscription Support       |
+
+</div>
+
