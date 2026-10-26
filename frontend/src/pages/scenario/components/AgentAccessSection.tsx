@@ -50,7 +50,7 @@ export interface AgentAccessSectionProps {
     children: React.ReactNode;
     /**
      * Shown under the folded URL row — only for state that deviates from the
-     * default (a plugin switched on, a slot split off), so the folded card
+     * default (a plugin switched on), so the folded card
      * stays one quiet line until something actually differs.
      */
     foldedExtras?: React.ReactNode;

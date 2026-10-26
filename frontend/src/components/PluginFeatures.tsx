@@ -1,4 +1,5 @@
 import { Box, Chip, CircularProgress, Popover, Stack, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
+import { alpha, type Theme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { ConfigRow } from './ConfigRow';
@@ -11,6 +12,23 @@ import type { Provider } from '@/types/provider';
 interface PluginFeaturesProps {
     scenario: string;
 }
+
+// The panel's toggle buttons mark a selection with the theme's primary color
+// (soft tint + primary text/border), not MUI's default grey "standard" fill —
+// the same selected language as the chips strip and the plugin controls.
+const pluginToggleSx = (theme: Theme, nowrap = false) => ({
+    textTransform: 'none' as const,
+    py: 0.25,
+    px: 1,
+    ...(nowrap && { whiteSpace: 'nowrap' as const }),
+    '&.Mui-selected': {
+        bgcolor: alpha(theme.palette.primary.main, 0.12),
+        color: theme.palette.primary.main,
+        borderColor: alpha(theme.palette.primary.main, 0.48),
+        fontWeight: 600,
+        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.18) },
+    },
+});
 
 // Scenario-level plugins shown here: Thinking, Vision Proxy and Record. The
 // scenario's boolean plugins are gone — Smart Compact was removed (backend
@@ -210,7 +228,7 @@ const PluginFeatures: React.FC<PluginFeaturesProps> = ({ scenario }) => {
                                         >
                                             {EFFORT_LEVELS.map(level => (
                                                 <ToggleButton key={level.value || 'client'} value={level.value} title={level.description}
-                                                    sx={{ textTransform: 'none', py: 0.25, px: 1 }}>
+                                                    sx={(theme) => pluginToggleSx(theme)}>
                                                     {level.label}
                                                 </ToggleButton>
                                             ))}
@@ -230,7 +248,7 @@ const PluginFeatures: React.FC<PluginFeaturesProps> = ({ scenario }) => {
                                             {RECORDING_POINTS.map(point => (
                                                 <ToggleButton key={point.value} value={point.value} title={`${point.label}: ${point.description}`}
                                                     onClick={() => toggleRecordPoint(point.value)}
-                                                    sx={{ textTransform: 'none', py: 0.25, px: 1, whiteSpace: 'nowrap' }}>
+                                                    sx={(theme) => pluginToggleSx(theme, true)}>
                                                     {point.label.split(' (')[0]}
                                                 </ToggleButton>
                                             ))}

@@ -330,14 +330,13 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
                     until the agent is connected (or while its config is out of date),
                     then folded to just the URL. Slots and plugins are part of the
                     connection; folded, they surface only when they deviate from the
-                    default (a plugin on, a slot split). */}
+                    default (a plugin on). Slots stay in the expanded card. */}
                 <AgentAccessSection
                     expanded={access.expanded}
                     onToggle={access.toggle}
                     url={accessUrl}
                     foldedExtras={(
                         <>
-                            {slotRouting && slots.slots.length > 0 && slots.slotsRow}
                             {pluginsActive && pluginsRow}
                         </>
                     )}

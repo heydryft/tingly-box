@@ -256,7 +256,6 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
                 <AgentAccessSection expanded={access.expanded} onToggle={access.toggle} url={accessUrl}
                     foldedExtras={(
                         <>
-                            {slots.slots.length > 0 && slots.slotsRow}
                             {pluginsActive && pluginsRow}
                         </>
                     )}
