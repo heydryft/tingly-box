@@ -504,10 +504,12 @@ If Tingly Box has been useful to you, consider supporting its development.
 
 **Donations are optional.** A ⭐ on GitHub or a contribution is just as appreciated.
 
-<div align="center">
+<div align="left">
 
-|                            WeChat Pay                             |                            Alipay                             |
-| :---------------------------------------------------------------: | :-----------------------------------------------------------: |
-| <img src="docs/donation/wechat.jpg" width="220" alt="WeChat Pay"> | <img src="docs/donation/alipay.jpg" width="220" alt="Alipay"> |
+| Donation Method | QR Code / Link |
+| :--- | :---: |
+| GitHub Sponsors | ❤️ [Github Sponsors](https://github.com/sponsors/tingly-dev) |
+| WeChat Pay | <img src="https://github.com/tingly-dev/tingly-box/blob/main/docs/donation/wechat.jpg?raw=true" width="180" alt="WeChat Pay"> |
+| Alipay | <img src="https://github.com/tingly-dev/tingly-box/blob/main/docs/donation/alipay.jpg?raw=true" width="180" alt="Alipay"> |
 
 </div>
