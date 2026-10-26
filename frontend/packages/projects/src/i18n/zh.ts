@@ -131,6 +131,11 @@ export const zh: Dict<typeof en> = {
         placeholder: '/path/to/repository', add: '添加', invalid: '不是 git 仓库',
         baseHint: '线程从这个分支切出', dirtyHint: '该工作区有未提交的改动；不影响线程，但合并需要干净的工作区。',
     },
+    messageDetail: {
+        label: '消息详细度', detailed: '详细', concise: '简洁',
+        managerHint: '简洁仅显示管理者发言，隐藏线程信息。仅影响展示，不影响任务执行。',
+        threadHint: '简洁隐藏工具调用及结果，保留权限确认、提问和决策。仅影响展示，不影响任务执行。',
+    },
     conversation: {
         placeholder: '描述工作、粘贴 bug 报告或报错栈，或者提个问题…',
         coordinatorModel: '协调者模型',
@@ -142,7 +147,6 @@ export const zh: Dict<typeof en> = {
         step3: '你可以走开。Overview 会告诉你哪些可以 review、哪个线程在等你。',
         openThread: '打开线程',
         updateKind: { finished: '已完成', needs_input: '需要你回复', failed: '失败' },
-        showReports: '显示线程回报', hideReports: '隐藏线程回报',
         tryExample: '试试这些',
         example1: '先探索这个仓库并提出三个改进建议，暂时不要改任何东西。',
         example2: '在 README 里加一节，说明如何运行测试。',

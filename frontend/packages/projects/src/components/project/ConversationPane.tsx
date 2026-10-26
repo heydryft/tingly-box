@@ -9,15 +9,15 @@ import { ImSourceBadge } from '../im/ImSourceBadge';
 import { AttachmentChips, uploadAttachments } from '../attachments';
 import { ThreadComposer } from '../ThreadComposer';
 import { Markdown } from '../Markdown';
-import { readLocal, writeLocal } from '../../utils/storage';
+import { useMessageDetail } from '../../hooks/useMessageDetail';
+import { MessageDetailControl } from '../MessageDetailControl';
+import { showManagerMessage } from './messageDetail';
 import { ChevronRight, DiffIcon, ErrorOutline, ExpandMore, PlayArrow } from '../icons';
 import { DiffDialog } from './DiffDialog';
 import { LoadEarlier } from './LoadEarlier';
 import { ThreadStateMark, ThreadBadges, ThreadSubtitle } from './threadStatus';
 import { radius } from '@tingly/ui/theme/radius';
 import { conversationText, messageSpacing, userBubble, userMessageWidth } from '../../transcript/conversationStyles';
-
-const REPORTS_KEY = 'conversation.threadReports';
 
 function parse<T>(payload?: string): T | null {
     if (!payload) return null;
@@ -220,14 +220,12 @@ export function ConversationPane({ projectId, messages, more = false, onLoadEarl
     const scrollRef = useRef<HTMLDivElement>(null);
     const stick = useRef(true);
     const [seed, setSeed] = useState('');
-    // Thread reports are history, not news: shown by default, hideable per browser.
-    const [showReports, setShowReports] = useState(() => readLocal(REPORTS_KEY) !== '0');
-    const hasReports = messages.some((m) => m.kind === 'thread_update');
+    const [detail, setDetail] = useMessageDetail('conversation');
 
     useEffect(() => {
         const el = scrollRef.current;
         if (el && stick.current) el.scrollTop = el.scrollHeight;
-    }, [messages, busy]);
+    }, [messages, busy, detail]);
 
     return (
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, minWidth: 0 }}>
@@ -259,6 +257,7 @@ export function ConversationPane({ projectId, messages, more = false, onLoadEarl
                         </Box>
                     )}
                     {messages.map((m) => {
+                        if (!showManagerMessage(m, detail)) return null;
                         switch (m.kind) {
                             case 'user':
                                 return (
@@ -294,7 +293,7 @@ export function ConversationPane({ projectId, messages, more = false, onLoadEarl
                             // A thread's line above is its live state; each report is also its
                             // own folded entry here, in the order things happened.
                             case 'thread_update':
-                                return showReports ? <ThreadUpdateRow key={m.id} message={m} onOpen={onOpenThread} /> : null;
+                                return <ThreadUpdateRow key={m.id} message={m} onOpen={onOpenThread} />;
                             case 'error':
                                 return (
                                     <Stack key={m.id} role="alert" direction="row" spacing={0.75} sx={{ alignItems: 'flex-start', color: (theme) => getReadableAccent(theme, 'error') }}>
@@ -319,19 +318,7 @@ export function ConversationPane({ projectId, messages, more = false, onLoadEarl
             </Box>
             <Box sx={{ px: 2, pb: 2 }}>
                 {disabledReason}
-                {hasReports && (
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', pb: 0.5 }}>
-                        <Button size="small" color="inherit" aria-pressed={showReports}
-                            sx={{ minWidth: 0, py: 0, fontSize: fontSizes.sm, fontWeight: 400, color: 'text.secondary' }}
-                            onClick={() => {
-                                const next = !showReports;
-                                setShowReports(next);
-                                writeLocal(REPORTS_KEY, next ? '1' : '0');
-                            }}>
-                            {t(showReports ? 'conversation.hideReports' : 'conversation.showReports')}
-                        </Button>
-                    </Box>
-                )}
+                <MessageDetailControl detail={detail} onChange={setDetail} surface="conversation" />
                 <ThreadComposer
                     // Per conversation: its draft starts fresh.
                     key={threadId}

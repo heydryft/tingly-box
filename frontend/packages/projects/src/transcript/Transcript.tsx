@@ -15,6 +15,7 @@ import Markdown from './Markdown';
 import QuestionCard from './QuestionCard';
 import { radius } from '@tingly/ui/theme/radius';
 import { conversationText, messageSpacing, userBubble, userMessageWidth } from './conversationStyles';
+import {conciseBlock, type MessageDetail} from './messageDetail';
 
 // Respond answers a request. remember asks to allow the tool from now on
 // without asking (offered only when the host passes rememberLabel); answers
@@ -22,6 +23,8 @@ import { conversationText, messageSpacing, userBubble, userMessageWidth } from '
 export type Respond = (requestId: string, approved: boolean, answer: string, remember?: boolean, answers?: Record<string, string>) => Promise<boolean>;
 
 interface TranscriptProps {
+    // Presentation only; requests remain actionable in either level.
+    detail?: MessageDetail;
     blocks: TranscriptBlock[];
     pendingRequestId?: string;
     working: boolean;
@@ -486,11 +489,13 @@ interface BlockListProps {
 // already reports is left out, and the calls on either side of it read as
 // one run again. Each block keeps its index (the trajectory's anchor) and
 // whether it ends the list (the live one).
-const shownBlocks = (blocks: TranscriptBlock[], pendingRequestId?: string): {block: TranscriptBlock; index: number; last: boolean}[] => {
+const shownBlocks = (blocks: TranscriptBlock[], pendingRequestId?: string, detail: MessageDetail = 'detailed'): {block: TranscriptBlock; index: number; last: boolean}[] => {
     const out: {block: TranscriptBlock; index: number; last: boolean}[] = [];
-    blocks.forEach((block, index) => {
+    blocks.forEach((original, index) => {
+        const block = detail === 'concise' ? conciseBlock(original) : original;
+        if (!block) return;
         const last = index === blocks.length - 1;
-        if (block.type === 'request' && block.toolId && block.message.request_id !== pendingRequestId) {
+        if (detail === 'detailed' && block.type === 'request' && block.toolId && block.message.request_id !== pendingRequestId) {
             if (last && out.length > 0) out[out.length - 1].last = true;
             return;
         }
@@ -512,7 +517,8 @@ const holdsPending = (block: TranscriptBlock | undefined, pendingRequestId?: str
 // BlockList renders a run of blocks: the conversation, or a subagent's own
 // work inside its card.
 const BlockList = ({blocks, pendingRequestId, working, expandAll, onRespond, anchored = false, newFrom = -1}: BlockListProps) => {
-    const items = shownBlocks(blocks, pendingRequestId);
+    const {detail} = useTranscriptHost();
+    const items = shownBlocks(blocks, pendingRequestId, detail);
     // A merged run of calls keeps its first index, so the divider goes
     // before the first item at or past newFrom.
     const dividerAt = newFrom >= 0 ? items.find((x) => x.index >= newFrom)?.index : undefined;
@@ -526,7 +532,9 @@ const BlockList = ({blocks, pendingRequestId, working, expandAll, onRespond, anc
                 case 'activity':
                     return <ActivityRun key={i} steps={b.steps} live={working && last} hold={holdsPending(items[at + 1]?.block, pendingRequestId)} expandAll={expandAll} pendingRequestId={pendingRequestId}/>;
                 case 'agent':
-                    return <AgentCard key={i} block={b} turnLive={working} expandAll={expandAll} pendingRequestId={pendingRequestId} onRespond={onRespond}/>;
+                    return detail === 'concise'
+                        ? <Box key={i} {...anchor}><ConciseAgent block={b} pendingRequestId={pendingRequestId} working={working} expandAll={expandAll} onRespond={onRespond}/></Box>
+                        : <AgentCard key={i} block={b} turnLive={working} expandAll={expandAll} pendingRequestId={pendingRequestId} onRespond={onRespond}/>;
                 case 'request':
                     if (!b.message.request_id || b.message.request_id !== pendingRequestId) return <SettledRequest key={b.message.request_id ?? i} block={b}/>;
                     return b.message.kind === 'ask_request'
@@ -569,6 +577,13 @@ const BlockList = ({blocks, pendingRequestId, working, expandAll, onRespond, anc
                 : render(item, at))}
         </>
     );
+};
+
+// Load nested steps even though the Agent tool's card is hidden: a child may
+// contain the live question/approval the user needs to answer.
+const ConciseAgent = ({block, working, expandAll, pendingRequestId, onRespond}: Omit<BlockListProps, 'blocks'> & {block: Extract<TranscriptBlock, {type: 'agent'}>}) => {
+    const steps = useSubagentSteps(block.call.id, true);
+    return <Stack spacing={2.5}><AgentBody block={block} running={agentStatus(block, working) === 'running'} report={agentReport(block)} steps={steps} expandAll={expandAll} pendingRequestId={pendingRequestId} onRespond={onRespond}/></Stack>;
 };
 
 // NewDivider marks where what arrived since the last visit begins.
@@ -688,10 +703,11 @@ const AgentBody = ({block, running, report, steps, expandAll, pendingRequestId, 
     showEarlier?: boolean;
 }) => {
     const {t} = useTranslation();
+    const {detail} = useTranscriptHost();
     const input = (block.call.input ?? {}) as {prompt?: string};
     return (
         <>
-            {input.prompt && (
+            {detail === 'detailed' && input.prompt && (
                 <Box>
                     <Typography variant="caption" sx={{color: 'text.secondary'}}>{t('projects.transcript.agentPrompt', {defaultValue: 'Asked to'})}</Typography>
                     <Typography variant="body2" sx={{color: 'text.primary', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 160, overflow: 'auto'}}>
@@ -831,7 +847,8 @@ const VERB_DEFAULTS: Record<WorkingVerb, string> = {
 // shows, with the room of the whole pane. The host shows older steps above
 // it (SubagentSteps.load with earlier) and says where it sits in the
 // conversation.
-export const SubagentFocus = ({block, working, expandAll = false, onRespond, pendingRequestId, drafts, subagents, codeBlock, attachments, rememberLabel}: {
+export const SubagentFocus = ({block, working, detail = 'detailed', expandAll = false, onRespond, pendingRequestId, drafts, subagents, codeBlock, attachments, rememberLabel}: {
+    detail?: MessageDetail;
     block: Extract<TranscriptBlock, {type: 'agent'}>;
     // The thread's turn runs (a foreground subagent left running without it was cut off).
     working: boolean;
@@ -844,7 +861,7 @@ export const SubagentFocus = ({block, working, expandAll = false, onRespond, pen
     attachments?: AttachmentsComponent;
     rememberLabel?: (tool: string) => string;
 }) => (
-    <TranscriptHostProvider drafts={drafts} subagents={subagents} codeBlock={codeBlock} attachments={attachments} rememberLabel={rememberLabel}>
+    <TranscriptHostProvider detail={detail} drafts={drafts} subagents={subagents} codeBlock={codeBlock} attachments={attachments} rememberLabel={rememberLabel}>
         <FocusBody block={block} working={working} expandAll={expandAll} onRespond={onRespond} pendingRequestId={pendingRequestId}/>
     </TranscriptHostProvider>
 );
@@ -866,14 +883,14 @@ const FocusBody = ({block, working, expandAll, onRespond, pendingRequestId}: {
     );
 };
 
-const Transcript = ({blocks, pendingRequestId, working, expandAll = false, onRespond, drafts, subagents, codeBlock, attachments, rememberLabel, newSince}: TranscriptProps) => {
+const Transcript = ({blocks, pendingRequestId, working, detail = 'detailed', expandAll = false, onRespond, drafts, subagents, codeBlock, attachments, rememberLabel, newSince}: TranscriptProps) => {
     // While a request waits, its card is the live part; otherwise the turn
     // gets a line saying what it does and for how long.
     const showWorking = working && !pendingRequestId;
     const todos = latestTodos(blocks);
 
     return (
-        <TranscriptHostProvider drafts={drafts} subagents={subagents} codeBlock={codeBlock} attachments={attachments} rememberLabel={rememberLabel}>
+        <TranscriptHostProvider detail={detail} drafts={drafts} subagents={subagents} codeBlock={codeBlock} attachments={attachments} rememberLabel={rememberLabel}>
             <Stack spacing={messageSpacing}>
                 {todos && <Box sx={{position: 'sticky', top: 0, zIndex: 1}}><ChecklistCard todos={todos} working={working}/></Box>}
                 <BlockList anchored blocks={blocks} pendingRequestId={pendingRequestId} working={working} expandAll={expandAll} onRespond={onRespond} newFrom={firstNewBlock(blocks, newSince)}/>

@@ -1,5 +1,6 @@
 import {createContext, useCallback, useContext, useMemo, useSyncExternalStore} from 'react';
 import type {ComponentType, ReactNode, SetStateAction} from 'react';
+import type {MessageDetail} from './messageDetail';
 
 // DraftStorage is where the transcript keeps what the user typed into a
 // request card, and whether it was already sent, so both survive the card
@@ -62,6 +63,7 @@ export interface SubagentSteps {
 }
 
 interface TranscriptHost {
+    detail: MessageDetail;
     drafts: DraftStorage;
     subagents?: SubagentSteps;
     codeBlock?: CodeBlockComponent;
@@ -69,9 +71,10 @@ interface TranscriptHost {
     rememberLabel?: (tool: string) => string;
 }
 
-const HostContext = createContext<TranscriptHost>({drafts: memoryDrafts});
+const HostContext = createContext<TranscriptHost>({drafts: memoryDrafts, detail: 'detailed'});
 
-export const TranscriptHostProvider = ({drafts, subagents, codeBlock, attachments, rememberLabel, children}: {
+export const TranscriptHostProvider = ({detail = 'detailed', drafts, subagents, codeBlock, attachments, rememberLabel, children}: {
+    detail?: MessageDetail;
     drafts?: DraftStorage;
     subagents?: SubagentSteps;
     codeBlock?: CodeBlockComponent;
@@ -79,7 +82,7 @@ export const TranscriptHostProvider = ({drafts, subagents, codeBlock, attachment
     rememberLabel?: (tool: string) => string;
     children: ReactNode;
 }) => {
-    const value = useMemo(() => ({drafts: drafts ?? memoryDrafts, subagents, codeBlock, attachments, rememberLabel}), [drafts, subagents, codeBlock, attachments, rememberLabel]);
+    const value = useMemo(() => ({detail, drafts: drafts ?? memoryDrafts, subagents, codeBlock, attachments, rememberLabel}), [detail, drafts, subagents, codeBlock, attachments, rememberLabel]);
     return <HostContext.Provider value={value}>{children}</HostContext.Provider>;
 };
 

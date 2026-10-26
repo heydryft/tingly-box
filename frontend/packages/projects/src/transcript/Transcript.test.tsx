@@ -123,8 +123,8 @@ it('retains a pending and accepted decision when navigating away and back before
 
 const msg = (m: Partial<TranscriptEntry>): TranscriptEntry => ({content: '', timestamp: '2026-10-04T00:00:00Z', ...m});
 const respondNever = () => Promise.resolve(true);
-const renderEntries = (entries: TranscriptEntry[], opts: {pending?: string; working?: boolean; expandAll?: boolean} = {}) =>
-    render(<Transcript blocks={buildTranscript(entries)} pendingRequestId={opts.pending} working={opts.working ?? false} expandAll={opts.expandAll} onRespond={respondNever} drafts={drafts}/>);
+const renderEntries = (entries: TranscriptEntry[], opts: {pending?: string; working?: boolean; expandAll?: boolean; detail?: 'detailed' | 'concise'} = {}) =>
+    render(<Transcript detail={opts.detail} blocks={buildTranscript(entries)} pendingRequestId={opts.pending} working={opts.working ?? false} expandAll={opts.expandAll} onRespond={respondNever} drafts={drafts}/>);
 
 describe('approval card', () => {
     it('shows the command, not the raw input, with the input behind Details', () => {
@@ -409,3 +409,94 @@ describe('subagent steps read on open', () => {
     });
 });
 
+
+
+describe('message detail', () => {
+    it('hides tool calls/results without mutating paired data or changing message anchors', () => {
+        const blocks = buildTranscript([
+            msg({role: 'user', content: 'Please check'}),
+            msg({kind: 'tool_use', content: 'Bash', request_id: 'call', payload: {command: 'secret-command'}}),
+            msg({kind: 'tool_result', content: 'tool-output', request_id: 'call'}),
+            msg({role: 'assistant', content: 'Checked.'}),
+        ]);
+        const original = JSON.stringify(blocks);
+        const view = render(<Transcript blocks={blocks} detail="concise" expandAll working={false} onRespond={respondNever}/>);
+        expect(screen.getByText('Please check')).toBeInTheDocument();
+        expect(screen.getByText('Checked.')).toBeInTheDocument();
+        expect(screen.queryByText('Bash')).toBeNull();
+        expect(screen.queryByText('tool-output')).toBeNull();
+        expect(document.querySelector('[data-block="2"]')).toHaveTextContent('Checked.');
+        expect(JSON.stringify(blocks)).toBe(original);
+        view.rerender(<Transcript blocks={blocks} detail="detailed" expandAll working={false} onRespond={respondNever}/>);
+        expect(screen.getByText('Bash')).toBeInTheDocument();
+        expect(screen.getByText('tool-output')).toBeInTheDocument();
+    });
+
+    it('keeps permission decisions operable and prevents resubmission across detail switches', async () => {
+        const blocks = buildTranscript([
+            msg({kind: 'tool_use', content: 'Bash', request_id: 'call', payload: {command: 'go test ./...'}}),
+            msg({kind: 'approval_request', content: 'Bash', request_id: 'permission', payload: {command: 'go test ./...'}}),
+        ]);
+        const respond = vi.fn().mockResolvedValue(true);
+        const props = {blocks, pendingRequestId: 'permission', working: true, onRespond: respond, drafts};
+        const view = render(<Transcript {...props} detail="concise"/>);
+        expect(document.querySelector('[data-call-ids="call"]')).toBeNull();
+        expect(screen.getByText('go test ./...')).toBeInTheDocument();
+        await act(async () => fireEvent.click(screen.getByRole('button', {name: 'Allow'})));
+        expect(respond).toHaveBeenCalledWith('permission', true, '');
+        view.rerender(<Transcript {...props} detail="detailed"/>);
+        view.rerender(<Transcript {...props} detail="concise"/>);
+        expect(screen.getByRole('button', {name: 'Allow'})).toBeDisabled();
+        expect(respond).toHaveBeenCalledOnce();
+    });
+
+    it('keeps structured questions, answers and decline usable when calls are hidden', async () => {
+        const respond = vi.fn().mockResolvedValue(true);
+        const blocks = buildTranscript([
+            msg({kind: 'tool_use', content: 'AskUserQuestion', request_id: 'call'}),
+            msg({kind: 'ask_request', content: 'Choose?', request_id: 'question', payload: {questions: [
+                {question: 'Choose?', options: [{label: 'Keep'}, {label: 'Change'}]},
+            ]}}),
+        ]);
+        const view = render(<Transcript blocks={blocks} detail="concise" pendingRequestId="question" working onRespond={respond} drafts={drafts}/>);
+        expect(screen.queryByText('AskUserQuestion')).toBeNull();
+        await act(async () => fireEvent.click(screen.getByRole('radio', {name: 'Keep'})));
+        expect(respond).toHaveBeenCalledWith('question', true, '', undefined, {'Choose?': 'Keep'});
+        view.unmount();
+        render(<Transcript blocks={[request('decline', 'ask_request')]} detail="concise" pendingRequestId="decline" working onRespond={respond} drafts={drafts}/>);
+        await act(async () => fireEvent.click(screen.getByRole('button', {name: 'Decline'})));
+        expect(respond).toHaveBeenLastCalledWith('decline', false, '', undefined, {});
+    });
+
+    it('retains settled linked decisions rather than losing them with the tool row', () => {
+        renderEntries([
+            msg({kind: 'tool_use', content: 'Bash', request_id: 'call', payload: {command: 'check'}}),
+            msg({kind: 'approval_request', content: 'Bash', request_id: 'decision', payload: {command: 'check'}}),
+            msg({kind: 'approval_response', content: 'denied', request_id: 'decision'}),
+        ], {detail: 'concise'});
+        expect(document.querySelector('[data-call-ids="call"]')).toBeNull();
+        expect(document.querySelector('[data-request-id="decision"] [data-outcome="denied"]')).not.toBeNull();
+    });
+
+    it('retains subagent report fallbacks and older-step navigation in concise mode', async () => {
+        const load = vi.fn().mockResolvedValue(undefined);
+        const blocks: TranscriptBlock[] = [{type: 'agent', call: {type: 'tool', id: 'agent', name: 'Agent', input: {prompt: 'hidden prompt'}, isError: false}, children: [], task: {status: 'completed', background: false, summary: 'Finished checking'}}];
+        render(<Transcript blocks={blocks} detail="concise" working={false} onRespond={respondNever}
+            subagents={{steps: () => ({loaded: true, more: true}), load}}/>);
+        expect(screen.queryByText('hidden prompt')).toBeNull();
+        expect(screen.getByText('Finished checking')).toBeInTheDocument();
+        await act(async () => fireEvent.click(screen.getByRole('button', {name: 'Show earlier steps'})));
+        expect(load).toHaveBeenCalledWith('agent', true);
+    });
+
+    it('exposes nested requests even when the subagent tool card is hidden', async () => {
+        const respond = vi.fn().mockResolvedValue(true);
+        const blocks: TranscriptBlock[] = [{type: 'agent', call: {type: 'tool', id: 'agent', name: 'Agent', input: undefined, isError: false}, children: [request('nested')]}];
+        const load = vi.fn().mockResolvedValue(undefined);
+        render(<Transcript blocks={blocks} detail="concise" pendingRequestId="nested" working onRespond={respond} drafts={drafts}
+            subagents={{steps: () => ({loaded: false}), load}}/>);
+        await waitFor(() => expect(load).toHaveBeenCalledWith('agent', false));
+        await act(async () => fireEvent.click(screen.getByRole('button', {name: 'Deny'})));
+        expect(respond).toHaveBeenCalledWith('nested', false, '');
+    });
+});

@@ -126,6 +126,11 @@ export const en = {
         placeholder: '/path/to/repository', add: 'Add', invalid: 'Not a git repository',
         baseHint: 'Threads branch from this branch', dirtyHint: 'This checkout has uncommitted changes; threads are unaffected, but merging needs a clean checkout.',
     },
+    messageDetail: {
+        label: 'Message detail', detailed: 'Detailed', concise: 'Concise',
+        managerHint: 'Concise shows only the coordinator’s messages; thread information is hidden. Display only — work keeps running.',
+        threadHint: 'Concise hides tool calls and results. Permissions, questions and decisions stay visible. Display only — work keeps running.',
+    },
     conversation: {
         placeholder: 'Describe work, paste a bug report or stack trace, or ask a question…',
         coordinatorModel: 'Coordinator model',
@@ -137,7 +142,6 @@ export const en = {
         step3: 'Walk away. Overview shows what is ready for review and which thread is waiting on you.',
         openThread: 'Open thread',
         updateKind: { finished: 'finished', needs_input: 'needs input', failed: 'failed' },
-        showReports: 'Show thread reports', hideReports: 'Hide thread reports',
         tryExample: 'Try one',
         example1: 'Explore this repository and propose three improvements, without changing anything yet.',
         example2: 'Add a README section explaining how to run the tests.',

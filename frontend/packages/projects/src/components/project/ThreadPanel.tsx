@@ -28,6 +28,8 @@ import { SubagentsPanel } from '../workdir/SubagentsPanel';
 import { readLocal, writeLocal } from '../../utils/storage';
 import { fontMono, fontSizes } from '@tingly/ui/theme/fonts';
 import { radius } from '@tingly/ui/theme/radius';
+import { useMessageDetail } from '../../hooks/useMessageDetail';
+import { MessageDetailControl } from '../MessageDetailControl';
 
 const mono = { fontFamily: fontMono } as const;
 
@@ -118,6 +120,7 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
         setViewState(next);
         writeLocal('thread.view', next);
     };
+    const [detail, setDetail] = useMessageDetail('thread');
     const [expandAll, setExpandAll] = useState(() => readLocal('thread.expandTools') === '1');
     const toggleExpand = () => {
         writeLocal('thread.expandTools', expandAll ? '0' : '1');
@@ -170,7 +173,7 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
     useEffect(() => {
         const el = scrollRef.current;
         if (el && stick.current) el.scrollTop = el.scrollHeight;
-    }, [events]);
+    }, [events, detail]);
 
     // Any thread's subagent can be opened on its own: its steps are read apart.
     const host = useMemo(() => subagents && { ...subagents, focus: (call: string) => setFocus({ threadId, call }) }, [subagents, threadId]);
@@ -245,6 +248,8 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
             }
         }
         setFocus(null);
+        // An explicit reveal must have a visible target, even in concise mode.
+        setDetail('detailed');
         setView('chat');
         setTarget(anchor);
     };
@@ -330,7 +335,7 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
                     <Menu anchorEl={menu} open={!!menu} onClose={() => setMenu(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
                         <MenuItem onClick={() => { setMenu(null); setTaskOpen((v) => !v); }}>{taskOpen ? t('thread.hideTask') : t('thread.showTask')}</MenuItem>
                         <MenuItem onClick={() => { setMenu(null); setFocus(null); setView(view === 'chat' ? 'trajectory' : 'chat'); }}>{view === 'chat' ? t('thread.showTrajectory') : t('thread.showChat')}</MenuItem>
-                        {view === 'chat' && <MenuItem onClick={() => { setMenu(null); toggleExpand(); }}>{expandAll ? t('thread.collapseTools') : t('thread.expandTools')}</MenuItem>}
+                        {view === 'chat' && detail === 'detailed' && <MenuItem onClick={() => { setMenu(null); toggleExpand(); }}>{expandAll ? t('thread.collapseTools') : t('thread.expandTools')}</MenuItem>}
                         {/* The panel opens where the menu was, under the More button. */}
                         {session && !rail && <MenuItem onClick={() => { setTasksAnchor(menu); setMenu(null); }}>{t('session.backgroundTasks')}</MenuItem>}
                         {wide && railTop == null && <MenuItem onClick={() => { setMenu(null); toggleRail(); }}>{railOn ? t('rail.hide') : t('rail.show')}</MenuItem>}
@@ -399,9 +404,9 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
                 {events === null || (focused && !focusBlock)
                     ? <Skeleton variant="rounded" height={120} />
                     : focused && focusBlock
-                        ? <SubagentFocus block={focusBlock} subagents={host} working={running} pendingRequestId={pendingRequestId} expandAll={expandAll} onRespond={respond} codeBlock={CodeBlock} attachments={Attachments} rememberLabel={rememberLabel} />
+                        ? <SubagentFocus detail={detail} block={focusBlock} subagents={host} working={running} pendingRequestId={pendingRequestId} expandAll={expandAll} onRespond={respond} codeBlock={CodeBlock} attachments={Attachments} rememberLabel={rememberLabel} />
                     : view === 'chat'
-                        ? <Transcript blocks={blocks} subagents={host} pendingRequestId={pendingRequestId} working={running} newSince={newSince.at} expandAll={expandAll} onRespond={respond} codeBlock={CodeBlock} attachments={Attachments} rememberLabel={rememberLabel} />
+                        ? <Transcript detail={detail} blocks={blocks} subagents={host} pendingRequestId={pendingRequestId} working={running} newSince={newSince.at} expandAll={expandAll} onRespond={respond} codeBlock={CodeBlock} attachments={Attachments} rememberLabel={rememberLabel} />
                         : <Trajectory blocks={blocks} working={running} pendingRequestId={pendingRequestId} project={thread.cwd} onOpen={(anchor) => void openInChat(anchor)} />}
             </Box>
 
@@ -418,6 +423,7 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
                         </Box>
                     </Alert>
                 )}
+                {(view === 'chat' || focused) && <MessageDetailControl detail={detail} onChange={setDetail} surface="thread" />}
                 <ComposerStrip thread={thread} folder={session} autoAt={pendingAutoAt} onAutoAnswer={(mode) => { void act(() => ops.setAutoAnswer(mode)).then((ok) => ok && onRefresh?.()); }} />
                 <HeldMessages held={held} onEdit={(h) => void takeBack([h.id], true)} onRemove={(h) => void takeBack([h.id], false)} />
                 <ThreadComposer
