@@ -143,8 +143,19 @@ func (m *Threads) Handoff(id string) (string, error) {
 		argv = h.HandoffLaunch(t.Profile)
 	}
 	argv = append(argv, "--resume", t.SessionID)
-	if t.Model != "" {
-		argv = append(argv, "--model", t.Model)
+	model := t.Model
+	if !m.isFolder(t.ProjectID) {
+		// A worker's Model is the model that last answered, not its next
+		// launch choice. Handoff must preserve the configured override/default.
+		model = t.ModelOverride
+		if model == "" {
+			if p, err := m.store.GetProject(t.ProjectID); err == nil {
+				model = p.ThreadModel
+			}
+		}
+	}
+	if model != "" {
+		argv = append(argv, "--model", model)
 	}
 	return terminalCommand(runtime.GOOS, t.Cwd, argv), nil
 }

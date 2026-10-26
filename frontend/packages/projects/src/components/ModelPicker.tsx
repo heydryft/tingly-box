@@ -51,10 +51,10 @@ export function ModelPicker({ value, onChange, disabled, label, defaultLabel, so
                 transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 slotProps={{ paper: { sx: { maxHeight: 420, minWidth: 280 } } }}
             >
-                <MenuItem selected={value === ''} onClick={() => { if (!disabled) onChange(''); close(); }}>
+                {(defaultLabel !== undefined || source === 'projects') && <MenuItem selected={value === ''} onClick={() => { if (!disabled) onChange(''); close(); }}>
                     <ListItemText primary={defaultLabel || t('model.auto')} />
                     {value === '' && <Check fontSize="small" color="primary" sx={{ ml: 1 }} />}
-                </MenuItem>
+                </MenuItem>}
                 {models.map((m) => (
                     <MenuItem key={m.id} selected={m.id === value} onClick={() => { if (!disabled) onChange(m.id); close(); }}>
                         <ListItemText

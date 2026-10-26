@@ -47,6 +47,34 @@ func TestWorkerLaunchReadsDefaultsAndOverridesAfterWaitingForCapacity(t *testing
 	assert.Equal(t, "auto", launches[0].PermissionMode)
 }
 
+func TestWorkerHandoffUsesConfiguredModelNotLastObservedModel(t *testing.T) {
+	f := newFixture(t, func(turn *enginetest.Turn) error {
+		turn.Init("observed-model")
+		turn.Say("done", 1, 1)
+		return nil
+	})
+	f.project.ThreadModel = "project-default"
+	require.NoError(t, f.store.SaveProject(f.project))
+	th, err := f.threads.Start(context.Background(), f.project, StartSpec{Task: "handoff"})
+	require.NoError(t, err)
+	f.report(t)
+	waitStatus(t, f.store, th.ID, db.ThreadIdle)
+
+	_, err = f.threads.SetModel(context.Background(), th.ID, "chosen-override")
+	require.NoError(t, err)
+	cmd, err := f.threads.Handoff(th.ID)
+	require.NoError(t, err)
+	assert.Contains(t, cmd, "--model chosen-override")
+	assert.NotContains(t, cmd, "observed-model")
+
+	_, err = f.threads.SetModel(context.Background(), th.ID, "")
+	require.NoError(t, err)
+	cmd, err = f.threads.Handoff(th.ID)
+	require.NoError(t, err)
+	assert.Contains(t, cmd, "--model project-default")
+	assert.NotContains(t, cmd, "observed-model")
+}
+
 func TestWorkerModelOverrideIsIndependentAndSurvivesSettlement(t *testing.T) {
 	f := newFixture(t, func(turn *enginetest.Turn) error {
 		turn.Init("actual-reported-model")

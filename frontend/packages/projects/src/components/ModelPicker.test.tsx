@@ -31,9 +31,10 @@ it('uses the host model list in project composers and worker pickers', async () 
     expect(fetchModels).toHaveBeenCalledWith('/api/v1/projects/models');
     view.unmount();
 
-    render(<ModelPicker source="projects" value="" onChange={choose} />);
-    fireEvent.click(screen.getByRole('button', { name: 'model.auto' }));
-    expect(await screen.findByRole('menuitem', { name: 'host-model' })).toBeInTheDocument();
+    render(<ModelPicker source="projects" value="" defaultLabel="Project default · host-model" onChange={choose} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Project default · host-model' }));
+    expect(await screen.findByRole('menuitem', { name: 'Project default · host-model' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'host-model' })).toBeInTheDocument();
     expect(fetchModels).toHaveBeenCalledOnce();
 });
 
@@ -54,6 +55,7 @@ it('keeps standalone Chats on their connection and allows custom model IDs', asy
     fireEvent.click(screen.getByRole('button', { name: 'model.auto' }));
     expect(await screen.findByRole('menuitem', { name: 'chat-model' })).toBeInTheDocument();
     expect(fetchModels).toHaveBeenCalledWith('/api/v1/models');
+    expect(screen.queryByRole('menuitem', { name: 'model.auto' })).not.toBeInTheDocument();
     const input = screen.getByPlaceholderText('model.customPlaceholder');
     fireEvent.change(input, { target: { value: 'custom-model' } });
     fireEvent.submit(input.closest('form')!);
