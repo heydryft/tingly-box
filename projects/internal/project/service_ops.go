@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -42,16 +43,56 @@ func (s *Service) Create(ctx context.Context, spec NewProjectSpec) (*db.Project,
 	return p, nil
 }
 
-// Save persists a project change and tells open pages.
+// Save persists a project change and tells open pages and the coordinator.
 func (s *Service) Save(p *db.Project) error {
 	if len([]rune(p.Instructions)) > MaxInstructions {
 		return fmt.Errorf("instructions exceed %d characters", MaxInstructions)
 	}
-	if err := s.Store.SaveProject(p); err != nil {
+	previous, err := s.Store.GetProject(p.ID)
+	if err != nil {
+		return err
+	}
+	var notice *db.ThreadEvent
+	if fields := configurationChanges(previous, p); len(fields) > 0 && p.Type == db.ProjectProject && p.MainThreadID != "" {
+		notice = &db.ThreadEvent{ThreadID: p.MainThreadID, Kind: db.EvSystem, Source: db.SourceSystem,
+			Content: "Project settings changed: " + strings.Join(fields, ", ") + ". Use the current project settings instead of older values in the conversation. Repository changes apply to new threads; existing threads keep their worktrees.",
+			Payload: jsonString(map[string]bool{"settings_changed": true}),
+		}
+	}
+	if err := s.Store.SaveProjectWithEvent(p, notice); err != nil {
 		return err
 	}
 	s.Hub.Publish(Event{Type: EventProject, ProjectID: p.ID, Data: p})
+	if notice != nil {
+		s.Coordinator.publishEvent(p.ID, notice)
+		if !p.Paused && p.ArchivedAt == nil {
+			s.Coordinator.schedule(p.ID, func(q *queue) { q.config = true })
+		}
+	}
 	return nil
+}
+
+// Navigation metadata does not change how work runs and must not wake a model.
+func configurationChanges(a, b *db.Project) []string {
+	var fields []string
+	for _, field := range []struct {
+		name string
+		a, b string
+	}{
+		{"name", a.Name, b.Name}, {"goal", a.Goal, b.Goal},
+		{"instructions", a.Instructions, b.Instructions},
+		{"coordinator model", a.CoordinatorModel, b.CoordinatorModel},
+		{"thread model", a.ThreadModel, b.ThreadModel},
+		{"thread permission mode", a.ThreadPermissionMode, b.ThreadPermissionMode},
+	} {
+		if field.a != field.b {
+			fields = append(fields, field.name)
+		}
+	}
+	if !slices.Equal(a.Repos, b.Repos) {
+		fields = append(fields, "repositories")
+	}
+	return fields
 }
 
 // SetPaused pauses (stopping every running thread) or resumes a project.

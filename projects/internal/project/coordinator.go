@@ -48,6 +48,7 @@ type Coordinator struct {
 type queue struct {
 	running bool
 	user    bool
+	config  bool
 	reports []Report
 }
 
@@ -105,7 +106,7 @@ func (c *Coordinator) Busy(projectID string) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	q, ok := c.queues[projectID]
-	return ok && (q.running || q.user || len(q.reports) > 0)
+	return ok && (q.running || q.user || q.config || len(q.reports) > 0)
 }
 
 // final hands a message the coordinator is done with (a finished reply, a
@@ -151,9 +152,9 @@ func (c *Coordinator) work(projectID string, q *queue) {
 	c.hub.Publish(Event{Type: EventCoordinator, ProjectID: projectID, Data: map[string]bool{"busy": true}})
 	for {
 		c.mu.Lock()
-		user, reports := q.user, q.reports
-		q.user, q.reports = false, nil
-		if !user && len(reports) == 0 {
+		user, config, reports := q.user, q.config, q.reports
+		q.user, q.config, q.reports = false, false, nil
+		if !user && !config && len(reports) == 0 {
 			q.running = false
 			c.mu.Unlock()
 			c.hub.Publish(Event{Type: EventCoordinator, ProjectID: projectID, Data: map[string]bool{"busy": false}})
@@ -161,7 +162,7 @@ func (c *Coordinator) work(projectID string, q *queue) {
 		}
 		c.mu.Unlock()
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-		if err := c.turn(ctx, projectID, user, reports); err != nil {
+		if err := c.turn(ctx, projectID, user, config); err != nil {
 			c.final(c.addEvent(projectID, &db.ThreadEvent{Kind: db.EvError, Content: err.Error()}))
 		}
 		cancel()
@@ -170,17 +171,13 @@ func (c *Coordinator) work(projectID string, q *queue) {
 
 // turn runs one coordinator turn: the model answers, calls tools, and the
 // loop continues until it stops calling tools.
-func (c *Coordinator) turn(ctx context.Context, projectID string, userTriggered bool, reports []Report) error {
+func (c *Coordinator) turn(ctx context.Context, projectID string, userTriggered, configChanged bool) error {
 	p, err := c.store.GetProject(projectID)
 	if err != nil {
 		return err
 	}
 	if p.Paused || p.ArchivedAt != nil {
 		return nil
-	}
-	client, model, err := c.llm.ClientFor(ctx, p.CoordinatorModel)
-	if err != nil {
-		return fmt.Errorf("coordinator unavailable: %w", err)
 	}
 	history, err := c.store.ListRecentThreadEvents(p.MainThreadID, historyLimit)
 	if err != nil {
@@ -190,7 +187,9 @@ func (c *Coordinator) turn(ctx context.Context, projectID string, userTriggered 
 	if len(msgs) == 0 {
 		return nil
 	}
-	if !userTriggered {
+	if configChanged {
+		msgs = appendUser(msgs, "(Project settings changed. Re-evaluate pending work using the current settings. Continue previously requested work if the change unblocks it; do not start unrelated work or repeat completed work. Existing threads keep their worktrees. If no action or useful update is needed, reply exactly "+noUpdate+".)")
+	} else if !userTriggered {
 		// The thread updates are already in the history; nudge the model
 		// to stay quiet unless they matter.
 		msgs = appendUser(msgs, "(Coordinator check-in: the thread updates above just arrived. Post a brief update for the user only if it matters, otherwise reply exactly "+noUpdate+".)")
@@ -198,6 +197,17 @@ func (c *Coordinator) turn(ctx context.Context, projectID string, userTriggered 
 	tools := coordinatorTools()
 
 	for round := 0; round < maxToolRounds; round++ {
+		p, err = c.store.GetProject(projectID)
+		if err != nil {
+			return err
+		}
+		if p.Paused || p.ArchivedAt != nil {
+			return nil
+		}
+		client, model, err := c.llm.ClientFor(ctx, p.CoordinatorModel)
+		if err != nil {
+			return fmt.Errorf("coordinator unavailable: %w", err)
+		}
 		threads, _ := c.store.ListThreads(projectID)
 		system := coordinatorSystemPrompt(c.layout, p, threads, time.Now())
 
@@ -237,7 +247,21 @@ func (c *Coordinator) turn(ctx context.Context, projectID string, userTriggered 
 		results := make([]llm.ToolResult, 0, len(res.ToolCalls))
 		var started []string
 		for _, call := range res.ToolCalls {
-			out, isErr, ids := c.runTool(ctx, p, call)
+			current, err := c.store.GetProject(projectID)
+			if err != nil {
+				return err
+			}
+			if current.Paused || current.ArchivedAt != nil {
+				return nil
+			}
+			// An in-flight answer may still name a removed repository or use
+			// old instructions. Let the next round plan again before acting.
+			if len(configurationChanges(p, current)) > 0 {
+				results = append(results, llm.ToolResult{CallID: call.ID, IsError: true,
+					Content: "Project settings changed while this response was running. This tool was not executed. Re-evaluate it using the current project settings."})
+				continue
+			}
+			out, isErr, ids := c.runTool(ctx, current, call)
 			started = append(started, ids...)
 			results = append(results, llm.ToolResult{CallID: call.ID, Content: out, IsError: isErr})
 		}
@@ -249,9 +273,6 @@ func (c *Coordinator) turn(ctx context.Context, projectID string, userTriggered 
 			llm.Message{Role: "assistant", Content: res.Text, ToolCalls: res.ToolCalls},
 			llm.Message{Role: "user", ToolResults: results},
 		)
-		if p, err = c.store.GetProject(projectID); err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -281,6 +302,8 @@ func renderHistory(history []db.ThreadEvent, libraryDir string) []llm.Message {
 	}
 	for _, m := range history {
 		switch m.Kind {
+		case db.EvSystem:
+			add("user", "[Project update] "+m.Content)
 		case db.EvUser:
 			add("user", withAttachments(m.Content, libraryDir, ParseAttachments(m.Payload)))
 		case db.EvAssistant:

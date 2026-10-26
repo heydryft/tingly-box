@@ -139,6 +139,7 @@ export const zh: Dict<typeof en> = {
     conversation: {
         placeholder: '描述工作、粘贴 bug 报告或报错栈，或者提个问题…',
         coordinatorModel: '协调者模型',
+        settingsChanged: '项目设置已更新',
         threadModel: '线程模型',
         queuePlaceholder: '给项目发消息，它会在当前这一轮结束后读到…',
         emptyTitle: '给这个项目发第一份工作',

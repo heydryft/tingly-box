@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Box, Button, Divider, ListItemText, Menu, MenuItem, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { Check, ExpandMore } from './icons';
-import { useModels } from '../hooks/useModels';
+import { useModels, type ModelSource } from '../hooks/useModels';
 import { fontMono, fontSizes } from '@tingly/ui/theme/fonts';
 import { radius } from '@tingly/ui/theme/radius';
 
@@ -12,6 +12,7 @@ interface Props {
     disabled?: boolean;
     /** What the model is for, shown before it when a box holds more than one picker. */
     label?: string;
+    source?: ModelSource;
 }
 
 /**
@@ -19,9 +20,9 @@ interface Props {
  * user switch. When the endpoint cannot list models, a free-text field takes
  * over so chatting is never blocked on discovery.
  */
-export function ModelPicker({ value, onChange, disabled, label }: Props) {
+export function ModelPicker({ value, onChange, disabled, label, source = 'connection' }: Props) {
     const { t } = useTranslation('projects');
-    const { models, error } = useModels();
+    const { models, error } = useModels(source);
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
     const [custom, setCustom] = useState('');
 

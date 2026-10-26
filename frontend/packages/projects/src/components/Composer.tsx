@@ -5,6 +5,7 @@ import type { Attachment } from '../client';
 import { isLongText, lineCount, pastedTextFile } from './attachments';
 import { ArrowUpward, Attach, Close, Description, ExpandMore, Stop } from './icons';
 import { ModelPicker } from './ModelPicker';
+import type { ModelSource } from '../hooks/useModels';
 import { radius } from '@tingly/ui/theme/radius';
 import { fontSizes } from '@tingly/ui/theme/fonts';
 
@@ -60,6 +61,8 @@ export interface ComposerProps {
     onModelChange?: (m: string) => void;
     /** What `model` is for, when other model pickers share the box. */
     modelLabel?: string;
+    /** Projects use their host's models; standalone Chats use their saved connection. */
+    modelSource?: ModelSource;
     /** Controls above the text (a host's profile, model and permission pickers). */
     context?: ReactNode;
     /** Controls shown at the bottom-left (project / memory chips). */
@@ -89,7 +92,7 @@ export interface ComposerProps {
  * Enter (confirming a candidate) never sends, and a send never runs twice.
  */
 export function Composer({
-    onSend, attach, attachBlocked, streaming, onStop, sendWhileStreaming, sendModes, disabled, canSubmit = true, placeholder, autoFocus, model, onModelChange, modelLabel,
+    onSend, attach, attachBlocked, streaming, onStop, sendWhileStreaming, sendModes, disabled, canSubmit = true, placeholder, autoFocus, model, onModelChange, modelLabel, modelSource,
     context, leftSlot, minRows = 1, seed, keepUntilSent, text: controlled, onTextChange, onAccepted, keysHint,
 }: ComposerProps) {
     const { t } = useTranslation('projects');
@@ -401,7 +404,7 @@ export function Composer({
                             {leftSlot}
                             {hint && <Typography variant="caption" color="text.secondary">{t('composer.keys')}</Typography>}
                         </Box>
-                        {onModelChange && <ModelPicker value={model ?? ''} onChange={onModelChange} label={modelLabel} />}
+                        {onModelChange && <ModelPicker value={model ?? ''} onChange={onModelChange} label={modelLabel} source={modelSource} disabled={disabled} />}
                         {sendButton}
                         {modeButton}
                         {stopButton}

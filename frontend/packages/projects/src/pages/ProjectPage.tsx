@@ -336,6 +336,7 @@ export default function ProjectPage() {
                                     onChange={(m) => void patch({ thread_permission_mode: m as ThreadMode })}
                                 />
                                 <ModelPicker
+                                    source="projects"
                                     label={t('conversation.threadModel')}
                                     value={project.thread_model}
                                     disabled={blocked}

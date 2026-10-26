@@ -298,6 +298,8 @@ export function ConversationPane({ projectId, messages, more = false, onLoadEarl
                             // own folded entry here, in the order things happened.
                             case 'thread_update':
                                 return <ThreadUpdateRow key={m.id} message={m} onOpen={onOpenThread} />;
+                            case 'system':
+                                return <Typography key={m.id} variant="caption" color="text.secondary" sx={{ display: 'block', my: 1.5 }}>{parse<{ settings_changed?: boolean }>(m.payload)?.settings_changed ? t('conversation.settingsChanged') : m.content}</Typography>;
                             case 'error':
                                 return (
                                     <Stack key={m.id} role="alert" direction="row" spacing={0.75} sx={{ alignItems: 'flex-start', color: (theme) => getReadableAccent(theme, 'error') }}>
@@ -335,6 +337,7 @@ export function ConversationPane({ projectId, messages, more = false, onLoadEarl
                     model={model}
                     onModelChange={onModelChange}
                     modelLabel={t('conversation.coordinatorModel')}
+                    modelSource="projects"
                     placeholder={t(busy ? 'conversation.queuePlaceholder' : 'conversation.placeholder')}
                     attach={(files) => uploadAttachments({ projectId }, files)}
                     onSend={async (text, attachments) => {

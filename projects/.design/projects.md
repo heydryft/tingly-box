@@ -121,7 +121,8 @@ threads/<thread-id>.settings.json  线程的 Claude Code 设置（additionalDire
 - **一轮结束后**：读取 git 状态（领先提交数、改动文件数）→ 定状态 → 记一条 `report` 事件 → 通知协调者。
 
 ### 4.5 协调者
-- 每个项目一个串行队列；触发源：用户消息、线程汇报（完成 / 需要输入 / 失败）。
+- 每个项目一个串行队列；触发源：用户消息、线程汇报（完成 / 需要输入 / 失败）、项目运行配置变更。
+- **配置变更**：保存名称、Goal、Instructions、仓库、模型或权限模式时，在同一事务中写入主线程的 `system` 事件（`source=system`），经现有队列合并通知协调者。协调者按新配置重新评估待办，无事则保持安静；收藏与重复保存不触发模型，暂停或归档时只记录变更。每轮模型请求重新读取配置并解析模型；执行工具前再次检查，若响应生成期间配置已变，先返回工具错误让模型重新规划。仓库变更作用于新线程，已有线程的 worktree 不搬迁。
 - **按需构建上下文**（与官方一致：基于最近消息、线程表和记忆，而不是全量历史）：系统提示 = 角色 + Goal + Instructions + MEMORY.md + 仓库列表 + 线程表（id、标题、状态、最近汇报摘要）；消息 = 最近 N 条项目对话。
 - **工具**：`start_thread`、`propose_threads`、`message_thread`、`get_thread`、`resolve_thread`、`remember`、`forget`、`update_instructions`。
 - **路由规则**（提示词）：快速问题就地答；新工作开线程；同领域的后续交给已有线程并说明交给了谁；一条多任务拆多线程；用户表达的协调偏好（先提议、最多 N 个并行、更新简短……）用 `remember` 记下并遵守。
@@ -200,6 +201,7 @@ MVP 已实现（§2 中标 ✅ 的部分）。验证：
 - **挂载方式**：宿主把本仓库前端加进自己的 pnpm workspace，用 `lazy()` 挂页面。不用 iframe，也不在子路径下另挂一个 SPA，否则会出现两套侧栏、两套主题和两套登录状态。
 - **共享依赖**：react、react-dom、@mui/material、react-router-dom、i18next、react-i18next 作为 peerDependencies，只打包一份；i18n 用独立命名空间 `projects`。
 - **包内路径**：`@/` 别名属于 Tingly Box 的应用，`@tingly/projects` 内部一律用相对路径。
+- **模型来源**：项目设置、协调者输入框和线程默认模型都通过 `/api/v1/projects/models` 读取 `Host.Models`；共享的选择器由 `source` 参数传递来源。独立 Chats 继续使用连接自己的 `/api/v1/models`，不引入宿主专有依赖。
 - **外边距**：宿主传 `embedded: true`（`ProjectsHost`）时，页面去掉为独立版浮动侧栏按钮留的位置，项目页标题前加回到列表的链接；宿主布局给 Projects 路由不留内边距。另有可选的 `notify`，让 toast 走宿主的通知。
 
 ### 9.5 产品边界

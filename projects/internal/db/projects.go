@@ -78,6 +78,20 @@ func (s *Store) SaveProject(p *Project) error {
 	return s.db.Save(p).Error
 }
 
+// SaveProjectWithEvent keeps a configuration edit and its main-thread notice
+// together: the coordinator must never hear about a change that was not saved.
+func (s *Store) SaveProjectWithEvent(p *Project, e *ThreadEvent) error {
+	return s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(p).Error; err != nil {
+			return err
+		}
+		if e == nil {
+			return nil
+		}
+		return (&Store{db: tx}).AddThreadEvent(e)
+	})
+}
+
 // TouchProject bumps a project's UpdatedAt (recent activity).
 func (s *Store) TouchProject(id string) error {
 	return s.db.Model(&Project{}).Where("id = ?", id).UpdateColumn("updated_at", time.Now()).Error
