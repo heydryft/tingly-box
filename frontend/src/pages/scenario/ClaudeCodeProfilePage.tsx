@@ -389,11 +389,10 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
                         showPlugins={false}
                     />
                     {/* Slots and plugins live in the connection card: they are
-                        per-connection settings, set alongside the URL. */}
-                    <Box sx={{ px: 2, py: 0.5 }}>
-                        <Box sx={{ py: 0.5 }}>{slots.slotsRow}</Box>
-                        <Box sx={{ py: 0.5 }}>{pluginsRow}</Box>
-                    </Box>
+                        per-connection settings, set alongside the URL. Rows use
+                        pt:1 so the gaps match the card's edge rhythm. */}
+                    <Box sx={{ px: 2, pt: 1 }}>{slots.slotsRow}</Box>
+                    <Box sx={{ px: 2, pt: 1 }}>{pluginsRow}</Box>
                   </Box>
                 </AgentAccessSection>
             <CardGrid>

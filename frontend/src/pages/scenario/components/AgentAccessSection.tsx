@@ -131,7 +131,10 @@ export const AgentAccessSection: React.FC<AgentAccessSectionProps> = ({ expanded
                     aria-label={label}
                     sx={{ display: 'block', width: '100%', textAlign: 'left', '&:hover': { backgroundColor: 'action.hover' } }}
                 >
-                    <Box sx={{ pt: 1, pb: 1, pr: CHEVRON_GUTTER }}>
+                    {/* With extras below, the bottom padding moves to the extras
+                        wrapper so the URL→extras gap matches the card's own
+                        top/bottom rhythm (8 + 4 on each side of the row). */}
+                    <Box sx={{ pt: 1, pb: foldedExtras ? 0.5 : 1, pr: CHEVRON_GUTTER }}>
                         <Box sx={{ maxWidth: SCENARIO_HEADER_CONTENT_MAX_WIDTH }}>
                             <Box sx={{ px: 2, py: 0.5 }}>
                                 <ConfigRow
@@ -159,7 +162,7 @@ export const AgentAccessSection: React.FC<AgentAccessSectionProps> = ({ expanded
             {!expanded && foldedExtras && (
                 // Same row wrappers as the folded URL row above — just without
                 // its ButtonBase, so the extras' own controls stay clickable.
-                <Box sx={{ pb: 1, pr: CHEVRON_GUTTER }}>
+                <Box sx={{ pt: 0.5, pb: 1, pr: CHEVRON_GUTTER }}>
                     <Box sx={{ maxWidth: SCENARIO_HEADER_CONTENT_MAX_WIDTH }}>
                         <Box sx={{ px: 2, py: 0.5 }}>{foldedExtras}</Box>
                     </Box>

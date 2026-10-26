@@ -356,15 +356,12 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
                             showBaseUrlRow={connection?.baseUrlRow}
                         />
                         {/* Slots and plugins live in the connection card: they are
-                            per-connection settings, set alongside the URL. */}
+                            per-connection settings, set alongside the URL. Rows
+                            use pt:1 so the gaps match the card's edge rhythm. */}
                         {slotRouting && (
-                            <Box sx={{ px: 2, py: 0.5 }}>
-                                <Box sx={{ py: 0.5 }}>{slots.slotsRow}</Box>
-                            </Box>
+                            <Box sx={{ px: 2, pt: 1 }}>{slots.slotsRow}</Box>
                         )}
-                        <Box sx={{ px: 2, py: 0.5 }}>
-                            <Box sx={{ py: 0.5 }}>{pluginsRow}</Box>
-                        </Box>
+                        <Box sx={{ px: 2, pt: 1 }}>{pluginsRow}</Box>
                     </Box>
                 </AgentAccessSection>
 
