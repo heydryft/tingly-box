@@ -5,18 +5,24 @@ The conversation's display preference has two values, **Detailed / Concise**
 including its normal folded tools/reports. Tool expansion is still a separate
 inspection action, not a third detail level.
 
-- Project worker threads and folder threads: Concise hides tool-call rows,
-  results and Agent tool cards. User/assistant messages, thoughts, errors,
-  checklists and working status remain. Approval/question cards stay actionable;
-  settled decisions stay as request rows when their normal tool row is hidden.
-  Nested subagent steps use the same policy and are read through the existing
-  lazy reader so a hidden Agent card cannot hide a request inside it.
-- Project main thread (the manager/coordinator conversation): Concise shows
-  only the manager's own assistant speech. User/peer messages, thread lifecycle
-  cards, reports, suggestions and error entries are hidden. The composer,
-  Overview and waiting signals are unchanged; users can return to Detailed or
-  open a worker to act. This main-thread renderer does not have approval/ask
-  response controls; worker controls remain in the shared transcript.
+- Project worker threads and folder threads: Concise hides ordinary tool-call
+  rows and results, not structured cards. Agent cards keep their header, prompt,
+  report, focus action, expansion and lazy paging. User/assistant messages,
+  thoughts, errors, checklists and working status remain. Approval/question cards
+  stay actionable; settled decisions stay as request rows when their normal tool
+  row is hidden. In Concise, Agent cards start open while a request is pending,
+  so nested interactions remain discoverable without replacing their card.
+- Project main thread (the manager/coordinator conversation): Concise keeps the
+  manager's own assistant speech and **all cards and controls**. Only user and
+  peer conversational text is filtered. Thread lifecycle cards, report rows,
+  suggestions and error alerts remain, with their original expansion and actions.
+  The composer, model/switch controls, Overview and waiting signals are unchanged.
+  This main-thread renderer does not have approval/ask response controls; worker
+  controls remain in the shared transcript.
+
+Concise is not text truncation or generated summarization. Structured cards are
+never treated as conversational text, even when they contain text or originate
+from a thread. Unknown structured event kinds are not filtered preemptively.
 
 Both use `MessageDetailControl` next to the composer. A tooltip explains the
 surface-specific meaning and that this is display only (UX P3/P8/P9). The two

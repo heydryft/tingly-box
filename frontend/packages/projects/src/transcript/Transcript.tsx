@@ -532,9 +532,7 @@ const BlockList = ({blocks, pendingRequestId, working, expandAll, onRespond, anc
                 case 'activity':
                     return <ActivityRun key={i} steps={b.steps} live={working && last} hold={holdsPending(items[at + 1]?.block, pendingRequestId)} expandAll={expandAll} pendingRequestId={pendingRequestId}/>;
                 case 'agent':
-                    return detail === 'concise'
-                        ? <Box key={i} {...anchor}><ConciseAgent block={b} pendingRequestId={pendingRequestId} working={working} expandAll={expandAll} onRespond={onRespond}/></Box>
-                        : <AgentCard key={i} block={b} turnLive={working} expandAll={expandAll} pendingRequestId={pendingRequestId} onRespond={onRespond}/>;
+                    return <AgentCard key={i} block={b} turnLive={working} expandAll={expandAll} pendingRequestId={pendingRequestId} onRespond={onRespond}/>;
                 case 'request':
                     if (!b.message.request_id || b.message.request_id !== pendingRequestId) return <SettledRequest key={b.message.request_id ?? i} block={b}/>;
                     return b.message.kind === 'ask_request'
@@ -579,13 +577,6 @@ const BlockList = ({blocks, pendingRequestId, working, expandAll, onRespond, anc
     );
 };
 
-// Load nested steps even though the Agent tool's card is hidden: a child may
-// contain the live question/approval the user needs to answer.
-const ConciseAgent = ({block, working, expandAll, pendingRequestId, onRespond}: Omit<BlockListProps, 'blocks'> & {block: Extract<TranscriptBlock, {type: 'agent'}>}) => {
-    const steps = useSubagentSteps(block.call.id, true);
-    return <Stack spacing={2.5}><AgentBody block={block} running={agentStatus(block, working) === 'running'} report={agentReport(block)} steps={steps} expandAll={expandAll} pendingRequestId={pendingRequestId} onRespond={onRespond}/></Stack>;
-};
-
 // NewDivider marks where what arrived since the last visit begins.
 const NewDivider = () => {
     const {t} = useTranslation();
@@ -610,9 +601,10 @@ const AgentCard = ({block, turnLive, expandAll, pendingRequestId, onRespond}: {
     onRespond: Respond;
 }) => {
     const {t} = useTranslation();
-    const [open, toggle] = useExpanded(expandAll);
+    const {detail, subagents} = useTranscriptHost();
+    // Keep nested requests discoverable without replacing the card in concise mode.
+    const [open, toggle] = useExpanded(expandAll, detail === 'concise' && !!pendingRequestId);
     const steps = useSubagentSteps(block.call.id, open);
-    const {subagents} = useTranscriptHost();
     const input = (block.call.input ?? {}) as {description?: string; prompt?: string; subagent_type?: string};
     const task = block.task;
     const status = agentStatus(block, turnLive);
@@ -703,11 +695,10 @@ const AgentBody = ({block, running, report, steps, expandAll, pendingRequestId, 
     showEarlier?: boolean;
 }) => {
     const {t} = useTranslation();
-    const {detail} = useTranscriptHost();
     const input = (block.call.input ?? {}) as {prompt?: string};
     return (
         <>
-            {detail === 'detailed' && input.prompt && (
+            {input.prompt && (
                 <Box>
                     <Typography variant="caption" sx={{color: 'text.secondary'}}>{t('projects.transcript.agentPrompt', {defaultValue: 'Asked to'})}</Typography>
                     <Typography variant="body2" sx={{color: 'text.primary', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 160, overflow: 'auto'}}>

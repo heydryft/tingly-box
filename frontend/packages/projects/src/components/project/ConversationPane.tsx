@@ -257,15 +257,18 @@ export function ConversationPane({ projectId, messages, more = false, onLoadEarl
                         </Box>
                     )}
                     {messages.map((m) => {
-                        if (!showManagerMessage(m, detail)) return null;
+                        if (m.kind !== 'user' && !showManagerMessage(m, detail)) return null;
                         switch (m.kind) {
-                            case 'user':
+                            case 'user': {
+                                const attachments = parse<{ attachments?: Attachment[] }>(m.payload)?.attachments ?? [];
+                                const showText = showManagerMessage(m, detail);
+                                if (!showText && attachments.length === 0) return null;
                                 return (
                                     <Box key={m.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                                         <Box sx={{ maxWidth: userMessageWidth }}>
-                                            <AttachmentChips owner={{ projectId }} items={parse<{ attachments?: Attachment[] }>(m.payload)?.attachments ?? []} />
+                                            <AttachmentChips owner={{ projectId }} items={attachments} />
                                         </Box>
-                                        {m.content.trim() !== '' && (
+                                        {showText && m.content.trim() !== '' && (
                                             <Box sx={userBubble}>
                                                 <Typography variant="body1" sx={conversationText}>{m.content}</Typography>
                                             </Box>
@@ -275,6 +278,7 @@ export function ConversationPane({ projectId, messages, more = false, onLoadEarl
                                             : null}
                                     </Box>
                                 );
+                            }
                             case 'assistant':
                                 return <Box key={m.id}><Markdown text={m.content} conversation /></Box>;
                             case 'thread_started': {

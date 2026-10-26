@@ -481,20 +481,29 @@ describe('message detail', () => {
     it('retains subagent report fallbacks and older-step navigation in concise mode', async () => {
         const load = vi.fn().mockResolvedValue(undefined);
         const blocks: TranscriptBlock[] = [{type: 'agent', call: {type: 'tool', id: 'agent', name: 'Agent', input: {prompt: 'hidden prompt'}, isError: false}, children: [], task: {status: 'completed', background: false, summary: 'Finished checking'}}];
-        render(<Transcript blocks={blocks} detail="concise" working={false} onRespond={respondNever}
+        const view = render(<Transcript blocks={blocks} detail="concise" working={false} onRespond={respondNever}
             subagents={{steps: () => ({loaded: true, more: true}), load}}/>);
-        expect(screen.queryByText('hidden prompt')).toBeNull();
+        const card = document.querySelector<HTMLElement>('[data-call-ids="agent"]')!;
+        expect(card).toBeInTheDocument();
+        fireEvent.click(within(card).getByRole('button', {expanded: false}));
+        expect(screen.getByText('hidden prompt')).toBeInTheDocument();
         expect(screen.getByText('Finished checking')).toBeInTheDocument();
         await act(async () => fireEvent.click(screen.getByRole('button', {name: 'Show earlier steps'})));
         expect(load).toHaveBeenCalledWith('agent', true);
+        view.rerender(<Transcript blocks={blocks} detail="detailed" working={false} onRespond={respondNever}/>);
+        view.rerender(<Transcript blocks={blocks} detail="concise" working={false} onRespond={respondNever}/>);
+        expect(screen.getByText('Finished checking')).toBeInTheDocument();
+        fireEvent.click(within(card).getByRole('button', {expanded: true}));
+        await waitFor(() => expect(screen.queryByText('Finished checking')).not.toBeInTheDocument());
     });
 
-    it('exposes nested requests even when the subagent tool card is hidden', async () => {
+    it('keeps the subagent card and exposes its nested request in concise mode', async () => {
         const respond = vi.fn().mockResolvedValue(true);
         const blocks: TranscriptBlock[] = [{type: 'agent', call: {type: 'tool', id: 'agent', name: 'Agent', input: undefined, isError: false}, children: [request('nested')]}];
         const load = vi.fn().mockResolvedValue(undefined);
         render(<Transcript blocks={blocks} detail="concise" pendingRequestId="nested" working onRespond={respond} drafts={drafts}
             subagents={{steps: () => ({loaded: false}), load}}/>);
+        expect(document.querySelector('[data-call-ids="agent"]')).toBeInTheDocument();
         await waitFor(() => expect(load).toHaveBeenCalledWith('agent', false));
         await act(async () => fireEvent.click(screen.getByRole('button', {name: 'Deny'})));
         expect(respond).toHaveBeenCalledWith('nested', false, '');
