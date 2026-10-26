@@ -28,7 +28,8 @@ import AgentSetupCard, {
     scrollToModelsCard,
 } from './components/AgentSetupCard';
 import { SCENARIO_HEADER_CONTENT_MAX_WIDTH, ScenarioCardHeader, agentPageHeaderSx } from './components/ScenarioCardHeader';
-import AgentPluginsCard from './components/AgentPluginsCard';
+import PluginFeatures from '@/components/PluginFeatures';
+import { usePluginsActive } from '@/hooks/usePluginsActive';
 import ScenarioPageSkeleton from './components/ScenarioPageSkeleton';
 import TemplatePage from './components/TemplatePage.tsx';
 
@@ -267,6 +268,10 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
     // The connection section: open until connected, or while the client's config is
     // out of date; the user's own open / close (kept locally) wins over that.
     const [envMode, setEnvMode] = useState<EnvironmentMode>('local');
+    // Whether any plugin is on, read independently of the connection card's
+    // fold state, so the folded card can surface the row only when it matters.
+    const pluginsActive = usePluginsActive(scenario);
+    const pluginsRow = <PluginFeatures scenario={scenario} />;
     const accessUrl = transformUrlByMode(`${baseUrl}/tingly/${scenario}`, envMode);
     const access = useAccessExpanded(scenario, !connected || clientConfigStatus?.state === 'outdated');
 
@@ -323,8 +328,20 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
                 />
                 {/* Connection: always here, between the status row and the rules; open
                     until the agent is connected (or while its config is out of date),
-                    then folded to just the URL. Page-level Plugins are their own card. */}
-                <AgentAccessSection expanded={access.expanded} onToggle={access.toggle} url={accessUrl}>
+                    then folded to just the URL. Slots and plugins are part of the
+                    connection; folded, they surface only when they deviate from the
+                    default (a plugin on, a slot split). */}
+                <AgentAccessSection
+                    expanded={access.expanded}
+                    onToggle={access.toggle}
+                    url={accessUrl}
+                    foldedExtras={(
+                        <>
+                            {slotRouting && slots.slots.length > 0 && slots.slotsRow}
+                            {pluginsActive && pluginsRow}
+                        </>
+                    )}
+                >
                     <Box sx={{ maxWidth: SCENARIO_HEADER_CONTENT_MAX_WIDTH }}>
                         <ProviderConfigCard
                             title={connection?.titleKey ? t(connection.titleKey) : agent.title}
@@ -339,15 +356,18 @@ const AgentPageContent: React.FC<{ agent: AgentPageDescriptor }> = ({ agent }) =
                             showApiKeyRow={connection?.apiKeyRow}
                             showBaseUrlRow={connection?.baseUrlRow}
                         />
+                        {/* Slots and plugins live in the connection card: they are
+                            per-connection settings, set alongside the URL. */}
                         {slotRouting && (
                             <Box sx={{ px: 2, py: 0.5 }}>
                                 <Box sx={{ py: 0.5 }}>{slots.slotsRow}</Box>
                             </Box>
                         )}
+                        <Box sx={{ px: 2, py: 0.5 }}>
+                            <Box sx={{ py: 0.5 }}>{pluginsRow}</Box>
+                        </Box>
                     </Box>
                 </AgentAccessSection>
-
-                <AgentPluginsCard scenario={scenario} />
 
                 {quickStart && (
                     // Embedded where it always was, above the rules; gone once done.

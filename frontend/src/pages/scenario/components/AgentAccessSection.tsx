@@ -48,6 +48,12 @@ export interface AgentAccessSectionProps {
     url: string;
     /** The open section: Base URL, API Key, model mode... */
     children: React.ReactNode;
+    /**
+     * Shown under the folded URL row — only for state that deviates from the
+     * default (a plugin switched on, a slot split off), so the folded card
+     * stays one quiet line until something actually differs.
+     */
+    foldedExtras?: React.ReactNode;
 }
 
 /**
@@ -56,7 +62,7 @@ export interface AgentAccessSectionProps {
  * line with the Base URL; the whole line opens it. The fold chevron sits at
  * the card's right edge, as on the rule cards.
  */
-export const AgentAccessSection: React.FC<AgentAccessSectionProps> = ({ expanded, onToggle, url, children }) => {
+export const AgentAccessSection: React.FC<AgentAccessSectionProps> = ({ expanded, onToggle, url, children, foldedExtras }) => {
     const { t } = useTranslation();
     const label = t(expanded ? 'agentAccess.collapse' : 'agentAccess.expand');
     // Folded and open are two different buttons, so toggling would drop keyboard
@@ -149,6 +155,15 @@ export const AgentAccessSection: React.FC<AgentAccessSectionProps> = ({ expanded
                     </Box>
                     <Box sx={{ position: 'absolute', top: 12, right: 22, p: 0.25, display: 'flex' }}>{chevron}</Box>
                 </ButtonBase>
+            )}
+            {!expanded && foldedExtras && (
+                // Same row wrappers as the folded URL row above — just without
+                // its ButtonBase, so the extras' own controls stay clickable.
+                <Box sx={{ pb: 1, pr: CHEVRON_GUTTER }}>
+                    <Box sx={{ maxWidth: SCENARIO_HEADER_CONTENT_MAX_WIDTH }}>
+                        <Box sx={{ px: 2, py: 0.5 }}>{foldedExtras}</Box>
+                    </Box>
+                </Box>
             )}
             <Collapse in={expanded} timeout={0} unmountOnExit>
                 <Box sx={{ pt: 1, pb: 1, pr: CHEVRON_GUTTER }}>{children}</Box>

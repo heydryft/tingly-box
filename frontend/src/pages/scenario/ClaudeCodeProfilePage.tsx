@@ -9,7 +9,8 @@ import { useAgentObservation } from '@/pages/scenario/hooks/useAgentObservation'
 import { isCredentialProvider } from '@/utils/providers';
 import ScenarioPageSkeleton from './components/ScenarioPageSkeleton';
 import { SCENARIO_HEADER_CONTENT_MAX_WIDTH, agentPageHeaderSx } from './components/ScenarioCardHeader';
-import AgentPluginsCard from './components/AgentPluginsCard';
+import PluginFeatures from '@/components/PluginFeatures';
+import { usePluginsActive } from '@/hooks/usePluginsActive';
 import ProviderConfigCard from "@/components/ProviderConfigCard.tsx";
 import { useSlotRouting } from "@/pages/scenario/hooks/useSlotRouting";
 import ConfigRow from "@/components/ConfigRow.tsx";
@@ -197,6 +198,10 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
     const providerConnected = isLoading ? null : providers.some((p: any) => p.enabled && isCredentialProvider(p));
     const access = useAccessExpanded(scenario, launched !== true);
     const accessUrl = `${baseUrl}/tingly/${scenario}`;
+    // Whether any plugin is on, read independently of the connection card's
+    // fold state, so the folded card can surface the row only when it matters.
+    const pluginsActive = usePluginsActive(scenario);
+    const pluginsRow = <PluginFeatures scenario={scenario} />;
 
     return (
         <PageLayout loading={isLoading || slots.loading} loadingContent={<ScenarioPageSkeleton />} notification={notification}>
@@ -248,7 +253,14 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
                 )}
                 sx={agentPageHeaderSx()}
             />
-                <AgentAccessSection expanded={access.expanded} onToggle={access.toggle} url={accessUrl}>
+                <AgentAccessSection expanded={access.expanded} onToggle={access.toggle} url={accessUrl}
+                    foldedExtras={(
+                        <>
+                            {slots.slots.length > 0 && slots.slotsRow}
+                            {pluginsActive && pluginsRow}
+                        </>
+                    )}
+                >
                   <Box sx={{ maxWidth: SCENARIO_HEADER_CONTENT_MAX_WIDTH }}>
                     <Box sx={{ px: 2, pb: 0.5 }}>
                         <ConfigRow
@@ -376,13 +388,15 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
                         showBaseUrlRow={true}
                         compact={true}
                         showPlugins={false}
-                        extraContent={slots.slotsRow}
                     />
+                    {/* Slots and plugins live in the connection card: they are
+                        per-connection settings, set alongside the URL. */}
+                    <Box sx={{ px: 2, py: 0.5 }}>
+                        <Box sx={{ py: 0.5 }}>{slots.slotsRow}</Box>
+                        <Box sx={{ py: 0.5 }}>{pluginsRow}</Box>
+                    </Box>
                   </Box>
                 </AgentAccessSection>
-                {/* Page-level plugins: their own card, as on the Agent pages, shown whether
-                    the connection above is folded or not. */}
-                <AgentPluginsCard scenario={scenario} />
             <CardGrid>
 
                 <ClaudeCodeProfileOverrides
