@@ -249,6 +249,7 @@ export default {
       "renameProfile": "重命名方案",
       "deleteProfile": "删除方案",
       "quickStart": "启动",
+      "profileRefHint": "profile 后可以用方案名称,也可以用 id({{id}})",
       "commandGlobal": "全局",
       "settingsFile": "设置",
       "settingsFileWarning": "这是生成的运行配置；手动修改会被配置方案覆盖和模型规则重新生成。",

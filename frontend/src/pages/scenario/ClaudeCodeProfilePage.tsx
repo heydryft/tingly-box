@@ -184,13 +184,29 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
 
     // Profile quick start command. Keep the old `cc --profile` form compatible
     // in the CLI, but surface the new direct `profile <name>` form in the UI.
-    const ccCommand = React.useMemo(() => {
+    // Shown by name (the human handle); the id works too — hovering shows both
+    // complete commands.
+    const buildCommand = (ref: string) => {
         if (commandMode === 'npx') {
             const packageSpec = appVersion ? `tingly-box@${appVersion}` : 'tingly-box';
-            return `npx -y ${packageSpec} profile ${profileId}`;
+            return `npx -y ${packageSpec} profile ${ref}`;
         }
-        return `tingly-box profile ${profileId}`;
-    }, [commandMode, appVersion, profileId]);
+        return `tingly-box profile ${ref}`;
+    };
+    const profileRef = currentProfile?.name || profileId || '';
+    const ccCommand = React.useMemo(() => buildCommand(profileRef), [commandMode, appVersion, profileRef]);
+    // Both spellings in full — by name and by id — under a one-line hint, so
+    // the hover answers "which command can I run" without a round trip.
+    const commandHint = (
+        <Box sx={{ fontFamily: fontMono, whiteSpace: 'pre-line' }}>
+            <Typography variant="caption" sx={{ display: 'block', mb: 0.5, fontFamily: 'inherit' }}>
+                {t('claudeCode.profile.profileRefHint', { id: profileId || '' })}
+            </Typography>
+            {buildCommand(profileRef)}
+            {'\n'}
+            {buildCommand(profileId || '')}
+        </Box>
+    );
 
     // Facts, not clicks: a provider exists, a request has come through this profile.
     const observation = useAgentObservation(scenario);
@@ -237,7 +253,8 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
                         connected={launched === true}
                         configStatus={null}
                         unconnectedText={t('agentStatus.noRequestsYet')}
-                        // The alias is in the title; the id stays here since the launch command uses it.
+                        // The alias is in the title; the id stays visible here —
+                        // the launch command names the profile, the id still works.
                         leading={currentProfile ? profileId : ''}
                     />
                 )}
@@ -253,7 +270,30 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
                 )}
                 sx={agentPageHeaderSx()}
             />
+                {/* This page is special: it connects through the launch command,
+                    not the Base URL, so the folded line is the launch config. */}
                 <AgentAccessSection expanded={access.expanded} onToggle={access.toggle} url={accessUrl}
+                    foldedContent={(
+                        <ConfigRow
+                            tabs={[{
+                                key: 'quickstart',
+                                label: t('claudeCode.profile.quickStart'),
+                                content: (
+                                    <Tooltip title={commandHint} arrow>
+                                        <Typography
+                                            variant="subtitle2"
+                                            onClick={() => copyToClipboard(ccCommand, 'command')}
+                                            sx={copyableTextStyle}
+                                        >
+                                            {ccCommand}
+                                        </Typography>
+                                    </Tooltip>
+                                ),
+                            }]}
+                            activeTab="quickstart"
+                            onTabChange={() => {}}
+                        />
+                    )}
                     foldedExtras={(
                         <>
                             {pluginsActive && pluginsRow}
@@ -268,14 +308,15 @@ const ClaudeCodeProfilePageContent: React.FC = () => {
                                     key: 'quickstart',
                                     label: t('claudeCode.profile.quickStart'),
                                     content: (
-                                        <Typography
-                                            variant="subtitle2"
-                                            onClick={() => copyToClipboard(ccCommand, 'command')}
-                                            sx={copyableTextStyle}
-                                            title={t('claudeCode.profile.clickToCopy')}
-                                        >
-                                            {ccCommand}
-                                        </Typography>
+                                        <Tooltip title={commandHint} arrow>
+                                            <Typography
+                                                variant="subtitle2"
+                                                onClick={() => copyToClipboard(ccCommand, 'command')}
+                                                sx={copyableTextStyle}
+                                            >
+                                                {ccCommand}
+                                            </Typography>
+                                        </Tooltip>
                                     ),
                                     actions: (
                                         <>

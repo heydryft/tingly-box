@@ -279,6 +279,7 @@ export default {
       "renameProfile": "Переименовать профиль",
       "deleteProfile": "Удалить профиль",
       "quickStart": "Запуск",
+      "profileRefHint": "Профиль можно указать по имени или по id ({{id}})",
       "commandGlobal": "Глобально",
       "settingsFile": "Настройки",
       "settingsFileWarning": "Сгенерированные рабочие настройки. Ручные правки перезаписываются переопределениями профиля и правилами моделей.",

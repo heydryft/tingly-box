@@ -49,6 +49,11 @@ export interface AgentAccessSectionProps {
     /** The open section: Base URL, API Key, model mode... */
     children: React.ReactNode;
     /**
+     * Replaces the folded URL row's content — for pages whose folded line is
+     * not the Base URL (a profile page folds to its launch command).
+     */
+    foldedContent?: React.ReactNode;
+    /**
      * Shown under the folded URL row — only for state that deviates from the
      * default (a plugin switched on), so the folded card
      * stays one quiet line until something actually differs.
@@ -62,7 +67,7 @@ export interface AgentAccessSectionProps {
  * line with the Base URL; the whole line opens it. The fold chevron sits at
  * the card's right edge, as on the rule cards.
  */
-export const AgentAccessSection: React.FC<AgentAccessSectionProps> = ({ expanded, onToggle, url, children, foldedExtras }) => {
+export const AgentAccessSection: React.FC<AgentAccessSectionProps> = ({ expanded, onToggle, url, children, foldedContent, foldedExtras }) => {
     const { t } = useTranslation();
     const label = t(expanded ? 'agentAccess.collapse' : 'agentAccess.expand');
     // Folded and open are two different buttons, so toggling would drop keyboard
@@ -137,22 +142,24 @@ export const AgentAccessSection: React.FC<AgentAccessSectionProps> = ({ expanded
                     <Box sx={{ pt: 1, pb: foldedExtras ? 0.5 : 1, pr: CHEVRON_GUTTER }}>
                         <Box sx={{ maxWidth: SCENARIO_HEADER_CONTENT_MAX_WIDTH }}>
                             <Box sx={{ px: 2, py: 0.5 }}>
-                                <ConfigRow
-                                    tabs={[{
-                                        key: 'baseUrl',
-                                        label: 'Base URL',
-                                        content: (
-                                            <Typography
-                                                variant="subtitle2"
-                                                sx={{ fontFamily: fontMono, color: 'primary.main', boxSizing: 'border-box', display: 'block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', py: 1 }}
-                                            >
-                                                {url}
-                                            </Typography>
-                                        ),
-                                    }]}
-                                    activeTab="baseUrl"
-                                    onTabChange={() => {}}
-                                />
+                                {foldedContent ?? (
+                                    <ConfigRow
+                                        tabs={[{
+                                            key: 'baseUrl',
+                                            label: 'Base URL',
+                                            content: (
+                                                <Typography
+                                                    variant="subtitle2"
+                                                    sx={{ fontFamily: fontMono, color: 'primary.main', boxSizing: 'border-box', display: 'block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', py: 1 }}
+                                                >
+                                                    {url}
+                                                </Typography>
+                                            ),
+                                        }]}
+                                        activeTab="baseUrl"
+                                        onTabChange={() => {}}
+                                    />
+                                )}
                             </Box>
                         </Box>
                     </Box>

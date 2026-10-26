@@ -273,6 +273,7 @@ export default {
       "renameProfile": "Rename profile",
       "deleteProfile": "Delete profile",
       "quickStart": "Start",
+      "profileRefHint": "The profile can be named by its name or its id ({{id}})",
       "commandGlobal": "Global",
       "settingsFile": "Settings",
       "settingsFileWarning": "Generated runtime settings. Manual edits are overwritten by Profile Overrides and Model Rules.",
