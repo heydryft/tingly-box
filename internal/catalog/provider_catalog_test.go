@@ -223,6 +223,31 @@ func TestLatestOpenAIAndCodexModels(t *testing.T) {
 	}
 }
 
+func TestCodexTerraContext(t *testing.T) {
+	tm := NewProviderCatalogManager(EmbeddedOnly())
+	if err := tm.Initialize(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	provider, err := tm.GetTemplate("codex")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []string{"gpt-6.1-terra", "gpt-6.1-terra:fast"} {
+		found := false
+		for _, model := range provider.Models {
+			if model.ID == id {
+				found = true
+				if model.Context != 500000 {
+					t.Errorf("%s context = %d, want 500000", id, model.Context)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("missing Codex model %s", id)
+		}
+	}
+}
+
 // TestTemplateManagerFetchTemplates tests template fetching from various sources
 func TestTemplateManagerFetchTemplates(t *testing.T) {
 	tests := []struct {
