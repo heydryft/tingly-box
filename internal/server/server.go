@@ -51,11 +51,13 @@ import (
 
 // Server represents the HTTP server
 type Server struct {
-	config     *config.Config
-	jwtManager *auth.JWTManager
-	engine     *gin.Engine
-	httpServer *http.Server
-	watcher    *config.Watcher
+	config       *config.Config
+	jwtManager   *auth.JWTManager
+	engine       *gin.Engine
+	httpServer   *http.Server
+	http3Options HTTP3Options
+	http3Stop    func(context.Context) error
+	watcher      *config.Watcher
 
 	// multi-mode logger for text + JSON + memory output
 	multiLogger *obs.MultiLogger

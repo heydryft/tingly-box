@@ -35,6 +35,9 @@ import (
 // Host has no default on purpose: the CLI binds every interface when it is
 // empty (Docker relies on that), while the GUI pins it to localhost itself.
 type ServerFlagsKong struct {
+	HTTP3Addr   string `kong:"flag,name='http3-addr',help='Optional HTTPS + HTTP/3 listen address (TCP and UDP)'"`
+	HTTP3Cert   string `kong:"flag,name='http3-cert',help='HTTPS / HTTP/3 certificate file'"`
+	HTTP3Key    string `kong:"flag,name='http3-key',help='HTTPS / HTTP/3 private key file'"`
 	Port        int    `kong:"flag,name='port',short='p',help='Server port'"`
 	Host        string `kong:"flag,name='host',help='Server host'"`
 	EnableUI    bool   `kong:"flag,name='ui',short='u',default='true',help='Enable web UI'"`
@@ -48,6 +51,9 @@ type ServerFlagsKong struct {
 // --debug wins over the config's debug setting, a zero --port falls back to
 // the config and a non-zero one is persisted to it.
 func (f ServerFlagsKong) Resolve(appConfig *appconfig.AppConfig, rest options.StartFlags) options.StartServerOptions {
+	rest.HTTP3Addr = f.HTTP3Addr
+	rest.HTTP3Cert = f.HTTP3Cert
+	rest.HTTP3Key = f.HTTP3Key
 	rest.Port = f.Port
 	rest.Host = f.Host
 	rest.EnableUI = f.EnableUI
@@ -586,6 +592,7 @@ func startServerWithHook(appManager *app.AppManager, opts options.StartServerOpt
 		server.WithUI(opts.EnableUI),
 		server.WithOpenBrowser(opts.EnableOpenBrowser),
 		server.WithHost(opts.Host),
+		server.WithHTTP3(server.HTTP3Options{Addr: opts.HTTP3Addr, CertFile: opts.HTTP3Cert, KeyFile: opts.HTTP3Key}),
 		server.WithRecordDir(opts.RecordDir),
 		server.WithProjectsDir(opts.ProjectsDir),
 		server.WithMultiLogger(multiLogger),

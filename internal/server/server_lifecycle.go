@@ -3,6 +3,7 @@ package server
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -27,6 +28,16 @@ import (
 
 // Start starts the HTTP server
 func (s *Server) Start(port int) error {
+	if err := s.startHTTP3(); err != nil {
+		return err
+	}
+	if s.http3Stop != nil {
+		defer func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			_ = s.http3Stop(ctx)
+		}()
+	}
 	// Start token refresher background goroutine
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -361,7 +372,11 @@ func (s *Server) Stop(ctx context.Context) error {
 	s.CloseVirtualModelServer()
 
 	fmt.Println("Shutting down server...")
-	return s.httpServer.Shutdown(ctx)
+	var peerErr error
+	if s.http3Stop != nil {
+		peerErr = s.http3Stop(ctx)
+	}
+	return errors.Join(peerErr, s.httpServer.Shutdown(ctx))
 }
 
 func (s *Server) undoCodexImportOnStop() error {

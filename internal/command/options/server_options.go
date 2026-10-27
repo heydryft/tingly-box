@@ -11,6 +11,9 @@ import (
 
 // StartFlags holds flags for starting the server
 type StartFlags struct {
+	HTTP3Addr            string
+	HTTP3Cert            string
+	HTTP3Key             string
 	Port                 int
 	Host                 string
 	EnableUI             bool
@@ -24,6 +27,9 @@ type StartFlags struct {
 
 // StartServerOptions contains resolved options for starting the server
 type StartServerOptions struct {
+	HTTP3Addr         string
+	HTTP3Cert         string
+	HTTP3Key          string
 	Host              string
 	Port              int
 	EnableUI          bool
@@ -43,6 +49,9 @@ type StartServerOptions struct {
 // AddStartFlags adds all start-related flags to a command
 // This is shared between start, restart, gui, and slim commands
 func AddStartFlags(cmd *cobra.Command, flags *StartFlags) {
+	cmd.Flags().StringVar(&flags.HTTP3Addr, "http3-addr", "", "Optional HTTPS + HTTP/3 listen address (TCP and UDP)")
+	cmd.Flags().StringVar(&flags.HTTP3Cert, "http3-cert", "", "HTTPS / HTTP/3 certificate file")
+	cmd.Flags().StringVar(&flags.HTTP3Key, "http3-key", "", "HTTPS / HTTP/3 private key file")
 	cmd.Flags().IntVarP(&flags.Port, "port", "p", 0, "Server port (default: from config or 12580)")
 	cmd.Flags().StringVar(&flags.Host, "host", "localhost", "Server host")
 	cmd.Flags().BoolVarP(&flags.EnableUI, "ui", "u", true, "Enable web UI (default: true)")
@@ -80,6 +89,9 @@ func ResolveStartOptions(cmd *cobra.Command, flags StartFlags, appConfig *appcon
 	}
 
 	return StartServerOptions{
+		HTTP3Addr:         flags.HTTP3Addr,
+		HTTP3Cert:         flags.HTTP3Cert,
+		HTTP3Key:          flags.HTTP3Key,
 		Host:              flags.Host,
 		Port:              resolvedPort,
 		EnableUI:          flags.EnableUI,

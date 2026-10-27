@@ -15,6 +15,15 @@ func TestServerFlagsKongResolve(t *testing.T) {
 		t.Fatalf("Failed to create app manager: %v", err)
 	}
 	appConfig := appManager.AppConfig()
+	t.Run("HTTP3 options pass through without changing the main port", func(t *testing.T) {
+		opts := (ServerFlagsKong{HTTP3Addr: "0.0.0.0:12581", HTTP3Cert: "cert.pem", HTTP3Key: "key.pem"}).Resolve(appConfig, options.StartFlags{})
+		if opts.HTTP3Addr != "0.0.0.0:12581" || opts.HTTP3Cert != "cert.pem" || opts.HTTP3Key != "key.pem" {
+			t.Fatalf("HTTP3 options lost: %+v", opts)
+		}
+		if opts.Port == 12581 {
+			t.Fatal("H3 replaced the original port")
+		}
+	})
 	if err := appConfig.SetServerPort(23456); err != nil {
 		t.Fatalf("Failed to set server port: %v", err)
 	}
