@@ -3,7 +3,7 @@ import { Box, ListItemButton, ListItemIcon, Popover, Tooltip, Typography } from 
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ProviderQuotaPanel } from '@/components/ProviderQuotaPanel';
-import { DataUsage } from '@/components/icons';
+import { QuotaRing } from '@/components/credential/QuotaRing';
 import { activityItemSx } from './styles';
 
 export function QuotaMenu({ onNavigate }: { onNavigate?: () => void }) {
@@ -30,8 +30,8 @@ export function QuotaMenu({ onNavigate }: { onNavigate?: () => void }) {
                         ...(open && { color: 'primary.main', bgcolor: 'action.selected' }),
                     })}
                 >
-                    <ListItemIcon sx={{ minWidth: 0, color: 'inherit', justifyContent: 'center' }}>
-                        <DataUsage sx={{ fontSize: 22 }} />
+                    <ListItemIcon sx={{ minWidth: 0, width: 22, height: 22, color: 'inherit', alignItems: 'center', justifyContent: 'center' }}>
+                        <QuotaRing remaining={100} color="currentColor" size={18} />
                     </ListItemIcon>
                     <Typography variant="caption" sx={{ color: 'inherit', textAlign: 'center', lineHeight: 1.2 }}>
                         {label}
