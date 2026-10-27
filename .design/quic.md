@@ -15,7 +15,7 @@
   └──────────────────────────────────────────────▶ 云端 TB → Provider
 ```
 
-Caddy 在一个公网端口号的 TCP/UDP 上承载 HTTPS 和 HTTP/3，负责证书及加密终止；云端 TB 继续监听既有 HTTP 端口。Caddy 将 `/.well-known/tingly-transport` 和模型请求转发到 TB。普通客户端到本地 TB 的接口无需改变。部署层终止 QUIC 后，Caddy 到云端 TB 的内部链路是 HTTP；不能把这称为直接 TB-to-TB QUIC。
+Caddy 在一个公网端口号的 TCP/UDP 上承载 HTTPS 和 HTTP/3，负责证书及加密终止；云端 TB 继续监听既有 HTTP 端口。仓库提供 `deploy/caddy/Caddyfile`；Caddy 将 `/.well-known/tingly-transport` 和模型请求转发到 TB。普通客户端到本地 TB 的接口无需改变。部署层终止 QUIC 后，Caddy 到云端 TB 的内部链路是 HTTP；不能把这称为直接 TB-to-TB QUIC。
 
 ## 发现、安全与失败语义
 
@@ -36,7 +36,7 @@ CADDY_BIN=/absolute/path/to/caddy go test -tags=e2e ./internal/protocoltest \
   -run '^TestCaddySelfSignedTwoRealTB$' -v -count=1 -timeout=120s
 ```
 
-测试覆盖初始 HTTPS/TCP、自动发现 H3、OpenAI 与 Anthropic 上游路径的流式/非流式与用量断言，以及关闭 Caddy H3 后的后续请求回落。详细实测结果见下文。网络损耗、延迟与吞吐性能尚待基准测试。
+测试覆盖初始 HTTPS/TCP、自动发现 H3、OpenAI 与 Anthropic 上游路径的流式/非流式与用量断言，以及关闭 Caddy H3 后的后续请求回落。部署配置本身的自签名回归可运行 `CADDY_BIN=/absolute/path/to/caddy go test -tags=e2e ./internal/protocoltest -run ^TestCaddyDeploymentConfigHTTP3$ -v`。详细实测结果见下文。网络损耗、延迟与吞吐性能尚待基准测试。
 
 # 自签名 Caddy 与双 TB 验证
 
