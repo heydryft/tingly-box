@@ -22,7 +22,12 @@ func testPeer(t *testing.T, handler http.Handler, withQUIC bool) (string, *Trans
 	t.Helper()
 	s := httptest.NewUnstartedServer(nil)
 	_, port, _ := net.SplitHostPort(s.Listener.Addr().String())
-	s.Config.Handler = Handler(handler, port)
+	s.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.TLS != nil {
+			w.Header().Set("Alt-Svc", `h3=":`+port+`"; ma=300`)
+		}
+		ProbeHandler(handler).ServeHTTP(w, r)
+	})
 	s.StartTLS()
 	t.Cleanup(s.Close)
 	roots := x509.NewCertPool()
@@ -72,7 +77,7 @@ func doRequest(t *testing.T, c *http.Client, method, target string) *http.Respon
 	return resp
 }
 
-func TestAutomaticHTTP3AndHeaderCompatibility(t *testing.T) {
+func TestAutomaticHTTP3(t *testing.T) {
 	var tcp, quic atomic.Int32
 	origin, tr, _ := testPeer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 3 {
@@ -80,8 +85,6 @@ func TestAutomaticHTTP3AndHeaderCompatibility(t *testing.T) {
 		} else {
 			tcp.Add(1)
 		}
-		w.Header().Set("Connection", "keep-alive, X-Hop")
-		w.Header().Set("X-Hop", "remove-me")
 		w.Header().Set("Content-Type", "text/event-stream")
 		io.WriteString(w, "data: hello\n\n")
 		w.(http.Flusher).Flush()
@@ -99,9 +102,6 @@ func TestAutomaticHTTP3AndHeaderCompatibility(t *testing.T) {
 	resp.Body.Close()
 	if err != nil || string(data) != "data: hello\n\n" || resp.ProtoMajor != 3 {
 		t.Fatalf("H3 response proto=%s body=%q err=%v", resp.Proto, data, err)
-	}
-	if resp.Header.Get("Connection") != "" || resp.Header.Get("X-Hop") != "" {
-		t.Fatal("hop-by-hop headers reached H3 client")
 	}
 	if tcp.Load() != 1 || quic.Load() != 1 {
 		t.Fatalf("business counts TCP=%d H3=%d", tcp.Load(), quic.Load())

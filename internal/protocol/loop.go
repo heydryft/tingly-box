@@ -23,10 +23,7 @@ func RunLoop(c *gin.Context, step func(w io.Writer) bool) bool {
 	if !ok {
 		return false
 	}
-	var clientGone <-chan struct{}
-	if c.Request != nil {
-		clientGone = c.Request.Context().Done()
-	}
+	clientGone := w.CloseNotify()
 	committed := false
 	for {
 		select {

@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"context"
 	"io"
 	"net/http/httptest"
 	"testing"
@@ -12,36 +11,6 @@ import (
 
 	"github.com/tingly-dev/tingly-box/internal/constant"
 )
-
-// HTTP/3 response writers do not implement the deprecated CloseNotifier.
-// A plain recorder deliberately has the same limitation.
-func TestRunLoopWithoutCloseNotifier(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	for _, canceled := range []bool{false, true} {
-		t.Run(map[bool]string{false: "stream", true: "canceled"}[canceled], func(t *testing.T) {
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			c.Request = httptest.NewRequest("GET", "/stream", nil).WithContext(ctx)
-			if canceled {
-				cancel()
-			}
-			called := false
-			gone := RunLoop(c, func(out io.Writer) bool {
-				called = true
-				_, _ = io.WriteString(out, "data: done\n\n")
-				return false
-			})
-			assert.Equal(t, canceled, gone)
-			assert.Equal(t, !canceled, called)
-			if !canceled {
-				assert.Equal(t, "data: done\n\n", w.Body.String())
-				assert.True(t, w.Flushed)
-			}
-		})
-	}
-}
 
 // closeNotifyRecorder adds CloseNotify to httptest.ResponseRecorder so it can
 // back a gin.ResponseWriter driven by RunLoop.

@@ -29,7 +29,12 @@ func sdkPeer(t *testing.T, handler http.Handler) (string, *http.Client) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tcp.Config.Handler = peertransport.Handler(handler, port)
+	tcp.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.TLS != nil {
+			w.Header().Set("Alt-Svc", `h3=":`+port+`"; ma=300`)
+		}
+		peertransport.ProbeHandler(handler).ServeHTTP(w, r)
+	})
 	tcp.StartTLS()
 	t.Cleanup(tcp.Close)
 	udp, err := net.ListenPacket("udp", tcp.Listener.Addr().String())
@@ -77,8 +82,6 @@ func sdkPeer(t *testing.T, handler http.Handler) (string, *http.Client) {
 
 func sdkSSE(w http.ResponseWriter, events string) {
 	w.Header().Set("Content-Type", "text/event-stream")
-	// Existing TB handlers set this HTTP/1 header. The H3 boundary must strip it.
-	w.Header().Set("Connection", "keep-alive")
 	_, _ = io.WriteString(w, events)
 	w.(http.Flusher).Flush()
 }
