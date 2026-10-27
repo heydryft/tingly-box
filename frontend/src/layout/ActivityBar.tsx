@@ -24,6 +24,7 @@ import { REPO_URL } from './links';
 import { useSidebarCollapsed } from './useSidebarCollapsed';
 import type { ActivityItem } from './types';
 import { PreferencesMenu } from './PreferencesMenu';
+import { QuotaMenu } from './QuotaMenu';
 import { CoachMark } from '@/components/CoachMark';
 import { useOneTimeTip } from '@/hooks/useOneTimeTip';
 import { fontSizes } from '@/theme/fonts';
@@ -227,6 +228,8 @@ export const ActivityBar: React.FC<ActivityBarProps> = ({
                         </Typography>
                     </ListItemButton>
                 </Tooltip>
+
+                <QuotaMenu onNavigate={onStandaloneNavigate} />
 
             </Box>
 
