@@ -29,7 +29,7 @@ function Location() {
 it('loads the shared tray quota panel on demand and navigates to history in this window', async () => {
     const onNavigate = vi.fn();
     render(<MemoryRouter><QuotaMenu onNavigate={onNavigate} /><Location /></MemoryRouter>);
-    const trigger = screen.getByRole('button', { name: 'hub.quota.title' });
+    const trigger = screen.getByRole('button', { name: 'Quota' });
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
     expect(getProviders).not.toHaveBeenCalled();
 
@@ -46,7 +46,7 @@ it('loads the shared tray quota panel on demand and navigates to history in this
 
 it('closes on Escape and restores focus to the ring', async () => {
     render(<MemoryRouter><QuotaMenu /></MemoryRouter>);
-    const trigger = screen.getByRole('button', { name: 'hub.quota.title' });
+    const trigger = screen.getByRole('button', { name: 'Quota' });
     trigger.focus();
     fireEvent.click(trigger);
     const dialog = await screen.findByRole('dialog');

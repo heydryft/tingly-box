@@ -3,7 +3,7 @@ import { Box, ListItemButton, ListItemIcon, Popover, Tooltip, Typography } from 
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ProviderQuotaPanel } from '@/components/ProviderQuotaPanel';
-import { QuotaRing } from '@/components/credential/QuotaRing';
+import { DataUsage } from '@/components/icons';
 import { activityItemSx } from './styles';
 
 export function QuotaMenu({ onNavigate }: { onNavigate?: () => void }) {
@@ -12,7 +12,7 @@ export function QuotaMenu({ onNavigate }: { onNavigate?: () => void }) {
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const id = useId();
     const open = Boolean(anchorEl);
-    const label = t('hub.quota.title');
+    const label = 'Quota';
 
     return (
         <>
@@ -31,7 +31,7 @@ export function QuotaMenu({ onNavigate }: { onNavigate?: () => void }) {
                     })}
                 >
                     <ListItemIcon sx={{ minWidth: 0, color: 'inherit', justifyContent: 'center' }}>
-                        <QuotaRing remaining={100} color="currentColor" size={22} />
+                        <DataUsage sx={{ fontSize: 22 }} />
                     </ListItemIcon>
                     <Typography variant="caption" sx={{ color: 'inherit', textAlign: 'center', lineHeight: 1.2 }}>
                         {label}
@@ -47,7 +47,7 @@ export function QuotaMenu({ onNavigate }: { onNavigate?: () => void }) {
                 slotProps={{ paper: {
                     id,
                     role: 'dialog',
-                    'aria-label': label,
+                    'aria-label': t('hub.quota.title'),
                     sx: { width: 380, maxWidth: 'calc(100vw - 32px)', borderRadius: 2, ml: 0.5 },
                 } }}
             >
