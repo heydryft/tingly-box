@@ -8,6 +8,7 @@ interface KeyNameFieldProps {
     onShowField: () => void;
     name: string;
     autoName: string;
+    helperText?: string;
     onNameChange: (value: string) => void;
 }
 
@@ -17,6 +18,7 @@ const KeyNameField: React.FC<KeyNameFieldProps> = ({
     name,
     autoName,
     onNameChange,
+    helperText,
 }) => {
     const {t} = useTranslation();
 
@@ -30,7 +32,7 @@ const KeyNameField: React.FC<KeyNameFieldProps> = ({
                 value={name}
                 onChange={(e) => onNameChange(e.target.value)}
                 placeholder={autoName}
-                helperText={t('providerDialog.keyName.helper', {
+                helperText={helperText ?? t('providerDialog.keyName.helper', {
                     defaultValue: 'Leave blank to use the auto-generated name. You can rename later.',
                 })}
             />

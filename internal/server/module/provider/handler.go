@@ -353,6 +353,10 @@ func (h *Handler) UpdateProvider(c *gin.Context) {
 	}
 	if req.NoKeyRequired != nil {
 		p.NoKeyRequired = *req.NoKeyRequired
+		// An explicit no-auth choice must also stop sending the stored API key.
+		if *req.NoKeyRequired && p.IsAPIKey() {
+			p.Token = ""
+		}
 	}
 	if req.Enabled != nil {
 		p.Enabled = *req.Enabled
