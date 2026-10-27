@@ -15,7 +15,9 @@ export function QuotaMenu({ onNavigate }: { onNavigate?: () => void }) {
     const label = 'Quota';
 
     return (
-        <>
+        // Stretch the native button to the rail width, just like the block
+        // links above it; otherwise it shrinks to the short label's width.
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <Tooltip title={label} placement="right" arrow>
                 <ListItemButton
                     component="button"
@@ -61,6 +63,6 @@ export function QuotaMenu({ onNavigate }: { onNavigate?: () => void }) {
                     </Box>
                 )}
             </Popover>
-        </>
+        </Box>
     );
 }
