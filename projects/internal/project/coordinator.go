@@ -228,6 +228,11 @@ func (c *Coordinator) turn(ctx context.Context, projectID string, userTriggered,
 				return // report turns post only their final text (it may be NO_UPDATE)
 			}
 			streamed.WriteString(d)
+			// An older model's NO_UPDATE is not a reply: hold back text that
+			// may still turn into it.
+			if held := strings.TrimSpace(streamed.String()); live == nil && (held == "" || strings.HasPrefix(noUpdate, held) || strings.HasPrefix(held, noUpdate)) {
+				return
+			}
 			if live == nil {
 				live = c.addEvent(projectID, &db.ThreadEvent{Kind: db.EvAssistant, Content: streamed.String()})
 				return
@@ -236,6 +241,9 @@ func (c *Coordinator) turn(ctx context.Context, projectID string, userTriggered,
 		}
 		res, err := client.Stream(ctx, llm.Request{Model: model, System: system, Messages: msgs, Tools: tools, MaxTokens: 4096}, onDelta)
 		text := strings.TrimSpace(res.Text)
+		if userTriggered && live == nil && strings.HasPrefix(text, noUpdate) {
+			text = "" // never posted; the empty-reply nudge below handles it
+		}
 		switch {
 		case live != nil:
 			live.Content = text

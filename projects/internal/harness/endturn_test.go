@@ -107,6 +107,25 @@ func TestEndTurnEmptyReplyIsAskedOnlyOnce(t *testing.T) {
 	assert.Len(t, w.Requests(), 2)
 }
 
+// E5: a user's message answered with the old NO_UPDATE text or a rejected
+// no_update call is never posted as a reply; the model is asked to answer.
+func TestEndTurnNoUpdateOnUserMessageIsNotAReply(t *testing.T) {
+	w := New(t, Options{
+		Files: projectsRepo,
+		Brain: func(c *BrainCtx) llm.Result {
+			if strings.Contains(c.Last(), "ended your turn without replying") {
+				return llm.Result{Text: "Here is the answer."}
+			}
+			return llm.Result{Text: "NO_UPDATE"}
+		},
+	})
+
+	w.Say("What are you working on?")
+	w.Quiet()
+
+	assert.Equal(t, []string{"Here is the answer."}, assistantTexts(w))
+}
+
 func toolNames(r llm.Request) []string {
 	var out []string
 	for _, tl := range r.Tools {
