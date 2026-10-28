@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProjectsHostProvider, type ProjectsHost } from '../host/ProjectsHost';
@@ -38,14 +38,15 @@ const show = (h: ProjectsHost, path: string, props: Parameters<typeof ProjectsSi
 );
 
 describe('ProjectsSidebar', () => {
-    it('lists projects starred first, marks the open one and counts what waits', async () => {
+    it('lists projects starred first, marks the open one and dots what waits', async () => {
         show(host([summary('a', 'Alpha', 0), summary('b', 'Beta', 2, true), ...folders]), '/p/a');
         const projects = await screen.findByRole('region', { name: 'nav.projects' });
         await waitFor(() => expect(within(projects).getAllByRole('link').map((l) => l.textContent)).toEqual(['nav.projects', 'Beta', 'Alpha']));
         expect(within(projects).getByRole('link', { name: 'Alpha' })).toHaveAttribute('aria-current', 'page');
         expect(within(projects).getByRole('link', { name: /Beta/ })).toHaveAttribute('href', '/p/b');
-        // Beta is folded and says what waits in it with one dot.
-        expect(within(projects).getByTestId('rollup')).toHaveAttribute('data-status', 'waiting');
+        // What waits in a project dots its row; nothing waiting, no dot.
+        expect(within(projects).getByRole('link', { name: /Beta/ }).querySelector('.MuiBadge-badge')).not.toHaveClass('MuiBadge-invisible');
+        expect(within(projects).getByRole('link', { name: 'Alpha' }).querySelector('.MuiBadge-badge')).toHaveClass('MuiBadge-invisible');
     });
 
     it('renders host sections after projects and can leave projects out', async () => {
@@ -61,37 +62,27 @@ describe('ProjectsSidebar', () => {
         expect(list).not.toHaveBeenCalled();
     });
 
-    it('lists working folders as a tree: the open one unfolded, the others folded with a rollup dot', async () => {
-        const h = host([folder('f-app', '/home/me/app', 1, 0), folder('f-notes', '/home/me/notes', 0, 1)]);
+    it('lists projects and working folders flat: a row opens the page, threads are no subtree', async () => {
+        const h = host([summary('a', 'Alpha', 0), folder('f-app', '/home/me/app', 1, 0), folder('f-notes', '/home/me/notes', 0, 1)]);
         list.mockImplementation((path: string) => Promise.resolve({
             data: path.endsWith('/threads')
                 ? { threads: [
-                    { id: 't-old', title: 'Old idle', status: 'idle', updated_at: '2026-10-01T00:00:00Z' },
-                    { id: 't-done', title: 'Archived', status: 'resolved', updated_at: '2026-10-23T00:00:00Z' },
                     { id: 't-run', title: 'Running one', status: 'working', updated_at: '2026-10-22T00:00:00Z' },
                     { id: 't-wait', title: 'Waiting one', status: 'waiting', updated_at: '2026-10-21T00:00:00Z' },
                 ] }
-                : { projects: [folder('f-app', '/home/me/app', 1, 0), folder('f-notes', '/home/me/notes', 0, 1)] },
+                : { projects: [summary('a', 'Alpha', 0), folder('f-app', '/home/me/app', 1, 0), folder('f-notes', '/home/me/notes', 0, 1)] },
             response: new Response(),
         }));
-        show(h, '/f?path=%2Fhome%2Fme%2Fapp&session=t-run', { showProjects: false, showWorkdirs: true });
+        show(h, '/f?path=%2Fhome%2Fme%2Fapp&session=t-run', { showWorkdirs: true });
         const region = await screen.findByRole('region', { name: 'workdir.title' });
-        await waitFor(() => expect(within(region).getAllByRole('link').map((l) => l.textContent?.replace(/ago$|\d.*$/, '').trim())).toEqual(['workdir.title', 'app', 'Waiting one', 'Running one', 'Old idle', 'notes']));
-        expect(within(region).getByRole('link', { name: /Running one/ })).toHaveAttribute('aria-current', 'page');
-        expect(within(region).getByRole('link', { name: /Running one/ })).toHaveAttribute('href', '/f?path=%2Fhome%2Fme%2Fapp&session=t-run');
-        // The archived session sits behind "Show older"; the folded folder shows what runs in it.
-        expect(within(region).getByText('sidebar.showOlder')).toBeInTheDocument();
-        expect(within(region).getByTestId('rollup')).toHaveAttribute('data-status', 'working');
-    });
-    it('remembers a folded folder per browser and unfolds on click', async () => {
-        window.localStorage.clear();
-        const h = host([folder('f-app', '/home/me/app', 0, 0), folder('f-notes', '/home/me/notes', 0, 0)]);
-        show(h, '/f?path=%2Fhome%2Fme%2Fapp', { showProjects: false, showWorkdirs: true });
-        const region = await screen.findByRole('region', { name: 'workdir.title' });
-        const notes = await within(region).findByRole('button', { name: 'sidebar.unfold' });
-        expect(notes).toHaveAttribute('aria-expanded', 'false');
-        fireEvent.click(notes);
-        expect(window.localStorage.getItem('tingly-project.nav.folder.f-notes')).toBe('open');
+        await waitFor(() => expect(within(region).getAllByRole('link').map((l) => l.textContent)).toEqual(['workdir.title', 'app', 'notes']));
+        // The open folder's row is marked; the session open inside it is not a row.
+        expect(within(region).getByRole('link', { name: 'app' })).toHaveAttribute('aria-current', 'page');
+        expect(within(region).getByRole('link', { name: 'app' })).toHaveAttribute('href', '/f?path=%2Fhome%2Fme%2Fapp');
+        expect(within(region).queryByText('Running one')).not.toBeInTheDocument();
+        expect(within(region).queryByRole('button', { name: /sidebar.(un)?fold/ })).not.toBeInTheDocument();
+        // The nav reads no thread lists: sessions are observed inside the folder's page.
+        expect(list.mock.calls.every(([p]) => !String(p).includes('threads'))).toBe(true);
     });
     it('pins an IM row with the bot count when the host has IM, and leaves it out otherwise', async () => {
         const h = host([summary('a', 'Alpha', 0)]);

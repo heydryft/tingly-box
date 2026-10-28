@@ -5,9 +5,9 @@ import { fontSizes } from '@tingly/ui/theme/fonts';
 import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useProjectList } from '../hooks/useProjectList';
-import { Add, ChatBubble, Folder } from './icons';
+import { folderName } from '../utils/format';
+import { Add, ChatBubble, Folder, Stack, Star } from './icons';
 import { useProjectsHost } from '../host/ProjectsHost';
-import { NavTree } from './NavTree';
 
 /** One row of a sidebar section: a place the user can open. */
 export interface ProjectsSidebarRow {
@@ -136,9 +136,11 @@ function SectionView({ section, onNavigate }: { section: ProjectsSidebarSection;
 }
 
 /**
- * The Projects navigation: the user's projects (with how many threads wait on
- * them), followed by whatever sections the host adds. It knows nothing about
- * the host; Tingly Box passes its working folders in as a section.
+ * The Projects navigation: the user's projects and working folders, one flat
+ * row each that opens the project or folder (its threads are observed inside,
+ * in the Overview and the info rail — not as a subtree here), followed by
+ * whatever sections the host adds. It knows nothing about the host; Tingly Box
+ * passes its working folders in as a section.
  */
 export function ProjectsSidebar({ showProjects = true, showWorkdirs = false, showIm = true, sections = [], onNavigate }: ProjectsSidebarProps) {
     const { t } = useTranslation('projects');
@@ -150,7 +152,12 @@ export function ProjectsSidebar({ showProjects = true, showWorkdirs = false, sho
     const { projects, folders } = useProjectList(showProjects || showWorkdirs);
     const [params] = useSearchParams();
     const scope = location.pathname === paths.folder().split('?')[0] ? params.get('path') ?? '' : undefined;
-    const openSession = params.get('session');
+
+    // What waits on the user, or works, dots the icon; waiting wins the colour.
+    const state = (p: { threads: { waiting: number; failed: number; working: number } }) => ({
+        attention: p.threads.waiting + p.threads.failed > 0,
+        running: p.threads.working > 0,
+    });
 
     const projectSection: ProjectsSidebarSection | null = showProjects ? {
         key: 'projects',
@@ -163,18 +170,15 @@ export function ProjectsSidebar({ showProjects = true, showWorkdirs = false, sho
                 onNavigate?.();
             },
         },
-        rows: [],
-        content: projects?.length ? (
-            <NavTree
-                items={projects}
-                isFolder={false}
-                activeId={projects?.find((p) => location.pathname === paths.project(p.id))?.id}
-                openSession={params.get('thread')}
-                openParam="thread"
-                to={(p) => paths.project(p.id)}
-                onNavigate={onNavigate}
-            />
-        ) : undefined,
+        rows: (projects ?? []).map((p) => ({
+            key: p.id,
+            label: p.name,
+            title: p.name,
+            icon: p.starred ? <Star /> : <Stack />,
+            to: paths.project(p.id),
+            selected: location.pathname === paths.project(p.id),
+            ...state(p),
+        })),
         empty: projects ? t('sidebar.noProjects') : undefined,
     } : null;
 
@@ -189,18 +193,15 @@ export function ProjectsSidebar({ showProjects = true, showWorkdirs = false, sho
                 onNavigate?.();
             },
         },
-        rows: [],
-        content: folders?.length ? (
-            <NavTree
-                items={folders}
-                isFolder
-                activeId={folders.find((f) => f.path === scope)?.id}
-                openSession={openSession}
-                openParam="session"
-                to={(f) => paths.folder(f.path ?? '')}
-                onNavigate={onNavigate}
-            />
-        ) : undefined,
+        rows: (folders ?? []).map((f) => ({
+            key: f.id,
+            label: folderName(f.path ?? ''),
+            title: f.path ?? '',
+            icon: <Folder />,
+            to: paths.folder(f.path ?? ''),
+            selected: f.path != null && f.path === scope,
+            ...state(f),
+        })),
         empty: folders ? t('sidebar.noWorkdirs') : undefined,
     } : null;
 
