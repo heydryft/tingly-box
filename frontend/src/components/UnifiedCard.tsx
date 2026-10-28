@@ -26,7 +26,7 @@ interface UnifiedCardProps {
   subtitle?: string | ReactNode;
   children?: ReactNode;
   size?: 'small' | 'medium' | 'large' | 'full' | 'header' | 'footer';
-  variant?: 'default' | 'outlined' | 'elevated';
+  variant?: 'default' | 'outlined' | 'elevated' | 'flat';
   // Custom width, prioritized if provided
   width?: number | string;
   // Custom height, prioritized if provided
@@ -132,6 +132,9 @@ const cardVariants = {
     boxShadow: '0 8px 24px rgba(15, 23, 42, 0.10)',
     border: 'none',
   },
+  // No frame of its own: the section sits on the page and its contents carry
+  // the borders, so a list of bordered rows is one level of boxes, not two.
+  flat: {},
 };
 
 export const UnifiedCard = forwardRef<HTMLDivElement, UnifiedCardProps>(({
@@ -161,10 +164,9 @@ export const UnifiedCard = forwardRef<HTMLDivElement, UnifiedCardProps>(({
       sx={{
         ...getCardDimensions(size, width, height),
         ...cardVariants[variant],
-        borderRadius: 2,
-        border: '1px solid',
-        borderColor: 'divider',
-        backgroundColor: 'background.paper',
+        ...(variant === 'flat'
+          ? { borderRadius: 0, border: 'none', backgroundColor: 'transparent' }
+          : { borderRadius: 2, border: '1px solid', borderColor: 'divider', backgroundColor: 'background.paper' }),
         boxShadow: variant === 'elevated' ? undefined : 'none',
         transition: 'box-shadow 0.18s ease-out, border-color 0.18s ease-out',
         '@keyframes pulse': {
@@ -179,7 +181,8 @@ export const UnifiedCard = forwardRef<HTMLDivElement, UnifiedCardProps>(({
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          p: 3,
+          p: variant === 'flat' ? 0 : 3,
+          '&:last-child': variant === 'flat' ? { pb: 0 } : undefined,
           height: '100%',
         }}
       >
