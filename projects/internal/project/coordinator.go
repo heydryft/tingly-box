@@ -255,7 +255,7 @@ func (c *Coordinator) turn(ctx context.Context, projectID string, userTriggered,
 			// A message to the user must not end in silence: ask once more.
 			if userTriggered && !asked && round == 0 && text == "" && live == nil {
 				asked = true
-				msgs = appendUser(msgs, envelope(trustSystem, "(You ended your turn without replying. Reply to the user, start or message a thread, or call "+toolNoUpdate+" if nothing is needed.)", "source", "system", "kind", "no-reply"))
+				msgs = appendUser(msgs, envelope(trustSystem, "(You ended your turn without replying. Reply to the user, or start or message a thread.)", "source", "system", "kind", "no-reply"))
 				continue
 			}
 			return nil
@@ -279,6 +279,11 @@ func (c *Coordinator) turn(ctx context.Context, projectID string, userTriggered,
 				continue
 			}
 			if call.Name == toolNoUpdate {
+				if userTriggered {
+					results = append(results, llm.ToolResult{CallID: call.ID, IsError: true,
+						Content: "A message from the user needs a reply. Answer it, or start or message a thread."})
+					continue
+				}
 				ended = true
 			}
 			out, isErr, ids := c.runTool(ctx, current, call)
@@ -401,7 +406,7 @@ How to route each message:
 - When the user states how the project should run (how many threads at once, how much to post, when to propose vs start, models, review rules), follow it and save it with remember so it persists. Respect saved preferences from memory.
 - When the user asks you to remember or forget something, use remember / forget. Use update_instructions only when the user asks to change the project instructions.
 - Threads report back as events with source="thread". After an update, tell the user only what matters: what is ready for review, what a thread needs from them (quote its question), what failed and why. Answering a thread's question for the user is not your call unless they told you how; relay it.
-- Every turn ends one of three ways: you reply to the user, you call a tool that does the work, or you call no_update because nothing needs saying. Never end a turn on a message from the user without one of them.
+- Every turn ends one of three ways: you reply to the user, you call a tool that does the work, or, on a thread report or check-in only, you call no_update because nothing needs saying. A message from the user always gets a reply or work.
 - Never claim a thread did something it did not report. Use get_thread for details.
 - Title each thread with a verb that names the goal, in three to six words, in the user's own terms: "Fix Safari export button", not an id or a file path. When a thread's goal changes, rename it with rename_thread.
 - Keep messages short and concrete. Lead with the outcome, then only what the user must know or do. Refer to threads by title, never by id. Do not repeat the thread cards the UI already shows.
@@ -571,9 +576,9 @@ func (c *Coordinator) runTool(ctx context.Context, p *db.Project, call llm.ToolC
 			}
 			lines = append(lines, fmt.Sprintf("[%s] %s", e.Kind, clip(e.Content, 300)))
 		}
-		return fmt.Sprintf("thread %s %q status=%s branch=%s base=%s commits_ahead=%d files_changed=%d waiting_on=%q\ntask: %s\nlast report: %s\nrecent transcript:\n%s",
+		return envelope(trustRelay, fmt.Sprintf("thread %s %q status=%s branch=%s base=%s commits_ahead=%d files_changed=%d waiting_on=%q\ntask: %s\nlast report: %s\nrecent transcript:\n%s",
 			short(t.ID), t.Title, t.Status, orNone(t.Branch), orNone(t.BaseBranch), t.CommitsAhead, t.FilesChanged, t.WaitReason,
-			clip(t.Task, 1500), clip(t.LastReport, 2000), strings.Join(lines, "\n")), false, nil
+			clip(t.Task, 1500), clip(t.LastReport, 2000), strings.Join(lines, "\n")), "source", "thread", "kind", "get_thread"), false, nil
 	case "rename_thread":
 		t, err := c.findThread(p.ID, in.ThreadID)
 		if err != nil {
