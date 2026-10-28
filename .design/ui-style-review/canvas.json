@@ -52,23 +52,30 @@
       "h": 1150,
       "title": "3c · 方案 B3：底色分层"
     },
-    "E-OptionC.dc.html": {
+    "J-OptionB4.dc.html": {
       "x": 0,
       "y": 7040,
+      "w": 1560,
+      "h": 1180,
+      "title": "3d · 方案 B4：重做质感"
+    },
+    "E-OptionC.dc.html": {
+      "x": 0,
+      "y": 8340,
       "w": 1560,
       "h": 1130,
       "title": "4 · 方案 C：换壳"
     },
     "F-DashInB.dc.html": {
       "x": 0,
-      "y": 8290,
+      "y": 9590,
       "w": 1560,
       "h": 1130,
       "title": "5 · B 推广到 Dashboard"
     },
     "G-Compare.dc.html": {
       "x": 0,
-      "y": 9540,
+      "y": 10840,
       "w": 1560,
       "h": 560,
       "title": "6 · 对比"
