@@ -24,7 +24,7 @@ const projects: Proj[] = [
         id: 'p-latency', type: 'project', main_thread_id: 'main-p-latency', name: 'Payments API latency', goal: 'Get p99 of /charge under 300 ms without dropping retries.',
         instructions: 'Keep changes behind the existing feature flags.', paused: false, starred: true,
         repos: [repo('/Users/me/code/payments-api'), repo('/Users/me/code/payments-sdk')],
-        coordinator_model: 'claude-sonnet-4-5', thread_model: 'claude-sonnet-4-5', coordinator_effort: 'medium', thread_effort: 'high', thread_permission_mode: 'acceptEdits',
+        coordinator_model: 'sonnet', thread_model: 'claude-haiku-4-5', coordinator_effort: 'medium', thread_effort: 'high', thread_permission_mode: 'acceptEdits',
         created_at: ago(60 * 26), updated_at: ago(4),
     },
     {
@@ -374,7 +374,12 @@ export const projectsHandlers = [
         projects.unshift(p)
         return HttpResponse.json(p, { status: 201 })
     }),
-    http.get('/api/v1/projects/models', () => HttpResponse.json({ models: [{ id: 'claude-sonnet-4-5', display_name: 'Claude Sonnet 4.5' }, { id: 'claude-haiku-4-5', display_name: 'Claude Haiku 4.5' }] })),
+    // An alias tier with its route, like the gateway lists them, so the
+    // pickers show what the alias resolves to.
+    http.get('/api/v1/projects/models', () => HttpResponse.json({ models: [
+        { id: 'sonnet', display_name: 'Claude Sonnet 4.5', provider_model: 'claude-sonnet-4-5', provider_name: 'anthropic-primary' },
+        { id: 'claude-haiku-4-5', display_name: 'Claude Haiku 4.5' },
+    ] })),
     http.get('/api/v1/projects/runtime', () => HttpResponse.json({ cli_path: '/usr/local/bin/claude', base_url: 'http://localhost:12580/tingly/claude_code' })),
     http.get('/api/v1/projects/:id', ({ params }) => {
         const p = find(params.id as string)
