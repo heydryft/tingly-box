@@ -30,6 +30,7 @@ func TestCoordinatorPromptTrustAndStyleRules(t *testing.T) {
 	assert.Contains(t, s, "Lead with the outcome")
 	assert.Contains(t, s, "Memory is background")
 	assert.Contains(t, s, "wins where they differ")
+	assert.Contains(t, s, "no_update")
 }
 
 func TestThreadPromptRules(t *testing.T) {

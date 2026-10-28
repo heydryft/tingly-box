@@ -10,6 +10,7 @@
 - 每个场景结束时自动检查三条不变量：`trust.report-labelled`、`wait.has-reason`、`memory.index-resolves`。
 - 随 `go test ./...`（`task projects:test`）运行，不需要额外配置。
 - 基线记录的是现在的行为。改变行为的 PR 必须在 diff 里改对应旅程。
+- 显式收尾工具是第一个在 harness 保护下做的改动：先写了静默、兼容旧哨兵、空回复被提醒一次三类场景，再改代码，原有五个旅程不变。
 - 下文 §1 起是完整设计，未标注"已实施"的都是后续阶段。
 
 ## 1. 要验证的对象
