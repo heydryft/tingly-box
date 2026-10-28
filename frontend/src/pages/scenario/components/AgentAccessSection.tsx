@@ -102,15 +102,11 @@ export const AgentAccessSection: React.FC<AgentAccessSectionProps> = ({ expanded
         <Card
             sx={{
                 position: 'relative',
-                // Flat: a hairline above and below, the rows on the page's own
-                // background, so it reads as a key/value list, not a card.
-                borderRadius: 0,
-                border: 'none',
-                borderTop: '1px solid',
-                borderBottom: '1px solid',
+                borderRadius: 2,
+                border: '1px solid',
                 borderColor: 'divider',
                 boxShadow: 'none',
-                backgroundColor: 'transparent',
+                backgroundColor: 'background.paper',
                 '& .agent-access-toggle:hover svg': { color: 'text.primary' },
             }}
         >

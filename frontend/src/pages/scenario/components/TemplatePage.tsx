@@ -357,7 +357,6 @@ const TemplatePage: React.FC<TemplatePageProps> = (props) => {
             <UnifiedCard
                 id="models-and-forwarding-rules"
                 size="full"
-                variant="flat"
                 title={title}
                 leftAction={
                     <TitleIconButtons
