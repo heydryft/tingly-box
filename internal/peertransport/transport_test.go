@@ -20,6 +20,11 @@ import (
 
 func testPeer(t *testing.T, handler http.Handler, withQUIC bool) (string, *Transport, *http3.Server) {
 	t.Helper()
+	return testPeerWithMiddleware(t, handler, withQUIC, nil)
+}
+
+func testPeerWithMiddleware(t *testing.T, handler http.Handler, withQUIC bool, middleware func(http.Handler) http.Handler) (string, *Transport, *http3.Server) {
+	t.Helper()
 	s := httptest.NewUnstartedServer(nil)
 	_, port, _ := net.SplitHostPort(s.Listener.Addr().String())
 	s.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -28,6 +33,9 @@ func testPeer(t *testing.T, handler http.Handler, withQUIC bool) (string, *Trans
 		}
 		ProbeHandler(handler).ServeHTTP(w, r)
 	})
+	if middleware != nil {
+		s.Config.Handler = middleware(s.Config.Handler)
+	}
 	s.StartTLS()
 	t.Cleanup(s.Close)
 	roots := x509.NewCertPool()
@@ -96,7 +104,7 @@ func TestAutomaticHTTP3(t *testing.T) {
 	if resp.ProtoMajor != 1 {
 		t.Fatalf("first request: %s", resp.Proto)
 	}
-	peerState(t, tr, origin, func(p *peer) bool { return p.ready })
+	peerState(t, tr, origin+"/generate", func(p *peer) bool { return p.ready })
 	resp = doRequest(t, c, http.MethodPost, origin+"/generate")
 	data, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
@@ -310,5 +318,51 @@ func TestHTTP3DeadlineFailureCoolsPeerWithoutReplay(t *testing.T) {
 	resp.Body.Close()
 	if resp.ProtoMajor != 1 || tcp.Load() != 2 || quic.Load() != 1 {
 		t.Fatalf("deadline did not trigger TCP fallback: %s TCP=%d H3=%d", resp.Proto, tcp.Load(), quic.Load())
+	}
+}
+
+func TestProbePreservesPathAndIsolatesRoutes(t *testing.T) {
+	var probes atomic.Int32
+	middleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !strings.HasPrefix(r.URL.Path, "/prefix/") {
+				http.NotFound(w, r)
+				return
+			}
+			if r.Method == http.MethodHead && r.Header.Get(ProbeHeader) == Capability && strings.HasPrefix(r.URL.Path, "/prefix/tingly/") {
+				if r.URL.Path != "/prefix/tingly/model" || r.URL.RawQuery != "route=one" || r.Header.Get("Authorization") != "Bearer synthetic" {
+					t.Errorf("probe lost routing or auth: %s", r.URL.String())
+				}
+				probes.Add(1)
+			}
+			r.URL.Path = strings.TrimPrefix(r.URL.Path, "/prefix")
+			next.ServeHTTP(w, r)
+		})
+	}
+	origin, tr, _ := testPeerWithMiddleware(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }), true, middleware)
+	c := &http.Client{Transport: tr}
+	target := origin + "/prefix/tingly/model?route=one"
+	request := func(target string) *http.Response {
+		req, _ := http.NewRequest(http.MethodPost, target, nil)
+		req.Header.Set("Authorization", "Bearer synthetic")
+		res, err := c.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return res
+	}
+	res := request(target)
+	res.Body.Close()
+	peerState(t, tr, target, func(p *peer) bool { return p.ready })
+	res = request(target)
+	res.Body.Close()
+	if res.ProtoMajor != 3 || probes.Load() != 1 {
+		t.Fatalf("prefixed route used %s, probes %d", res.Proto, probes.Load())
+	}
+	other := origin + "/prefix/other/model"
+	res = request(other)
+	res.Body.Close()
+	if res.ProtoMajor == 3 {
+		t.Fatal("discovery leaked between routes")
 	}
 }

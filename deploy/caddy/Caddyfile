@@ -14,12 +14,6 @@
 # https:// (port 443) is implied by the bare host — Caddy auto-provisions TLS
 # and its automatic HTTPS redirects :80 -> :443
 you.domain {
-	# TB peers probe this endpoint before enabling HTTP/3. Keep it outside
-	# the /tingly/* matcher so the existing TB HTTP listener can answer it.
-	handle /.well-known/tingly-transport {
-		reverse_proxy localhost:12580
-	}
-
 	handle /tingly/* {
 		reverse_proxy localhost:12580 {
 			# Caddy flushes text/event-stream responses immediately by default.

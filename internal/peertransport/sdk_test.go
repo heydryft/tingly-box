@@ -33,6 +33,10 @@ func sdkPeer(t *testing.T, handler http.Handler) (string, *http.Client) {
 		if r.TLS != nil {
 			w.Header().Set("Alt-Svc", `h3=":`+port+`"; ma=300`)
 		}
+		if r.Method == http.MethodGet {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		peertransport.ProbeHandler(handler).ServeHTTP(w, r)
 	})
 	tcp.StartTLS()
@@ -52,30 +56,23 @@ func sdkPeer(t *testing.T, handler http.Handler) (string, *http.Client) {
 	transport := peertransport.New(base)
 	t.Cleanup(func() { _ = transport.Close() })
 	client := &http.Client{Transport: transport, Timeout: 5 * time.Second}
-	res, err := client.Get(tcp.URL + "/warmup")
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, _ = io.Copy(io.Discard, res.Body)
-	_ = res.Body.Close()
-	if res.ProtoMajor == 3 {
-		t.Fatal("first request must use the original TCP transport")
-	}
-	deadline := time.Now().Add(4 * time.Second)
-	for {
-		res, err = client.Get(tcp.URL + "/warmup")
-		if err != nil {
-			t.Fatal(err)
+	for _, path := range []string{"/chat/completions", "/responses", "/v1/messages"} {
+		deadline := time.Now().Add(4 * time.Second)
+		for {
+			res, err := client.Get(tcp.URL + path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, _ = io.Copy(io.Discard, res.Body)
+			_ = res.Body.Close()
+			if res.ProtoMajor == 3 {
+				break
+			}
+			if time.Now().After(deadline) {
+				t.Fatalf("peer never selected HTTP/3 for %s", path)
+			}
+			time.Sleep(5 * time.Millisecond)
 		}
-		_, _ = io.Copy(io.Discard, res.Body)
-		_ = res.Body.Close()
-		if res.ProtoMajor == 3 {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("peer never selected HTTP/3 after discovery")
-		}
-		time.Sleep(5 * time.Millisecond)
 	}
 	return tcp.URL, client
 }

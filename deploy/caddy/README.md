@@ -7,8 +7,8 @@ UDP 443**. TCP 80 is used by automatic HTTPS redirects and may be needed for
 HTTP-01 certificate issuance. Existing network or container firewall rules must
 publish both 443 protocols.
 
-The deployment forwards `/.well-known/tingly-transport` to the existing TB HTTP
-listener for peer discovery, as well as `/tingly/*` for model requests. Point a
+The deployment forwards `/tingly/*` to the existing TB HTTP listener for model
+requests and same-path HEAD capability probes. Point a
 local TB peer at the authenticated `https://` URL. Plain `http://` peer URLs do
 not automatically upgrade. Existing `/mirror/*` and `/hi` behavior is retained.
 Caddy serves SSE without response buffering using its default event-stream

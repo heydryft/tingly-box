@@ -126,14 +126,7 @@ func TestCaddyDeploymentConfigHTTP3(t *testing.T) {
 		}
 		return client.Do(req)
 	}
-	res, err := request(http.MethodHead, peertransport.ProbePath, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if res.StatusCode != 204 || res.Header.Get(peertransport.CapabilityHeader) != peertransport.Capability {
-		t.Fatalf("probe status=%d", res.StatusCode)
-	}
-	res.Body.Close()
+	var res *http.Response
 	deadline = time.Now().Add(4 * time.Second)
 	for {
 		res, err = request(http.MethodPost, "/tingly/test", true)

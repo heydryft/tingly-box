@@ -18,7 +18,7 @@ import (
 	"github.com/quic-go/quic-go/http3"
 )
 
-const ProbePath = "/.well-known/tingly-transport"
+const ProbeHeader = "Tingly-Transport-Probe"
 const CapabilityHeader = "Tingly-Transport"
 const Capability = "http3-v1"
 
@@ -77,10 +77,10 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if !t.eligible(req) {
 		return t.base.RoundTrip(req)
 	}
-	origin := req.URL.Scheme + "://" + req.URL.Host
+	key := req.URL.String()
 	now := time.Now()
 	t.mu.Lock()
-	p := t.peers[origin]
+	p := t.peers[key]
 	ready := !t.closed && p != nil && p.ready && now.Before(p.expires)
 	if ready {
 		t.active++
@@ -113,7 +113,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := t.base.RoundTrip(req)
 	if err == nil && resp.TLS != nil && resp.TLS.HandshakeComplete && len(resp.TLS.VerifiedChains) > 0 {
 		if lifetime, ok := advertisement(resp.Header.Values("Alt-Svc"), req.URL); ok {
-			t.discover(origin, lifetime)
+			t.discover(key, req, lifetime)
 		}
 	}
 	return resp, err
@@ -149,16 +149,16 @@ func advertisement(values []string, u *url.URL) (time.Duration, bool) {
 	return 0, false
 }
 
-func (t *Transport) discover(origin string, lifetime time.Duration) {
+func (t *Transport) discover(key string, original *http.Request, lifetime time.Duration) {
 	t.mu.Lock()
-	p := t.peers[origin]
+	p := t.peers[key]
 	if p == nil {
 		if len(t.peers) >= 64 {
 			t.mu.Unlock()
 			return
 		}
 		p = &peer{}
-		t.peers[origin] = p
+		t.peers[key] = p
 	}
 	if t.closed || p.probing || time.Now().Before(p.retryAfter) {
 		t.mu.Unlock()
@@ -166,10 +166,18 @@ func (t *Transport) discover(origin string, lifetime time.Duration) {
 	}
 	p.probing = true
 	t.mu.Unlock()
+	probeURL := *original.URL
+	probeHost := original.Host
+	probeHeaders := original.Header.Clone()
+	probeHeaders.Del("Content-Length")
+	probeHeaders.Del("Transfer-Encoding")
+	probeHeaders.Set(ProbeHeader, Capability)
 	go func() {
 		ctx, cancel := context.WithTimeout(t.ctx, t.probeTimeout)
 		defer cancel()
-		req, _ := http.NewRequestWithContext(ctx, http.MethodHead, origin+ProbePath, nil)
+		req, _ := http.NewRequestWithContext(ctx, http.MethodHead, probeURL.String(), nil)
+		req.Header = probeHeaders
+		req.Host = probeHost
 		resp, err := t.h3.RoundTrip(req)
 		ok := err == nil && resp.StatusCode == http.StatusNoContent && resp.Header.Get(CapabilityHeader) == Capability
 		if resp != nil && resp.Body != nil {

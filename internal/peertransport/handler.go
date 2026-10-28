@@ -6,13 +6,8 @@ import "net/http"
 // existing HTTP listener. TLS and HTTP/3 terminate at the deployment proxy.
 func ProbeHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != ProbePath {
+		if r.Method != http.MethodHead || r.Header.Get(ProbeHeader) != Capability {
 			next.ServeHTTP(w, r)
-			return
-		}
-		if r.Method != http.MethodHead {
-			w.Header().Set("Allow", "HEAD")
-			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 		w.Header().Set(CapabilityHeader, Capability)

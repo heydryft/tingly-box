@@ -15,11 +15,11 @@
   └──────────────────────────────────────────────▶ 云端 TB → Provider
 ```
 
-Caddy 在一个公网端口号的 TCP/UDP 上承载 HTTPS 和 HTTP/3，负责证书及加密终止；云端 TB 继续监听既有 HTTP 端口。仓库提供 `deploy/caddy/Caddyfile`；Caddy 将 `/.well-known/tingly-transport` 和模型请求转发到 TB。普通客户端到本地 TB 的接口无需改变。部署层终止 QUIC 后，Caddy 到云端 TB 的内部链路是 HTTP；不能把这称为直接 TB-to-TB QUIC。
+Caddy 在一个公网端口号的 TCP/UDP 上承载 HTTPS 和 HTTP/3，负责证书及加密终止；云端 TB 继续监听既有 HTTP 端口。仓库提供 `deploy/caddy/Caddyfile`；Caddy 将模型请求及同一路径上的 HEAD 能力探测转发到 TB，保留部署路径前缀。普通客户端到本地 TB 的接口无需改变。部署层终止 QUIC 后，Caddy 到云端 TB 的内部链路是 HTTP；不能把这称为直接 TB-to-TB QUIC。
 
 ## 发现、安全与失败语义
 
-- 本地 TB 只接受已验证 HTTPS 的同源同端口 H3 声明，后台 HEAD 探测云端 TB 的能力；探测成功后才切换后续请求。明文 HTTP 不自动升级。
+- 本地 TB 只接受已验证 HTTPS 的同源同端口 H3 声明，后台对业务请求同一 URL 发带标记的 HEAD 探测云端 TB 的能力，探测结果按 URL 隔离；探测成功后才切换后续请求。明文 HTTP 不自动升级。
 - 客户端需要信任部署层证书。自签名证书应通过受控 CA/信任库配置，禁止以关闭证书验证代替信任配置。当前 TB 没有专门的证书导入 UI；实验用进程级 `SSL_CERT_FILE`。
 - 不支持 H3 或 UDP 不可达时继续走 TCP；业务请求结果不明或已返回部分流时不能透明重放，避免重复生成和计费。主动取消向上游传播。
 - 云端 TB 的探测端点只回答能力，不处理业务请求；模型入口仍由已有认证与策略保护。

@@ -9,8 +9,8 @@ transport selector.
 The cloud TB exposes the probe on its existing HTTP listener. TLS, certificates,
 TCP/UDP listeners and HTTP/3 termination belong to the deployment proxy. For
 example, Caddy can listen on the same public port for HTTPS/TCP and QUIC/UDP,
-and proxy both to the cloud TB's existing HTTP port. Forward
-`/.well-known/tingly-transport` alongside the model API. Configure the local
+and proxy both to the cloud TB's existing HTTP port. The probe uses the same URL as the model request with a dedicated HEAD header,
+so existing proxy routes and path prefixes are preserved. Configure the local
 TB's peer URL as the proxy's trusted HTTPS URL. Plain `http://` URLs keep their
 existing transport; they are not automatically upgraded.
 

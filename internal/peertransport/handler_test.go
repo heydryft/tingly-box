@@ -13,21 +13,23 @@ func TestProbeHandlerPreservesHTTPRoutes(t *testing.T) {
 		w.WriteHeader(http.StatusAccepted)
 	}))
 	for _, tc := range []struct {
-		method, path string
-		status       int
-		marker       string
+		method, path, probe string
+		status              int
+		marker              string
 	}{
-		{http.MethodHead, ProbePath, http.StatusNoContent, Capability},
-		{http.MethodGet, ProbePath, http.StatusMethodNotAllowed, ""},
-		{http.MethodPost, "/v1/messages", http.StatusAccepted, ""},
+		{http.MethodHead, "/prefix/tingly/test", Capability, http.StatusNoContent, Capability},
+		{http.MethodHead, "/prefix/tingly/test", "", http.StatusAccepted, ""},
+		{http.MethodPost, "/v1/messages", Capability, http.StatusAccepted, ""},
 	} {
 		recorder := httptest.NewRecorder()
-		handler.ServeHTTP(recorder, httptest.NewRequest(tc.method, tc.path, nil))
+		req := httptest.NewRequest(tc.method, tc.path, nil)
+		req.Header.Set(ProbeHeader, tc.probe)
+		handler.ServeHTTP(recorder, req)
 		if recorder.Code != tc.status || recorder.Header().Get(CapabilityHeader) != tc.marker {
 			t.Fatalf("%s %s: status %d marker %q", tc.method, tc.path, recorder.Code, recorder.Header().Get(CapabilityHeader))
 		}
 	}
-	if calls != 1 {
+	if calls != 2 {
 		t.Fatalf("model handler called %d times", calls)
 	}
 }
