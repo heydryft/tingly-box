@@ -96,5 +96,3 @@ func (b *brain) requests() []llm.Request {
 	defer b.mu.Unlock()
 	return append([]llm.Request(nil), b.reqs...)
 }
-
-func contains(s, sub string) bool { return strings.Contains(s, sub) }

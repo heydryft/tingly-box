@@ -113,7 +113,7 @@ func TestPersonaModelFailureDoesNotKillTheQueue(t *testing.T) {
 
 	w.Say("Second message.")
 	w.Eventually("the second message is answered", func() bool {
-		return contains(strings.Join(assistantTexts(w), "|"), "Back again.")
+		return strings.Contains(strings.Join(assistantTexts(w), "|"), "Back again.")
 	})
 }
 

@@ -51,7 +51,6 @@ type World struct {
 	brain *brain
 
 	mu      sync.Mutex
-	reports []project.Report
 	prompts []string
 }
 
@@ -93,13 +92,6 @@ func New(t *testing.T, o Options) *World {
 	hub := project.NewHub()
 	w.Threads = project.NewThreads(store, layout, hub, project.Agents{Service: w.Agent.Service()}, staticEnv{})
 	w.Coord = project.NewCoordinator(store, layout, hub, w.Threads, w.brain)
-	prev := w.Threads.OnReport
-	w.Threads.OnReport = func(r project.Report) {
-		w.mu.Lock()
-		w.reports = append(w.reports, r)
-		w.mu.Unlock()
-		prev(r)
-	}
 	t.Cleanup(w.settle)
 	t.Cleanup(w.CheckInvariants)
 	return w

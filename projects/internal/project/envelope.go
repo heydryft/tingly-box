@@ -2,6 +2,7 @@ package project
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -73,8 +74,5 @@ func repliesSinceUser(history []db.ThreadEvent, now time.Time) (replies int, sin
 }
 
 func roundMinutes(d time.Duration) string {
-	if d < 0 {
-		d = 0
-	}
-	return fmt.Sprintf("%d", int(d.Minutes()))
+	return strconv.Itoa(max(0, int(d.Minutes())))
 }

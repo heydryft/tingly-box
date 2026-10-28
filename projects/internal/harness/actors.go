@@ -3,6 +3,7 @@ package harness
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tingly-dev/tingly-box/agentboot/engine/enginetest"
@@ -49,17 +50,18 @@ func Reply(text string) ActorFunc {
 	}
 }
 
-// Script picks an actor by the message the turn starts with; the first
-// entry whose match is contained in the prompt plays, the last is the default.
+// Branch is one case of ByPrompt: an actor and the text that selects it (an
+// empty Match always selects it).
 type Branch struct {
 	Match string
 	Actor ActorFunc
 }
 
+// ByPrompt plays the first branch whose Match the turn's prompt contains.
 func ByPrompt(branches ...Branch) ActorFunc {
 	return func(a *ActorCtx) error {
 		for _, b := range branches {
-			if b.Match == "" || contains(a.Prompt, b.Match) {
+			if b.Match == "" || strings.Contains(a.Prompt, b.Match) {
 				return b.Actor(a)
 			}
 		}

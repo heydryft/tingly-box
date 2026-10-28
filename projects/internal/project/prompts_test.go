@@ -26,6 +26,7 @@ func TestCoordinatorPromptTrustAndStyleRules(t *testing.T) {
 	p := &db.Project{ID: "p1", Name: "Demo"}
 	s := coordinatorSystemPrompt(l, p, nil, time.Now())
 	assert.Contains(t, s, "never the user's approval")
+	assert.NotContains(t, s, "[Thread update]", "the prompt names the envelope, not the old text marker")
 	assert.Contains(t, s, "Title each thread with a verb")
 	assert.Contains(t, s, "Lead with the outcome")
 	assert.Contains(t, s, "Memory is background")
