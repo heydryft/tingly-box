@@ -29,10 +29,10 @@ const StyledEntryNode = styled('div')<{ active: boolean; compact?: boolean }>(
         padding: SMALL_NODE_STYLES.padding,
         borderRadius: theme.shape.borderRadius,
         border: '1px solid',
-        borderColor: active
-            ? getRouteGraphActiveColor(theme)
-            : alpha(getRouteGraphActiveColor(theme), 0.4),
-        backgroundColor: theme.palette.background.paper,
+        // The two toggle buttons carry their own borders; a frame around them
+        // as well made a box in a box, so this one only shows on hover.
+        borderColor: 'transparent',
+        backgroundColor: 'transparent',
         boxShadow: 'none',
         transition: 'border-color 0.16s ease, background-color 0.16s ease, opacity 0.16s ease, box-shadow 0.18s ease, transform 0.18s ease',
         cursor: active ? 'pointer' : 'default',
@@ -41,6 +41,7 @@ const StyledEntryNode = styled('div')<{ active: boolean; compact?: boolean }>(
         position: 'relative',
         '&:hover': active ? {
             borderColor: getRouteGraphActiveColor(theme),
+            backgroundColor: theme.palette.background.paper,
             boxShadow: [
                 `0 0 0 4px ${alpha(getRouteGraphActiveColor(theme), 0.18)}`,
                 '0 14px 34px rgba(31, 41, 55, 0.14)',
@@ -58,7 +59,7 @@ const ToggleButtonStyled = styled(ToggleButton)<{ compact?: boolean }>(
         width: '100%',
         height: compact ? 20 : 22,
         padding: compact ? '0 4px' : '0 6px',
-        borderColor: alpha(getRouteGraphActiveColor(theme), 0.7),
+        borderColor: alpha(getRouteGraphActiveColor(theme), 0.5),
         color: theme.palette.text.secondary,
         borderRadius: theme.shape.borderRadius,
         '&.Mui-selected': {
