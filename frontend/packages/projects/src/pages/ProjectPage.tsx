@@ -6,6 +6,7 @@ import { api, isFolder, type components, unwrap, type Project, type Thread, type
 import { ConversationPane } from '../components/project/ConversationPane';
 import { OverviewPane } from '../components/project/OverviewPane';
 import { ModelPicker } from '../components/ModelPicker';
+import { EffortPicker } from '../components/EffortPicker';
 import { loadPermissionModes, PermissionModeSelect } from '../components/workdir/PermissionModeSelect';
 import { ThreadSettingsPickers } from '../components/ThreadSettingsPickers';
 import { mergeThreadSettings, useThreadSettings } from '../hooks/useThreadSettings';
@@ -30,6 +31,8 @@ import { needsUser } from '../components/project/threadStatus';
 // The permission modes a project can give its threads (the server refuses others).
 type ThreadMode = NonNullable<components['schemas']['UpdateProjectRequest']['thread_permission_mode']>;
 const THREAD_MODES = ['default', 'acceptEdits', 'auto', 'bypassPermissions'];
+// The thinking-effort levels beside each model choice (the server refuses others).
+type EffortLevel = NonNullable<components['schemas']['UpdateProjectRequest']['coordinator_effort']>;
 
 function upsert<T extends { id: string }>(list: T[], item: T): T[] {
     const i = list.findIndex((x) => x.id === item.id);
@@ -196,7 +199,7 @@ export default function ProjectPage() {
         p.delete('thread');
         return p;
     });
-    const patch = async (body: Pick<components['schemas']['UpdateProjectRequest'], 'starred' | 'paused' | 'archived' | 'coordinator_model' | 'thread_model' | 'thread_permission_mode'>) => {
+    const patch = async (body: Pick<components['schemas']['UpdateProjectRequest'], 'starred' | 'paused' | 'archived' | 'coordinator_model' | 'thread_model' | 'coordinator_effort' | 'thread_effort' | 'thread_permission_mode'>) => {
         if (projectSaving.current) return;
         projectSaving.current = true;
         setSavingDefaults(true);
@@ -350,6 +353,8 @@ export default function ProjectPage() {
                         threadId={mainThreadId}
                         model={project?.coordinator_model}
                         onModelChange={(m) => void patch({ coordinator_model: m })}
+                        effort={project?.coordinator_effort}
+                        onEffortChange={(e) => void patch({ coordinator_effort: e as EffortLevel })}
                         composerContext={project && (
                             // Defaults stay project-scoped; the selected worker's overrides are in its own panel.
                             <>
@@ -368,6 +373,12 @@ export default function ProjectPage() {
                                     value={project.thread_model}
                                     disabled={blocked || savingDefaults}
                                     onChange={(m) => void patch({ thread_model: m })}
+                                />
+                                <EffortPicker
+                                    label={t('conversation.threadEffort')}
+                                    value={project.thread_effort || ''}
+                                    disabled={blocked || savingDefaults}
+                                    onChange={(e) => void patch({ thread_effort: e as EffortLevel })}
                                 />
                             </>
                         )}

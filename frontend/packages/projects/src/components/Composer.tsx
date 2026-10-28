@@ -5,6 +5,7 @@ import type { Attachment } from '../client';
 import { isLongText, lineCount, pastedTextFile } from './attachments';
 import { ArrowUpward, Attach, Close, Description, ExpandMore, Stop } from './icons';
 import { ModelPicker } from './ModelPicker';
+import { EffortPicker } from './EffortPicker';
 import type { ModelSource } from '../hooks/useModels';
 import { radius } from '@tingly/ui/theme/radius';
 import { fontSizes } from '@tingly/ui/theme/fonts';
@@ -61,6 +62,11 @@ export interface ComposerProps {
     onModelChange?: (m: string) => void;
     /** What `model` is for, when other model pickers share the box. */
     modelLabel?: string;
+    /** Shows the effort picker beside the model picker when onEffortChange is set. */
+    effort?: string;
+    onEffortChange?: (effort: string) => void;
+    /** What `effort` is for, when other effort pickers share the box. */
+    effortLabel?: string;
     /** Projects use their host's models; standalone Chats use their saved connection. */
     modelSource?: ModelSource;
     /** Controls above the text (a host's profile, model and permission pickers). */
@@ -92,7 +98,7 @@ export interface ComposerProps {
  * Enter (confirming a candidate) never sends, and a send never runs twice.
  */
 export function Composer({
-    onSend, attach, attachBlocked, streaming, onStop, sendWhileStreaming, sendModes, disabled, canSubmit = true, placeholder, autoFocus, model, onModelChange, modelLabel, modelSource,
+    onSend, attach, attachBlocked, streaming, onStop, sendWhileStreaming, sendModes, disabled, canSubmit = true, placeholder, autoFocus, model, onModelChange, modelLabel, effort, onEffortChange, effortLabel, modelSource,
     context, leftSlot, minRows = 1, seed, keepUntilSent, text: controlled, onTextChange, onAccepted, keysHint,
 }: ComposerProps) {
     const { t } = useTranslation('projects');
@@ -274,7 +280,7 @@ export function Composer({
     const hint = keysHint && !mobile && !leftSlot;
     // Nothing under the text: the buttons sit beside it and the box is one
     // line until the text grows.
-    const inline = !leftSlot && !onModelChange && !hint;
+    const inline = !leftSlot && !onModelChange && !onEffortChange && !hint;
 
     const attachButton = attach && (
         <Tooltip title={attachBlocked || t('composer.attach')}>
@@ -405,6 +411,7 @@ export function Composer({
                             {hint && <Typography variant="caption" color="text.secondary">{t('composer.keys')}</Typography>}
                         </Box>
                         {onModelChange && <ModelPicker value={model ?? ''} onChange={onModelChange} label={modelLabel} source={modelSource} disabled={disabled} />}
+                        {onEffortChange && <EffortPicker value={effort ?? ''} onChange={onEffortChange} label={effortLabel} disabled={disabled} />}
                         {sendButton}
                         {modeButton}
                         {stopButton}

@@ -2931,6 +2931,14 @@
           "id": {
             "type": "string",
             "description": "Field id"
+          },
+          "provider_model": {
+            "type": "string",
+            "description": "Field provider_model"
+          },
+          "provider_name": {
+            "type": "string",
+            "description": "Field provider_name"
           }
         },
         "required": [
@@ -3058,6 +3066,10 @@
             "format": "date-time",
             "description": "Field archived_at"
           },
+          "coordinator_effort": {
+            "type": "string",
+            "description": "Field coordinator_effort"
+          },
           "coordinator_model": {
             "type": "string",
             "description": "Field coordinator_model"
@@ -3106,6 +3118,10 @@
             "type": "boolean",
             "description": "Field starred"
           },
+          "thread_effort": {
+            "type": "string",
+            "description": "Field thread_effort"
+          },
           "thread_model": {
             "type": "string",
             "description": "Field thread_model"
@@ -3133,6 +3149,8 @@
           "repos",
           "coordinator_model",
           "thread_model",
+          "coordinator_effort",
+          "thread_effort",
           "thread_permission_mode",
           "paused",
           "starred",
@@ -3227,6 +3245,10 @@
             "format": "date-time",
             "description": "Field archived_at"
           },
+          "coordinator_effort": {
+            "type": "string",
+            "description": "Field coordinator_effort"
+          },
           "coordinator_model": {
             "type": "string",
             "description": "Field coordinator_model"
@@ -3275,6 +3297,10 @@
             "type": "boolean",
             "description": "Field starred"
           },
+          "thread_effort": {
+            "type": "string",
+            "description": "Field thread_effort"
+          },
           "thread_model": {
             "type": "string",
             "description": "Field thread_model"
@@ -3305,6 +3331,8 @@
           "repos",
           "coordinator_model",
           "thread_model",
+          "coordinator_effort",
+          "thread_effort",
           "thread_permission_mode",
           "paused",
           "starred",
@@ -4060,6 +4088,17 @@
             "type": "boolean",
             "description": "Field archived"
           },
+          "coordinator_effort": {
+            "type": "string",
+            "description": "Field coordinator_effort",
+            "enum": [
+              "",
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
           "coordinator_model": {
             "type": "string",
             "description": "Field coordinator_model"
@@ -4090,6 +4129,17 @@
           "starred": {
             "type": "boolean",
             "description": "Field starred"
+          },
+          "thread_effort": {
+            "type": "string",
+            "description": "Field thread_effort",
+            "enum": [
+              "",
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
           },
           "thread_model": {
             "type": "string",

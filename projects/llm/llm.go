@@ -89,6 +89,12 @@ type Result struct {
 type Model struct {
 	ID          string `json:"id"`
 	DisplayName string `json:"display_name"`
+	// ProviderModel / ProviderName are what the host routes ID to — the real
+	// model an alias stands for, and the provider that serves it. Set by an
+	// embedding host that can resolve its routing (Tingly Box does, the way
+	// its status line does); empty when the endpoint says nothing.
+	ProviderModel string `json:"provider_model,omitempty"`
+	ProviderName  string `json:"provider_name,omitempty"`
 }
 
 // Client generates text against one connection.

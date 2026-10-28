@@ -104,6 +104,7 @@ export const zh: Dict<typeof en> = {
         sendStop: '停止并发送', sendStopHint: '先中断当前这一轮' },
     queue: { heading: '本轮结束后发送', edit: '编辑', remove: '移除', attachmentsOnly: '附件', returned: '排队的消息已放回输入框。' },
     model: { auto: '默认模型', listFailed: '无法从端点获取模型列表，请直接输入模型 ID。', customPlaceholder: '模型 ID，例如 claude-sonnet-4-5' },
+    effort: { default: '默认推理力度', defaultHint: '跟随模型自身的默认值', low: '低', lowHint: '轻量推理——更快、更省', medium: '中', mediumHint: '均衡的推理力度', high: '高', highHint: '为难题进行深入推理', max: '最高', maxHint: '模型所能提供的最充分的推理' },
     connection: { open: '去设置' },
     chat: {
         untitled: '未命名对话', replyPlaceholder: '回复…', regenerate: '重新生成回复', retry: '重试',
@@ -145,8 +146,10 @@ export const zh: Dict<typeof en> = {
     conversation: {
         placeholder: '描述工作、粘贴 bug 报告或报错栈，或者提个问题…',
         coordinatorModel: '协调者模型',
+        coordinatorEffort: '协调者推理力度',
         settingsChanged: '项目设置已更新',
         threadModel: '线程模型',
+        threadEffort: '线程推理力度',
         queuePlaceholder: '给项目发消息，它会在当前这一轮结束后读到…',
         emptyTitle: '给这个项目发第一份工作',
         step1: '在这里描述要做的事——一个任务、一串任务、一份 bug 报告或一段报错栈都可以。',

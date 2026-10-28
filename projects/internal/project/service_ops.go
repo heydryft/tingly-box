@@ -83,6 +83,8 @@ func configurationChanges(a, b *db.Project) []string {
 		{"instructions", a.Instructions, b.Instructions},
 		{"coordinator model", a.CoordinatorModel, b.CoordinatorModel},
 		{"thread model", a.ThreadModel, b.ThreadModel},
+		{"coordinator effort", a.CoordinatorEffort, b.CoordinatorEffort},
+		{"thread effort", a.ThreadEffort, b.ThreadEffort},
 		{"thread permission mode", a.ThreadPermissionMode, b.ThreadPermissionMode},
 	} {
 		if field.a != field.b {

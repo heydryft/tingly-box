@@ -154,7 +154,11 @@ func (s *Server) apiModules(ctx context.Context, schema bool) []module.Module {
 	if !schema {
 		s.adoptProjectsForRemote()
 	}
-	if app := newProjectsApp(s.config, s.projectsDir, schema, chatBridge); app != nil {
+	// The host previews each listed model's route with the status line's own
+	// resolution (PreviewRoute never reads quota, so the quota manager stays
+	// out), letting the composer show the real model behind an alias.
+	projectsRoutes := statusline.NewHandler(s.config, s.loadBalancer, statusline.NewCache(), nil)
+	if app := newProjectsApp(s.config, s.projectsDir, schema, chatBridge, projectsRoutes); app != nil {
 		start := func() { app.Start(ctx) }
 		var chatDisabled func(string) bool
 		if sm != nil && sm.RemoteChats() != nil {

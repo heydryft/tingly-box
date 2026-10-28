@@ -397,6 +397,31 @@ func TestProjectEndToEnd(t *testing.T) {
 	assert.DirExists(t, th.Cwd)
 }
 
+// The composer's effort picks persist beside each model pick, only ladder
+// levels are accepted, and a folder has no thread default to set.
+func TestProjectEffortSettings(t *testing.T) {
+	_, c := newServer(t, nil)
+	var p db.Project
+	require.Equal(t, http.StatusCreated, c.do("POST", "/projects", map[string]any{"name": "efforts"}, &p))
+
+	var saved db.Project
+	require.Equal(t, http.StatusOK, c.do("PATCH", "/projects/"+p.ID, map[string]any{"coordinator_effort": "high", "thread_effort": "low"}, &saved))
+	assert.Equal(t, "high", saved.CoordinatorEffort)
+	assert.Equal(t, "low", saved.ThreadEffort)
+
+	// Back to the default.
+	require.Equal(t, http.StatusOK, c.do("PATCH", "/projects/"+p.ID, map[string]any{"coordinator_effort": ""}, &saved))
+	assert.Equal(t, "", saved.CoordinatorEffort)
+
+	// The server refuses what the ladder does not speak.
+	assert.Equal(t, http.StatusBadRequest, c.do("PATCH", "/projects/"+p.ID, map[string]any{"coordinator_effort": "ultra"}, nil))
+
+	// A folder has no thread defaults.
+	var f db.Project
+	require.Equal(t, http.StatusOK, c.do("POST", "/projects", map[string]any{"type": "folder", "name": "notes", "path": t.TempDir()}, &f))
+	assert.Equal(t, http.StatusBadRequest, c.do("PATCH", "/projects/"+f.ID, map[string]any{"thread_effort": "high"}, nil))
+}
+
 // The events stream outlives the server's WriteTimeout: cut at it, every open
 // page reconnects and re-fetches everything it shows.
 func TestEventStreamOutlivesWriteTimeout(t *testing.T) {

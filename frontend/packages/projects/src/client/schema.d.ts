@@ -1297,6 +1297,10 @@ export interface components {
             display_name: string;
             /** @description Field id */
             id: string;
+            /** @description Field provider_model */
+            provider_model?: string;
+            /** @description Field provider_name */
+            provider_name?: string;
         };
         ModelRequest: {
             /** @description Field model */
@@ -1349,6 +1353,8 @@ export interface components {
              * @description Field archived_at
              */
             archived_at?: string;
+            /** @description Field coordinator_effort */
+            coordinator_effort: string;
             /** @description Field coordinator_model */
             coordinator_model: string;
             /**
@@ -1374,6 +1380,8 @@ export interface components {
             repos: components["schemas"]["Repo"][];
             /** @description Field starred */
             starred: boolean;
+            /** @description Field thread_effort */
+            thread_effort: string;
             /** @description Field thread_model */
             thread_model: string;
             /** @description Field thread_permission_mode */
@@ -1416,6 +1424,8 @@ export interface components {
              * @description Field archived_at
              */
             archived_at?: string;
+            /** @description Field coordinator_effort */
+            coordinator_effort: string;
             /** @description Field coordinator_model */
             coordinator_model: string;
             /**
@@ -1441,6 +1451,8 @@ export interface components {
             repos: components["schemas"]["Repo"][];
             /** @description Field starred */
             starred: boolean;
+            /** @description Field thread_effort */
+            thread_effort: string;
             /** @description Field thread_model */
             thread_model: string;
             /** @description Field thread_permission_mode */
@@ -1826,6 +1838,11 @@ export interface components {
         UpdateProjectRequest: {
             /** @description Field archived */
             archived?: boolean;
+            /**
+             * @description Field coordinator_effort
+             * @enum {string}
+             */
+            coordinator_effort?: "" | "low" | "medium" | "high" | "max";
             /** @description Field coordinator_model */
             coordinator_model?: string;
             /** @description Field goal */
@@ -1840,6 +1857,11 @@ export interface components {
             repos?: string[];
             /** @description Field starred */
             starred?: boolean;
+            /**
+             * @description Field thread_effort
+             * @enum {string}
+             */
+            thread_effort?: "" | "low" | "medium" | "high" | "max";
             /** @description Field thread_model */
             thread_model?: string;
             /**

@@ -20,13 +20,21 @@ interface Props {
 /**
  * Shows the concrete model ID that will be called (not an alias) and lets the
  * user switch. When the endpoint cannot list models, a free-text field takes
- * over so chatting is never blocked on discovery.
+ * over so chatting is never blocked on discovery. A listed id the host routes
+ * (an alias) is shown with the real model it stands for, the way the status
+ * line renders a route.
  */
 export function ModelPicker({ value, onChange, disabled, label, defaultLabel, source = 'connection' }: Props) {
     const { t } = useTranslation('projects');
     const { models, error } = useModels(source);
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
     const [custom, setCustom] = useState('');
+
+    // What the picked id routes to: the alias "sonnet" shows the real model
+    // beside it, both on the button and in the menu (provider_model is empty
+    // when the host does not resolve routes, or the id is its own model).
+    const routed = models.find((m) => m.id === value);
+    const shown = routed?.provider_model && routed.provider_model !== value ? `${value} → ${routed.provider_model}` : value;
 
     const close = () => setAnchor(null);
     return (
@@ -39,8 +47,8 @@ export function ModelPicker({ value, onChange, disabled, label, defaultLabel, so
                 endIcon={<ExpandMore fontSize="small" />}
                 sx={{ color: 'text.secondary', fontWeight: 500, fontSize: fontSizes.sm, maxWidth: 260, px: 0.75, minWidth: 0, borderRadius: radius.row }}
             >
-                <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {label ? `${label} · ` : ''}{value || defaultLabel || t('model.auto')}
+                <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={shown}>
+                    {label ? `${label} · ` : ''}{shown || defaultLabel || t('model.auto')}
                 </Box>
             </Button>
             <Menu
@@ -55,16 +63,19 @@ export function ModelPicker({ value, onChange, disabled, label, defaultLabel, so
                     <ListItemText primary={defaultLabel || t('model.auto')} />
                     {value === '' && <Check fontSize="small" color="primary" sx={{ ml: 1 }} />}
                 </MenuItem>}
-                {models.map((m) => (
-                    <MenuItem key={m.id} selected={m.id === value} onClick={() => { if (!disabled) onChange(m.id); close(); }}>
-                        <ListItemText
-                            primary={m.id}
-                            secondary={m.display_name && m.display_name !== m.id ? m.display_name : undefined}
-                            slotProps={{ primary: { sx: { fontFamily: fontMono, fontSize: fontSizes.base } } }}
-                        />
-                        {m.id === value && <Check fontSize="small" color="primary" sx={{ ml: 1 }} />}
-                    </MenuItem>
-                ))}
+                {models.map((m) => {
+                    const real = m.provider_model && m.provider_model !== m.id ? [m.provider_model, m.provider_name].filter(Boolean).join(' @ ') : undefined;
+                    return (
+                        <MenuItem key={m.id} selected={m.id === value} onClick={() => { if (!disabled) { onChange(m.id); close(); } }}>
+                            <ListItemText
+                                primary={m.id}
+                                secondary={real ?? (m.display_name && m.display_name !== m.id ? m.display_name : undefined)}
+                                slotProps={{ primary: { sx: { fontFamily: fontMono, fontSize: fontSizes.base } }, secondary: { sx: { fontFamily: real ? fontMono : undefined, fontSize: fontSizes.sm } } }}
+                            />
+                            {m.id === value && <Check fontSize="small" color="primary" sx={{ ml: 1 }} />}
+                        </MenuItem>
+                    );
+                })}
                 {error && (
                     <Box sx={{ px: 2, py: 1, maxWidth: 320 }}>
                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>

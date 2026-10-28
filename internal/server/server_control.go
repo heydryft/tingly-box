@@ -125,8 +125,8 @@ func RuntimeAuditSink() remotescenario.AuditFunc {
 // dataDir (--projects-dir, default "<config dir>-project"), never inside the
 // config dir, so a thread's working directory does not sit next to Tingly
 // Box's credentials.
-func newProjectsApp(cfg *config.Config, dataDir string, schema bool, chats *projectsmodule.ChatBridge) *projectsapp.App {
-	host := projectsmodule.NewHost(cfg)
+func newProjectsApp(cfg *config.Config, dataDir string, schema bool, chats *projectsmodule.ChatBridge, routes projectsmodule.RoutePreviewer) *projectsapp.App {
+	host := projectsmodule.NewHost(cfg).WithRoutePreview(routes)
 	host.SetChatBridge(chats)
 	opts := projectsapp.Options{Host: host}
 	if !schema {

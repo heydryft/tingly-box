@@ -66,6 +66,8 @@ type UpdateProjectRequest struct {
 	Repos                *[]string `json:"repos,omitempty"`
 	CoordinatorModel     *string   `json:"coordinator_model,omitempty"`
 	ThreadModel          *string   `json:"thread_model,omitempty"`
+	CoordinatorEffort    *string   `json:"coordinator_effort,omitempty" enum:",low,medium,high,max"`
+	ThreadEffort         *string   `json:"thread_effort,omitempty" enum:",low,medium,high,max"`
 	ThreadPermissionMode *string   `json:"thread_permission_mode,omitempty" enum:"default,acceptEdits,auto,bypassPermissions"`
 	Starred              *bool     `json:"starred,omitempty"`
 	Paused               *bool     `json:"paused,omitempty"`
@@ -361,8 +363,8 @@ func (h *Handler) update(c *gin.Context) {
 	if !ok {
 		return
 	}
-	if p.Type == db.ProjectFolder && (req.Repos != nil || req.ThreadModel != nil) {
-		apierr.BadRequest(c, "repos and thread_model do not apply to a folder")
+	if p.Type == db.ProjectFolder && (req.Repos != nil || req.ThreadModel != nil || req.ThreadEffort != nil) {
+		apierr.BadRequest(c, "repos, thread_model and thread_effort do not apply to a folder")
 		return
 	}
 	if req.Name != nil {
@@ -392,6 +394,23 @@ func (h *Handler) update(c *gin.Context) {
 	}
 	if req.ThreadModel != nil {
 		p.ThreadModel = strings.TrimSpace(*req.ThreadModel)
+	}
+	for _, effort := range []struct {
+		req *string
+		set func(string)
+	}{
+		{req.CoordinatorEffort, func(v string) { p.CoordinatorEffort = v }},
+		{req.ThreadEffort, func(v string) { p.ThreadEffort = v }},
+	} {
+		if effort.req == nil {
+			continue
+		}
+		v := strings.TrimSpace(*effort.req)
+		if !rt.ValidEffort(v) {
+			apierr.BadRequest(c, "unknown effort level")
+			return
+		}
+		effort.set(v)
 	}
 	if req.ThreadPermissionMode != nil {
 		switch *req.ThreadPermissionMode {

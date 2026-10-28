@@ -15,6 +15,7 @@ type Proj = {
     id: string; type: 'project' | 'folder'; path?: string; main_thread_id?: string
     name: string; goal: string; instructions: string; paused: boolean; starred: boolean
     repos: { path: string; base_branch: string }[]; coordinator_model: string; thread_model: string
+    coordinator_effort: string; thread_effort: string
     thread_permission_mode: string; created_at: string; updated_at: string; archived_at?: string
 }
 
@@ -23,19 +24,19 @@ const projects: Proj[] = [
         id: 'p-latency', type: 'project', main_thread_id: 'main-p-latency', name: 'Payments API latency', goal: 'Get p99 of /charge under 300 ms without dropping retries.',
         instructions: 'Keep changes behind the existing feature flags.', paused: false, starred: true,
         repos: [repo('/Users/me/code/payments-api'), repo('/Users/me/code/payments-sdk')],
-        coordinator_model: 'claude-sonnet-4-5', thread_model: 'claude-sonnet-4-5', thread_permission_mode: 'acceptEdits',
+        coordinator_model: 'claude-sonnet-4-5', thread_model: 'claude-sonnet-4-5', coordinator_effort: 'medium', thread_effort: 'high', thread_permission_mode: 'acceptEdits',
         created_at: ago(60 * 26), updated_at: ago(4),
     },
     {
         id: 'p-docs', type: 'project', main_thread_id: 'main-p-docs', name: 'Docs refresh', goal: 'Every public endpoint documented with a runnable example.',
         instructions: '', paused: false, starred: false, repos: [repo('/Users/me/code/website')],
-        coordinator_model: 'claude-sonnet-4-5', thread_model: 'claude-haiku-4-5', thread_permission_mode: 'default',
+        coordinator_model: 'claude-sonnet-4-5', thread_model: 'claude-haiku-4-5', coordinator_effort: '', thread_effort: '', thread_permission_mode: 'default',
         created_at: ago(60 * 24 * 5), updated_at: ago(60 * 3),
     },
     {
         id: 'p-migrate', type: 'project', main_thread_id: 'main-p-migrate', name: 'Postgres 17 migration', goal: 'Move every service off Postgres 13 with zero downtime.',
         instructions: '', paused: true, starred: false, repos: [repo('/Users/me/code/infra')],
-        coordinator_model: 'claude-sonnet-4-5', thread_model: 'claude-sonnet-4-5', thread_permission_mode: 'default',
+        coordinator_model: 'claude-sonnet-4-5', thread_model: 'claude-sonnet-4-5', coordinator_effort: '', thread_effort: 'max', thread_permission_mode: 'default',
         created_at: ago(60 * 24 * 12), updated_at: ago(60 * 24 * 2),
     },
 ]
@@ -43,7 +44,7 @@ const projects: Proj[] = [
 // Working folders: projects of type folder (no goal, memory or main thread).
 const folderProject = (id: string, path: string, min: number): Proj => ({
     id, type: 'folder', path, name: path.split('/').pop() ?? path, goal: '', instructions: '', paused: false, starred: false, repos: [],
-    coordinator_model: '', thread_model: '', thread_permission_mode: '', created_at: ago(60 * 24 * 3), updated_at: ago(min),
+    coordinator_model: '', thread_model: '', coordinator_effort: '', thread_effort: '', thread_permission_mode: '', created_at: ago(60 * 24 * 3), updated_at: ago(min),
 })
 projects.push(
     folderProject('f-notes', '/Users/me/code/notes-app', 2),

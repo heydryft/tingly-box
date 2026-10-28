@@ -207,6 +207,9 @@ interface Props {
     /** The coordinator's model, switched from the message box; the picker is left out without onModelChange. */
     model?: string;
     onModelChange?: (model: string) => void;
+    /** The coordinator's thinking effort, beside its model picker. */
+    effort?: string;
+    onEffortChange?: (effort: string) => void;
     /** Pickers above the message box (what the project's threads start with). */
     composerContext?: React.ReactNode;
     onOpenThread: (id: string) => void;
@@ -215,7 +218,7 @@ interface Props {
     chatTitle?: (platform: string, chatId: string) => string | undefined;
 }
 
-export function ConversationPane({ projectId, messages, more = false, onLoadEarlier, threads, busy, disabled, disabledReason, onSend, threadId, model, onModelChange, composerContext, onOpenThread, onStartSuggestions, chatTitle }: Props) {
+export function ConversationPane({ projectId, messages, more = false, onLoadEarlier, threads, busy, disabled, disabledReason, onSend, threadId, model, onModelChange, effort, onEffortChange, composerContext, onOpenThread, onStartSuggestions, chatTitle }: Props) {
     const { t } = useTranslation('projects');
     const scrollRef = useRef<HTMLDivElement>(null);
     const stick = useRef(true);
@@ -336,6 +339,9 @@ export function ConversationPane({ projectId, messages, more = false, onLoadEarl
                     streaming={busy}
                     model={model}
                     onModelChange={onModelChange}
+                    effort={effort}
+                    onEffortChange={onEffortChange}
+                    effortLabel={t('conversation.coordinatorEffort')}
                     modelLabel={t('conversation.coordinatorModel')}
                     modelSource="projects"
                     placeholder={t(busy ? 'conversation.queuePlaceholder' : 'conversation.placeholder')}

@@ -33,8 +33,12 @@ type Project struct {
 	Instructions string `gorm:"type:text" json:"instructions"`
 	Repos        []Repo `gorm:"serializer:json;type:text" json:"repos"`
 	// CoordinatorModel / ThreadModel are empty for "connection default".
-	CoordinatorModel string `gorm:"size:200" json:"coordinator_model"`
-	ThreadModel      string `gorm:"size:200" json:"thread_model"`
+	// CoordinatorEffort / ThreadEffort are the thinking effort beside each of
+	// them (project.Efforts); empty for the endpoint's default.
+	CoordinatorModel  string `gorm:"size:200" json:"coordinator_model"`
+	ThreadModel       string `gorm:"size:200" json:"thread_model"`
+	CoordinatorEffort string `gorm:"size:32" json:"coordinator_effort"`
+	ThreadEffort      string `gorm:"size:32" json:"thread_effort"`
 	// ThreadPermissionMode is the Claude Code permission mode threads run in.
 	ThreadPermissionMode string     `gorm:"size:40" json:"thread_permission_mode"`
 	Paused               bool       `json:"paused"`

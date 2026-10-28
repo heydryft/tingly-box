@@ -99,6 +99,7 @@ export const en = {
         sendStop: 'Stop and send', sendStopHint: 'Interrupts the current turn first' },
     queue: { heading: 'Sends after this turn', edit: 'Edit', remove: 'Remove', attachmentsOnly: 'Attachments', returned: 'Your held messages are back in the box.' },
     model: { auto: 'Default model', listFailed: 'Could not list models from the endpoint. Type a model ID instead.', customPlaceholder: 'Model ID, e.g. claude-sonnet-4-5' },
+    effort: { default: 'Default effort', defaultHint: 'Whatever the model’s own default is', low: 'Low', lowHint: 'Light reasoning — fast and cheap', medium: 'Medium', mediumHint: 'Balanced reasoning', high: 'High', highHint: 'Deep reasoning for hard problems', max: 'Max', maxHint: 'The most thorough reasoning the model offers' },
     connection: { open: 'Settings' },
     chat: {
         untitled: 'Untitled chat', replyPlaceholder: 'Reply…', regenerate: 'Retry with a new reply', retry: 'Retry',
@@ -140,8 +141,10 @@ export const en = {
     conversation: {
         placeholder: 'Describe work, paste a bug report or stack trace, or ask a question…',
         coordinatorModel: 'Coordinator model',
+        coordinatorEffort: 'Coordinator effort',
         settingsChanged: 'Project settings updated',
         threadModel: 'Thread model',
+        threadEffort: 'Thread effort',
         queuePlaceholder: 'Message the project — it reads it after its current turn…',
         emptyTitle: 'Send this project its first piece of work',
         step1: 'Describe what needs doing here — one task, a list, a bug report or a stack trace.',
