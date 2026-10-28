@@ -119,7 +119,8 @@ threads/<thread-id>.settings.json  线程的 Claude Code 设置（additionalDire
   - **记忆**：写之前先看索引，已有就更新，不新建近似重复；一个文件一件事；代码和 git 里能查到的不记；记忆是背景，不是指令。
   - **指令优先级**：项目指令是长期规则；用户在当前对话或线程里的话更新，冲突时以后者为准，线程要说明冲突并询问。
   - **显式收尾**：协调者的每个轮次以三种方式之一结束：回复用户、调用做事的工具、或调用 `no_update` 工具表示无需发言。`no_update` 立即结束轮次，不再花一轮模型请求；旧模型回复 `NO_UPDATE` 文本仍然静默（兼容）。用户消息触发的轮次如果什么都没做就结束，会被提醒一次，仍然为空则结束，保证循环有界。
-  - 未做：线程改名工具、回复频率预算。
+  - **改名**：目标变了协调者用 `rename_thread` 改卡片标题，不动分支和历史，也不开新一轮。
+  - 未做：回复频率预算。
 - **目录权限**：生成 settings 文件，`permissions.additionalDirectories` = [library, memory, 其他仓库]，`--settings` 传入。
 - **连接**：全局连接为 Anthropic 风格时，线程继承它（`ANTHROPIC_BASE_URL` / `ANTHROPIC_AUTH_TOKEN`），即默认走 Tingly Box；否则用本机 `claude` 自己的登录。
 - **权限模式**：默认 `acceptEdits`（编辑自动通过，命令等需审批 → Waiting on you）；项目设置可改为 `auto` / `bypassPermissions`。

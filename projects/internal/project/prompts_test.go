@@ -31,6 +31,7 @@ func TestCoordinatorPromptTrustAndStyleRules(t *testing.T) {
 	assert.Contains(t, s, "Memory is background")
 	assert.Contains(t, s, "wins where they differ")
 	assert.Contains(t, s, "no_update")
+	assert.Contains(t, s, "rename_thread")
 }
 
 func TestThreadPromptRules(t *testing.T) {
