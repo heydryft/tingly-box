@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, Button, Divider, ListItemText, Menu, MenuItem, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import type { Model } from '../client';
 import { Check, ExpandMore } from './icons';
 import { useModels, type ModelSource } from '../hooks/useModels';
 import { fontMono, fontSizes } from '@tingly/ui/theme/fonts';
@@ -17,6 +18,10 @@ interface Props {
     defaultLabel?: string;
 }
 
+/** The real model a listed id stands for, when the host routes it to one
+ * (provider_model is empty when routes are unresolved or the id is its own). */
+const routedTo = (m: Model | undefined) => (m && m.provider_model && m.provider_model !== m.id ? m.provider_model : undefined);
+
 /**
  * Shows the concrete model ID that will be called (not an alias) and lets the
  * user switch. When the endpoint cannot list models, a free-text field takes
@@ -31,10 +36,9 @@ export function ModelPicker({ value, onChange, disabled, label, defaultLabel, so
     const [custom, setCustom] = useState('');
 
     // What the picked id routes to: the alias "sonnet" shows the real model
-    // beside it, both on the button and in the menu (provider_model is empty
-    // when the host does not resolve routes, or the id is its own model).
-    const routed = models.find((m) => m.id === value);
-    const shown = routed?.provider_model && routed.provider_model !== value ? `${value} → ${routed.provider_model}` : value;
+    // beside it, both on the button and in the menu.
+    const real = routedTo(models.find((m) => m.id === value));
+    const shown = real ? `${value} → ${real}` : value;
 
     const close = () => setAnchor(null);
     return (
@@ -64,7 +68,8 @@ export function ModelPicker({ value, onChange, disabled, label, defaultLabel, so
                     {value === '' && <Check fontSize="small" color="primary" sx={{ ml: 1 }} />}
                 </MenuItem>}
                 {models.map((m) => {
-                    const real = m.provider_model && m.provider_model !== m.id ? [m.provider_model, m.provider_name].filter(Boolean).join(' @ ') : undefined;
+                    const routed = routedTo(m);
+                    const real = routed && [routed, m.provider_name].filter(Boolean).join(' @ ');
                     return (
                         <MenuItem key={m.id} selected={m.id === value} onClick={() => { if (!disabled) { onChange(m.id); close(); } }}>
                             <ListItemText

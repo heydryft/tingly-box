@@ -5,8 +5,15 @@ import { Check, ExpandMore } from './icons';
 import { fontSizes } from '@tingly/ui/theme/fonts';
 import { radius } from '@tingly/ui/theme/radius';
 
-/** The effort levels a project can set, the ladder the gateway's rules speak. */
-export const EFFORTS = ['low', 'medium', 'high', 'max'] as const;
+// The effort levels a project can set, the ladder the gateway's rules speak;
+// empty is the endpoint's default.
+const EFFORTS = ['low', 'medium', 'high', 'max'] as const;
+
+// The menu's choices: value and its i18n key, default first.
+const CHOICES: ReadonlyArray<readonly [string, string]> = [
+    ['', 'effort.default'],
+    ...EFFORTS.map((level) => [level, `effort.${level}`] as const),
+];
 
 interface Props {
     value: string;
@@ -25,7 +32,6 @@ export function EffortPicker({ value, onChange, disabled, label }: Props) {
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
     const close = () => setAnchor(null);
-    const current = label ? `${label} · ` : '';
     return (
         <>
             <Button
@@ -37,7 +43,7 @@ export function EffortPicker({ value, onChange, disabled, label }: Props) {
                 sx={{ color: 'text.secondary', fontWeight: 500, fontSize: fontSizes.sm, px: 0.75, minWidth: 0, borderRadius: radius.row }}
             >
                 <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {current}{value ? t(`effort.${value}`) : t('effort.default')}
+                    {label ? `${label} · ` : ''}{value ? t(`effort.${value}`) : t('effort.default')}
                 </Box>
             </Button>
             <Menu
@@ -48,19 +54,11 @@ export function EffortPicker({ value, onChange, disabled, label }: Props) {
                 transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 slotProps={{ paper: { sx: { minWidth: 240 } } }}
             >
-                <MenuItem selected={value === ''} onClick={() => { if (!disabled) { onChange(''); close(); } }}>
-                    <ListItemText
-                        primary={t('effort.default')}
-                        secondary={t('effort.defaultHint')}
-                        slotProps={{ primary: { sx: { fontSize: fontSizes.base } }, secondary: { sx: { fontSize: fontSizes.sm } } }}
-                    />
-                    {value === '' && <Check fontSize="small" color="primary" sx={{ ml: 1 }} />}
-                </MenuItem>
-                {EFFORTS.map((level) => (
-                    <MenuItem key={level} selected={level === value} onClick={() => { if (!disabled) { onChange(level); close(); } }}>
+                {CHOICES.map(([level, key]) => (
+                    <MenuItem key={key} selected={level === value} onClick={() => { if (!disabled) { onChange(level); close(); } }}>
                         <ListItemText
-                            primary={t(`effort.${level}`)}
-                            secondary={t(`effort.${level}Hint`)}
+                            primary={t(key)}
+                            secondary={t(`${key}Hint`)}
                             slotProps={{ primary: { sx: { fontSize: fontSizes.base } }, secondary: { sx: { fontSize: fontSizes.sm } } }}
                         />
                         {level === value && <Check fontSize="small" color="primary" sx={{ ml: 1 }} />}

@@ -397,10 +397,10 @@ func (h *Handler) update(c *gin.Context) {
 	}
 	for _, effort := range []struct {
 		req *string
-		set func(string)
+		dst *string
 	}{
-		{req.CoordinatorEffort, func(v string) { p.CoordinatorEffort = v }},
-		{req.ThreadEffort, func(v string) { p.ThreadEffort = v }},
+		{req.CoordinatorEffort, &p.CoordinatorEffort},
+		{req.ThreadEffort, &p.ThreadEffort},
 	} {
 		if effort.req == nil {
 			continue
@@ -410,7 +410,7 @@ func (h *Handler) update(c *gin.Context) {
 			apierr.BadRequest(c, "unknown effort level")
 			return
 		}
-		effort.set(v)
+		*effort.dst = v
 	}
 	if req.ThreadPermissionMode != nil {
 		switch *req.ThreadPermissionMode {

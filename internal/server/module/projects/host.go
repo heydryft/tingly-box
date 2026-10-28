@@ -16,14 +16,6 @@ import (
 	"github.com/tingly-dev/tingly-box/projects/llm"
 )
 
-// RoutePreviewer predicts where the gateway routes a model id, the way the
-// status line does (statusline.Handler.PreviewRoute): the rule that matches
-// the model in the scenario and the service it would pick, without claiming a
-// load-balancer probe slot.
-type RoutePreviewer interface {
-	PreviewRoute(scenario, modelID string) *statusline.Route
-}
-
 // Host gives Projects model access through Tingly Box's own gateway. The
 // coordinator and the threads both go through the claude_code scenario, so
 // its routing rules, usage records and quotas cover Projects too, and the
@@ -31,9 +23,9 @@ type RoutePreviewer interface {
 type Host struct {
 	cfg *config.Config
 	cc  *tbclient.TBClientImpl
-	// routes resolves each listed model to the real model behind it; nil
-	// leaves the list as the bare ids.
-	routes RoutePreviewer
+	// routes resolves each listed model to the real model behind it via the
+	// status line's own PreviewRoute; nil leaves the list as the bare ids.
+	routes *statusline.Handler
 	// bridge carries Projects messages to IM chats; see chatbridge.go.
 	bridge *ChatBridge
 }
@@ -47,7 +39,7 @@ func NewHost(cfg *config.Config) *Host {
 // WithRoutePreview names the status line's route preview, so the model list
 // can show what each id resolves to. Same wiring as the scenario module's
 // tier listing (server_webui_api.go).
-func (h *Host) WithRoutePreview(routes RoutePreviewer) *Host {
+func (h *Host) WithRoutePreview(routes *statusline.Handler) *Host {
 	h.routes = routes
 	return h
 }
