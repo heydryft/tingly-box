@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -45,10 +46,13 @@ func (f *fakeLLM) requests() []llm.Request {
 	return append([]llm.Request(nil), f.reqs...)
 }
 
+var envelopeTag = regexp.MustCompile(`<event[^>]*>\n|\n</event>`)
+
+// lastUserText is the last user message without its event envelopes.
 func lastUserText(req llm.Request) string {
 	for i := len(req.Messages) - 1; i >= 0; i-- {
 		if req.Messages[i].Role == "user" {
-			return req.Messages[i].Content
+			return envelopeTag.ReplaceAllString(req.Messages[i].Content, "")
 		}
 	}
 	return ""
@@ -221,7 +225,10 @@ func TestRenderHistoryAlternates(t *testing.T) {
 	}, "")
 	require.Len(t, msgs, 3)
 	assert.Equal(t, "user", msgs[0].Role)
-	assert.Equal(t, "a\n\nb", msgs[0].Content)
+	assert.Contains(t, msgs[0].Content, `trust="principal"`)
+	assert.Contains(t, msgs[0].Content, "a\n</event>\n\n<event")
+	assert.Contains(t, msgs[0].Content, "\nb\n</event>")
 	assert.Contains(t, msgs[1].Content, "01234567")
-	assert.Contains(t, msgs[2].Content, "[Thread update]")
+	assert.Contains(t, msgs[2].Content, `source="thread"`)
+	assert.Contains(t, msgs[2].Content, `trust="relay"`)
 }

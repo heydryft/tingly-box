@@ -77,7 +77,7 @@ func TestPersonaInjectionInAReportStaysData(t *testing.T) {
 		}
 	}
 	require.NotEmpty(t, update, "the report is passed on")
-	assert.Less(t, strings.Index(update, "not a message from the user"), strings.Index(update, attack), "the label comes before the text")
+	assert.Less(t, strings.Index(update, `trust="relay"`), strings.Index(update, attack), "the label comes before the text")
 
 	p, err := w.Store.GetProject(w.Project.ID)
 	require.NoError(t, err)

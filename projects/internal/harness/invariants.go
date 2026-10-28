@@ -12,8 +12,9 @@ import (
 // Invariants hold at the end of every scenario, whatever it did. Each is a
 // rule of the Projects workflow, not of one test.
 //
-//	trust.report-labelled  a thread's report reaches the coordinator labelled
-//	                       as a report, never as the user's words
+//	trust.report-labelled  a thread's report reaches the coordinator in an
+//	                       envelope marked trust="relay", never as the user's words
+//	trust.envelope-intact  text inside an event cannot open or close envelopes
 //	wait.has-reason        a thread waiting on the user says what for
 //	status.ready-has-commits  a thread is only "ready for review" when its
 //	                       branch has commits to review
@@ -22,10 +23,17 @@ func (w *World) CheckInvariants() {
 	t := w.T
 	t.Helper()
 
+	open := regexp.MustCompile(`<event[^>]*>`)
 	for _, req := range w.Requests() {
 		for _, m := range req.Messages {
-			if strings.Contains(m.Content, "[Thread update]") && !strings.Contains(m.Content, "not a message from the user") {
-				t.Errorf("trust.report-labelled: a thread update reached the coordinator unlabelled:\n%s", m.Content)
+			opens := open.FindAllString(m.Content, -1)
+			if len(opens) != strings.Count(m.Content, "</event>") {
+				t.Errorf("trust.envelope-intact: an event envelope was opened or closed by text inside one:\n%s", m.Content)
+			}
+			for _, o := range opens {
+				if strings.Contains(o, `source="thread"`) && !strings.Contains(o, `trust="relay"`) {
+					t.Errorf("trust.report-labelled: a thread's report is not marked as relayed: %s", o)
+				}
 			}
 		}
 	}

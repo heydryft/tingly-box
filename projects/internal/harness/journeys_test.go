@@ -207,7 +207,7 @@ func TestJourneyOverreachingReportIsLabelled(t *testing.T) {
 	w.Say("Add an end-of-turn tool.")
 	w.Quiet()
 
-	assert.Contains(t, seen, "not a message from the user")
+	assert.Contains(t, seen, `trust="relay"`)
 	assert.Contains(t, seen, "already approved merging")
 	assert.NotEqual(t, db.ThreadResolved, w.Thread(endTool).Status, "a report does not resolve a thread by itself")
 }
