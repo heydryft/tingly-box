@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Box, InputBase, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { fontSizes } from '@tingly/ui/theme/fonts';
@@ -13,11 +13,11 @@ import { Pencil } from '../icons';
 export function ThreadTitle({ title, onSave }: { title: string; onSave: (title: string) => Promise<boolean> }) {
     const { t } = useTranslation('projects');
     const [editing, setEditing] = useState(false);
-    const [value, setValue] = useState(title);
+    // The edit buffer; `edit` seeds it from the shown title every time.
+    const [value, setValue] = useState('');
     // What the header shows: the saved title, ahead of the thread's next
     // re-read so the rename lands without waiting for its event.
     const [shown, setShown] = useState(title);
-    const input = useRef<HTMLInputElement>(null);
     // Escape sets this before the field goes away, so its blur does not save.
     const cancelled = useRef(false);
     const [lastTitle, setLastTitle] = useState(title);
@@ -26,9 +26,6 @@ export function ThreadTitle({ title, onSave }: { title: string; onSave: (title: 
         setLastTitle(title);
         setShown(title);
     }
-    useEffect(() => {
-        if (editing) input.current?.select();
-    }, [editing]);
 
     const edit = () => {
         setValue(shown);
@@ -45,9 +42,9 @@ export function ThreadTitle({ title, onSave }: { title: string; onSave: (title: 
         return (
             <InputBase
                 autoFocus
-                inputRef={input}
                 fullWidth
                 value={value}
+                onFocus={(e) => e.currentTarget.select()}
                 onChange={(e) => setValue(e.target.value)}
                 onBlur={() => {
                     if (cancelled.current) {
@@ -57,7 +54,7 @@ export function ThreadTitle({ title, onSave }: { title: string; onSave: (title: 
                     save();
                 }}
                 onKeyDown={(e) => {
-                    if (e.key === 'Enter') input.current?.blur();
+                    if (e.key === 'Enter') e.currentTarget.blur();
                     else if (e.key === 'Escape') {
                         cancelled.current = true;
                         setEditing(false);
