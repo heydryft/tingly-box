@@ -264,24 +264,21 @@ Claude 会把这些偏好**自己写进项目记忆**，之后的线程也会遵
 
 ## 9. 对照：当前 tingly-project 复刻了什么
 
-| 能力 | Chat Projects | Redesigned Projects | tingly-project 现状 |
-|---|---|---|---|
-| 名称和描述不发给模型 | ✓ | — | ✓ |
-| 指令 | ✓ | ✓（16k，也发给协调者） | ✓ |
-| 知识库，超量时自动 RAG | ✓ | Library（文件加产出物） | ✓（只支持文本，不支持 PDF） |
-| 项目记忆，单个对话可关闭 | ✓ | 多个记忆文件，由 Claude 写、可编辑 | ⚠️ 一段自动总结的文本 |
-| 收藏、归档（归档后不能删）、移动对话 | ✓ | Pause、Archive、Delete | ✓ |
-| 共享和权限 | ✓（Team） | ✗ | ✗ |
-| 协调者对话加路由 | ✗ | ✓ | ✗ |
-| 线程就是 agent 会话（分支、PR、CI） | ✗ | ✓ | ✗ |
-| Overview 状态和"等你处理" | ✗ | ✓ | ✗ |
-| 线程内审批 | ✗ | ✓ | ✗ |
-| 目标（Goal）、仓库、环境 | ✗ | ✓ | ✗ |
-| Suggested threads、Setup recommendations | ✗ | ✓ | ✗ |
-| Routines | ✗ | ✓ | ✗ |
-| 按线程、按模型看用量 | ✗ | ✓ | ✗ |
+> 本节写于调研时，当时只有旧版的单用户本地复刻。之后协调者、线程、Overview、记忆文件、线程内审批、Goal、仓库和 Library 都已实现，现状以 `../.design/projects.md` §2 为准，下表只保留官方两代产品的差异。
 
-**结论**：tingly-project 目前是 Chat Projects（旧版）的单用户本地复刻，对新版核心体验的复刻度为零。官方正在把旧版并入新版，所以如果目标是"复刻 Claude Projects"，旧版只能算地基，不是主体。
+| 能力 | Chat Projects | Redesigned Projects |
+|---|---|---|
+| 指令 | ✓ | ✓（16k，也发给协调者） |
+| 知识库 / Library | 知识库，超量时自动 RAG | Library（文件加产出物） |
+| 项目记忆 | 一段记忆，单个对话可关闭 | 多个记忆文件，由 Claude 写、可编辑 |
+| 共享和权限 | ✓（Team） | ✗ |
+| 协调者对话加路由 | ✗ | ✓ |
+| 线程 = agent 会话（分支、PR、CI） | ✗ | ✓ |
+| Overview 状态和"等你处理" | ✗ | ✓ |
+| 线程内审批 | ✗ | ✓ |
+| Suggested threads、Setup recommendations、Routines | ✗ | ✓ |
+
+提示词层面的设计对照（协调者与线程的来源标注、命名、记忆写入、回复风格）见 `../.design/projects.md` §4.5。
 
 ---
 
