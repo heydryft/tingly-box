@@ -373,6 +373,10 @@ export default {
   "help": {
     "title": "帮助与技巧",
     "description": "一些容易被忽略但很有用的小功能。",
+    "feedback": {
+      "description": "在 GitHub 上报告问题或分享建议。",
+      "action": "打开 GitHub Issues"
+    },
     "shortcut": {
       "title": "桌面快捷方式",
       "description": "一键重启 Tingly Box 并打开网页界面。仅创建，不会自动更新或自动重启。",

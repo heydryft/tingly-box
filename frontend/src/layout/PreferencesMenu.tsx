@@ -15,8 +15,7 @@ import { useThemeMode } from '../contexts/ThemeContext';
 import { useVersion as useAppVersion } from '../contexts/VersionContext';
 import { Z_INDEX } from '../constants/zIndex';
 import { PowerUpsMenu } from './PowerUpsMenu';
-
-const FEEDBACK_URL = 'https://github.com/tingly-dev/tingly-box/issues/new/choose';
+import { FEEDBACK_URL } from './links';
 
 interface PreferencesMenuProps {
     anchorEl: HTMLElement | null;

@@ -376,6 +376,10 @@ export default {
   "help": {
     "title": "Tips & Help",
     "description": "A few easy-to-miss but useful things.",
+    "feedback": {
+      "description": "Report a problem or share an idea on GitHub.",
+      "action": "Open GitHub Issues"
+    },
     "shortcut": {
       "title": "Desktop Shortcut",
       "description": "One click to restart Tingly Box and open the web UI. Never auto-updates or auto-restarts on its own — creating it is the only thing this does.",
