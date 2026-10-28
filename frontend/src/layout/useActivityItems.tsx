@@ -30,7 +30,6 @@ import {
     Cable as IconPlug,
     Users as IconUsers,
     Science as IconFlask,
-    Handyman as IconTools,
     Server as IconServer,
     AiAgents as IconAiAgents,
     CircleOutlined as IconCustom,
@@ -266,6 +265,19 @@ export function useActivityItems(): ActivityItem[] {
                 { path: '/bench', label: t('layout.bench', { defaultValue: 'Bench' }), icon: <IconTestPipe sx={{ fontSize: 20 }} /> },
             ]);
         }
+        // Tools are always available; their existing routes and profiles live together.
+        powerUpGroups.push([
+            { path: '/mcp/server-tools', label: t('mcp.workspace.serverToolsNav', { defaultValue: 'Server Tools' }), icon: <IconServer sx={{ fontSize: 20 }} />, match: (path: string) => ['/mcp/server-tools', '/tools/servertool'].includes(path) },
+            { path: '/mcp/tools', label: t('mcp.workspace.toolsNav', { defaultValue: 'MCP Tools' }), icon: <IconTerminal sx={{ fontSize: 20 }} />, match: (path: string) => ['/mcp/tools', '/mcp/sources'].includes(path) },
+            ...mcpProfiles.map((p): NavItem => ({
+                path: `/mcp/profile/${p.id}`,
+                // The profile is the subject of its row (ux-principles #9).
+                label: p.id === MCP_DEFAULT_PROFILE_ID ? t('mcp.workspace.defaultProfileName', { defaultValue: 'MCP Integration' }) : p.name || p.id,
+                subtitle: p.id === MCP_DEFAULT_PROFILE_ID ? t('mcp.workspace.defaultNavCaption', { defaultValue: 'Default profile' }) : t('mcp.workspace.profileCaption', { defaultValue: 'MCP profile' }),
+                icon: <SettingsApplications sx={{ fontSize: 20 }} />,
+            })),
+            { path: '/mcp/profile/new', label: t('mcp.workspace.newProfileAction', { defaultValue: 'New profile' }), icon: <IconPlus sx={{ fontSize: 20 }} /> },
+        ]);
         const powerUpChildren: NavItem[] = powerUpGroups.flatMap((group, i) => (i === 0 ? group : [{ type: 'divider' as const }, ...group]));
 
         // Rail order, top to bottom: usage → use → power-ups → configuration.
@@ -375,9 +387,8 @@ export function useActivityItems(): ActivityItem[] {
             }] as ActivityItem[] : []),
             // Power-ups — one rail item for the opt-in features that act on
             // requests rather than being somewhere you work: Guardrails, the
-            // Prompt pages and Bench. Each is still switched on in the
-            // Power-ups menu; this item lists the ones that are on, one group
-            // per feature, and is gone when none is.
+            // Prompt pages, Bench, and Tools. Optional features remain controlled by
+            // the Power-ups menu; Tools remain available regardless of those switches.
             ...(powerUpChildren.length > 0 ? [{
                 key: 'powerups' as const,
                 icon: <IconBolt sx={{ fontSize: 22 }} />,
@@ -385,24 +396,6 @@ export function useActivityItems(): ActivityItem[] {
                 defaultPath: powerUpChildren.find((item): item is NavItemBase => item.type !== 'divider')?.path,
                 children: powerUpChildren,
             }] as ActivityItem[] : []),
-            ...[{
-                key: 'tools' as const,
-                icon: <IconTools sx={{ fontSize: 22 }} />,
-                label: t('layout.tools', { defaultValue: 'Tools' }),
-                defaultPath: '/mcp/server-tools',
-                children: [
-                    { path: '/mcp/server-tools', label: t('mcp.workspace.serverToolsNav', { defaultValue: 'Server Tools' }), icon: <IconServer sx={{ fontSize: 20 }} />, match: (path: string) => ['/mcp/server-tools', '/tools/servertool'].includes(path) },
-                    { path: '/mcp/tools', label: t('mcp.workspace.toolsNav', { defaultValue: 'MCP Tools' }), icon: <IconTerminal sx={{ fontSize: 20 }} />, match: (path: string) => ['/mcp/tools', '/mcp/sources'].includes(path) },
-                    ...mcpProfiles.map((p): NavItem => ({
-                        path: `/mcp/profile/${p.id}`,
-                        // The profile is the subject of its row (ux-principles #9).
-                        label: p.id === MCP_DEFAULT_PROFILE_ID ? t('mcp.workspace.defaultProfileName', { defaultValue: 'MCP Integration' }) : p.name || p.id,
-                        subtitle: p.id === MCP_DEFAULT_PROFILE_ID ? t('mcp.workspace.defaultNavCaption', { defaultValue: 'Default profile' }) : t('mcp.workspace.profileCaption', { defaultValue: 'MCP profile' }),
-                        icon: <SettingsApplications sx={{ fontSize: 20 }} />,
-                    })),
-                    { path: '/mcp/profile/new', label: t('mcp.workspace.newProfileAction', { defaultValue: 'New profile' }), icon: <IconPlus sx={{ fontSize: 20 }} /> },
-                ],
-            }] as ActivityItem[],
             // ── Configuration: set once, rarely revisited ──
             {
                 key: 'credential',
