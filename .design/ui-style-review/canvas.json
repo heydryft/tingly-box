@@ -38,23 +38,37 @@
       "h": 1130,
       "title": "3 · 方案 B：换视觉语法"
     },
-    "E-OptionC.dc.html": {
+    "H-OptionB2.dc.html": {
       "x": 0,
       "y": 4500,
+      "w": 1560,
+      "h": 1150,
+      "title": "3b · 方案 B2：保留卡片只留一层"
+    },
+    "I-OptionB3.dc.html": {
+      "x": 0,
+      "y": 5770,
+      "w": 1560,
+      "h": 1150,
+      "title": "3c · 方案 B3：底色分层"
+    },
+    "E-OptionC.dc.html": {
+      "x": 0,
+      "y": 7040,
       "w": 1560,
       "h": 1130,
       "title": "4 · 方案 C：换壳"
     },
     "F-DashInB.dc.html": {
       "x": 0,
-      "y": 5750,
+      "y": 8290,
       "w": 1560,
       "h": 1130,
       "title": "5 · B 推广到 Dashboard"
     },
     "G-Compare.dc.html": {
       "x": 0,
-      "y": 7000,
+      "y": 9540,
       "w": 1560,
       "h": 560,
       "title": "6 · 对比"
