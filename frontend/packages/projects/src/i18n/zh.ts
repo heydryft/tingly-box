@@ -179,6 +179,7 @@ export const zh: Dict<typeof en> = {
         files_one: '{{count}} 个文件', files_other: '{{count}} 个文件',
         noRepo: '无仓库——文件放入文件库', fromBase: '基于 {{base}}', uncommitted: '有未提交的改动',
         copyCd: '复制进入 worktree 的 cd 命令', back: '返回 Overview',
+        editTitle: '重命名线程',
         review: 'Review 改动', resolve: '标记为已解决', reopen: '重新打开', showTask: '查看任务', hideTask: '收起任务',
         showTrajectory: '查看轨迹', showChat: '查看对话', expandTools: '展开所有工具调用', collapseTools: '折叠工具调用',
         fromCoordinator: '协调者', allowThread: '本线程都允许 {{tool}}', loadEarlier: '显示更早的消息',

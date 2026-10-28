@@ -12,14 +12,15 @@ import { HeldMessages, heldMessages } from './HeldMessages';
 import { AttachmentChips, uploadAttachments, type AttachOwner } from '../attachments';
 import { CodeBlock, Markdown } from '../Markdown';
 import { ConfirmDialog, CopyIconButton } from '@tingly/ui';
-import { ArrowBack, DiffIcon, Merge, MoreVert, Robot, Stream, Terminal } from '../icons';
+import { ArrowBack, DiffIcon, MoreVert, Robot, Stream, Terminal, Warning } from '../icons';
 import { useNotify } from '../../hooks/useNotify';
 import { formatTokens } from '../../utils/format';
 import { DiffDialog } from './DiffDialog';
 import { ComposerStrip } from './ComposerStrip';
 import { RAIL_MIN_PANEL, ThreadInfoRail } from './ThreadInfoRail';
 import { LoadEarlier } from './LoadEarlier';
-import { needsUser, ThreadState, ThreadStateMark } from './threadStatus';
+import { needsUser, ThreadBadges, ThreadState, ThreadStateMark } from './threadStatus';
+import { ThreadTitle } from './ThreadTitle';
 import { threadTranscript } from './threadTranscript';
 import { threadOps } from './threadOps';
 import { BackgroundTasksPanel } from '../workdir/BackgroundTasksPanel';
@@ -309,6 +310,9 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
         if (liveTasks.length > 0) setConfirm(what);
         else void runConfirmed(what);
     };
+    // Renaming is metadata: it persists at once and the thread's next event
+    // carries it to every surface that shows it.
+    const saveTitle = async (title: string) => act(() => ops.setTitle(title));
 
     if (!thread) {
         return <Box sx={{ p: 2 }}><Skeleton height={40} /><Skeleton variant="rounded" height={200} /></Box>;
@@ -324,8 +328,16 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
                     {!hideTitle && <IconButton size="small" onClick={onBack} aria-label={t('thread.back')}><ArrowBack fontSize="small" /></IconButton>}
                     {hideTitle
                         ? <Box sx={{ flex: 1 }} />
-                        : <Typography noWrap sx={{ flex: 1, minWidth: 0, fontSize: fontSizes.base, fontWeight: 650, color: 'text.primary' }} title={thread.title}>{thread.title}</Typography>}
-                    {canReview && <Button size="small" variant="contained" startIcon={<DiffIcon />} onClick={() => setDiffOpen(true)} sx={{ flexShrink: 0, py: 0.25 }}>{t('thread.review')}</Button>}
+                        : <ThreadTitle title={thread.title} onSave={saveTitle} />}
+                    {canReview && (
+                        <Tooltip title={t('thread.review')}>
+                            {/* Icon-only, but still the contained call to action the text button was. */}
+                            <IconButton size="small" aria-label={t('thread.review')} onClick={() => setDiffOpen(true)}
+                                sx={{ flexShrink: 0, bgcolor: 'primary.main', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.dark' } }}>
+                                <DiffIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    )}
                     {/* While work runs in the background it names itself. */}
                     {session && liveTasks.length > 0 && !rail && (
                         <Tooltip title={t('session.backgroundTasks')}>
@@ -368,11 +380,16 @@ export function ThreadPanel({ projectId, folder = false, threadId, thread, event
                         <ThreadState status={thread.status} />,
                         // The folder and branch float above the message box.
                         !thread.branch && !session && t('thread.noRepo'),
-                        // The rail's Changes card carries these.
-                        !rail && (thread.merged_at
-                            ? <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}><Merge sx={{ fontSize: 13 }} />{t('thread.mergedInto', { base: thread.base_branch })}</Box>
-                            : thread.commits_ahead > 0 && <>{t('thread.commits', { count: thread.commits_ahead })} · {t('thread.files', { count: thread.files_changed })}</>),
-                        !rail && thread.uncommitted && t('thread.uncommitted'),
+                        // The work, as badges whose details hover out (the
+                        // rail's Changes card carries them in full).
+                        <ThreadBadges thread={thread} />,
+                        thread.uncommitted && (
+                            <Tooltip title={t('thread.uncommitted')}>
+                                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
+                                    <Warning sx={{ fontSize: 14, display: 'block' }} />
+                                </Box>
+                            </Tooltip>
+                        ),
                     ]} />
                 </Box>
                 <Collapse in={taskOpen}>

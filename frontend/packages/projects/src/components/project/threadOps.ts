@@ -17,6 +17,8 @@ export interface ThreadOps {
     reopen: () => Promise<unknown>;
     /** Release a folder thread to a terminal: the command that resumes it. */
     handoff: () => Promise<string>;
+    /** Rename the thread; the renamed thread comes back. */
+    setTitle: (title: string) => Promise<unknown>;
     /** When a question with a suggested answer is answered without the user. */
     setAutoAnswer: (mode: '' | 'off' | 'delay' | 'now') => Promise<unknown>;
 }
@@ -33,6 +35,7 @@ export function threadOps(id: string): ThreadOps {
         finish: () => unwrap(api.POST('/api/v1/threads/{id}/archive', path)),
         reopen: () => unwrap(api.POST('/api/v1/threads/{id}/reopen', path)),
         handoff: async () => (await unwrap(api.POST('/api/v1/threads/{id}/handoff', path))).command,
+        setTitle: (title) => unwrap(api.PUT('/api/v1/threads/{id}/title', { ...path, body: { title } })),
         setAutoAnswer: (auto_answer) => unwrap(api.PUT('/api/v1/threads/{id}/auto-answer', { ...path, body: { auto_answer } })),
     };
 }

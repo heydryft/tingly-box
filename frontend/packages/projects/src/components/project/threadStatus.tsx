@@ -2,7 +2,7 @@ import { Box } from '@mui/material';
 import { fontMono, fontSizes } from '@tingly/ui/theme/fonts';
 import { getReadableAccent } from '@tingly/ui/theme/status';
 import { useTranslation } from 'react-i18next';
-import { Branch, CheckCircle, CircleDashed, Merge, Spinner } from '../icons';
+import { CheckCircle, CircleDashed, GitCommit, Merge, Spinner } from '../icons';
 import type { Thread } from '../../client';
 import { radius } from '@tingly/ui/theme/radius';
 
@@ -112,7 +112,8 @@ const pill = {
 } as const;
 
 /** A thread's work at a glance, as small pills: its commits, or that it was
- * merged. Nothing for a thread without a branch. */
+ * merged. Nothing for a thread without a branch; the details sit in the
+ * tooltip, so the pill stays one icon and one word wherever it shows. */
 export function ThreadBadges({ thread }: { thread: Thread }) {
     const { t } = useTranslation('projects');
     if (thread.merged_at) {
@@ -125,8 +126,10 @@ export function ThreadBadges({ thread }: { thread: Thread }) {
     }
     if (!thread.branch || thread.commits_ahead === 0) return null;
     return (
-        <Box component="span" title={thread.branch} sx={pill}>
-            <Branch />{t('thread.commits', { count: thread.commits_ahead })}
+        <Box component="span"
+            title={[thread.branch, t('thread.commits', { count: thread.commits_ahead }), t('thread.files', { count: thread.files_changed })].filter(Boolean).join(' · ')}
+            sx={pill}>
+            <GitCommit />{t('thread.commits', { count: thread.commits_ahead })}
         </Box>
     );
 }

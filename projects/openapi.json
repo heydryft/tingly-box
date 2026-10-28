@@ -2224,6 +2224,50 @@
           }
         }
       }
+    },
+    "/api/v1/threads/{id}/title": {
+      "put": {
+        "tags": [
+          "threads"
+        ],
+        "summary": "Rename the thread",
+        "description": "Rename the thread",
+        "operationId": "apiV1ThreadsIdTitlePut",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Request body",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TitleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Thread"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4034,6 +4078,18 @@
         },
         "required": [
           "threads"
+        ]
+      },
+      "TitleRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Field title"
+          }
+        },
+        "required": [
+          "title"
         ]
       },
       "UpdateConversationRequest": {

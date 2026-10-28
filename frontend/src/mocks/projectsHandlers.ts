@@ -321,6 +321,12 @@ export const projectsHandlers = [
         else th.model = model
         return HttpResponse.json(th)
     }),
+    http.put('/api/v1/threads/:tid/title', async ({ params, request }) => {
+        const th = findThread(params.tid as string) as Record<string, unknown> | undefined
+        if (!th) return HttpResponse.json({ error: 'thread not found' }, { status: 404 })
+        th.title = ((await request.json()) as { title: string }).title
+        return HttpResponse.json(th)
+    }),
     http.post('/api/v1/threads/:tid/handoff', ({ params }) => {
         const s = sessions.find((x) => x.id === params.tid)
         if (!s) return HttpResponse.json({ error: 'thread not found' }, { status: 404 })

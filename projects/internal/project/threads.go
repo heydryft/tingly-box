@@ -30,6 +30,8 @@ var (
 	ErrNotProject = errors.New("only a project's main thread starts threads in it")
 	// ErrMainThread is for running a main thread as an agent session.
 	ErrMainThread = errors.New("a main thread is the project conversation; send to it through the coordinator")
+	// ErrEmptyTitle is for renaming a thread to nothing.
+	ErrEmptyTitle = errors.New("the title is empty")
 )
 
 // MaxRunningPerProject caps concurrently running turns in one project. Turns
@@ -987,6 +989,34 @@ func (m *Threads) Reopen(threadID string) (*db.Thread, error) {
 			t.Status = db.ThreadReady
 		}
 	})
+}
+
+// MaxTitleLength caps a thread's title, like the column that stores it.
+const MaxTitleLength = 300
+
+// SetTitle renames a thread. Like every metadata edit it does not bump the
+// thread's UpdatedAt, so it keeps its place in "recently updated".
+func (m *Threads) SetTitle(threadID, title string) (*db.Thread, error) {
+	title = strings.TrimSpace(title)
+	if title == "" {
+		return nil, ErrEmptyTitle
+	}
+	if runes := []rune(title); len(runes) > MaxTitleLength {
+		title = string(runes[:MaxTitleLength])
+	}
+	l := m.rowLock(threadID)
+	l.Lock()
+	defer l.Unlock()
+	t, err := m.store.GetThread(threadID)
+	if err != nil {
+		return nil, err
+	}
+	t.Title = title
+	if err := m.store.SetThreadTitle(threadID, title); err != nil {
+		return nil, err
+	}
+	m.publish(t)
+	return t, nil
 }
 
 // Merge merges a thread's branch into its base in the main checkout and

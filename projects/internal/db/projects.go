@@ -238,6 +238,12 @@ func (s *Store) SaveThread(t *Thread) error {
 	return s.db.Save(t).Error
 }
 
+// SetThreadTitle renames a thread without bumping its UpdatedAt: a metadata
+// edit keeps the thread's place in "recently updated".
+func (s *Store) SetThreadTitle(id, title string) error {
+	return s.db.Model(&Thread{}).Where("id = ?", id).UpdateColumn("title", title).Error
+}
+
 // ListThreads returns a project's threads, most recently updated first. The
 // main thread is the project's conversation and is not listed.
 func (s *Store) ListThreads(projectID string) ([]Thread, error) {

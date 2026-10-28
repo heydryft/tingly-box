@@ -116,6 +116,11 @@ type ModelRequest struct {
 	Model string `json:"model"`
 }
 
+// TitleRequest renames a thread.
+type TitleRequest struct {
+	Title string `json:"title"`
+}
+
 // HandoffResponse is the command that continues the thread in a terminal.
 type HandoffResponse struct {
 	Command string `json:"command"`
@@ -222,6 +227,10 @@ func (h *Handler) RegisterRoutes(r *module.Routes) {
 	api.PUT("/threads/:id/model", h.setModel, tag,
 		swagger.WithDescription("Set the model of the thread's next turn; empty restores its project or host profile default"),
 		swagger.WithRequestModel(ModelRequest{}),
+		swagger.WithResponseModel(db.Thread{}))
+	api.PUT("/threads/:id/title", h.setTitle, tag,
+		swagger.WithDescription("Rename the thread"),
+		swagger.WithRequestModel(TitleRequest{}),
 		swagger.WithResponseModel(db.Thread{}))
 	api.POST("/threads/:id/handoff", h.handoff, tag,
 		swagger.WithDescription("Release the thread to a terminal: closes its process and returns the command that resumes it"),
@@ -604,6 +613,23 @@ func (h *Handler) setModel(c *gin.Context) {
 		return
 	}
 	out, err := h.svc.Threads.SetModel(c.Request.Context(), t.ID, req.Model)
+	if err != nil {
+		fail(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, out)
+}
+
+func (h *Handler) setTitle(c *gin.Context) {
+	var req TitleRequest
+	if !apierr.Bind(c, &req) {
+		return
+	}
+	t, ok := h.thread(c)
+	if !ok {
+		return
+	}
+	out, err := h.svc.Threads.SetTitle(t.ID, req.Title)
 	if err != nil {
 		fail(c, err)
 		return

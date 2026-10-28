@@ -587,3 +587,20 @@ func TestThreadWorktreeFallsBackToDataDir(t *testing.T) {
 	}
 	assert.True(t, said, "status %s: %s", th.Status, th.WaitReason)
 }
+
+func TestSetTitle(t *testing.T) {
+	f := newFixture(t, func(*enginetest.Turn) error { return errors.New("no turns expected") })
+	th := &db.Thread{ProjectID: f.project.ID, Agent: db.AgentClaudeCode, Title: "Before", Task: "t", Status: db.ThreadIdle, Cwd: f.repo}
+	require.NoError(t, f.store.CreateThread(th))
+
+	renamed, err := f.threads.SetTitle(th.ID, "  After  ")
+	require.NoError(t, err)
+	assert.Equal(t, "After", renamed.Title)
+	stored, err := f.store.GetThread(th.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "After", stored.Title)
+	assert.True(t, th.UpdatedAt.Equal(stored.UpdatedAt), "a rename must not bump updated_at")
+
+	_, err = f.threads.SetTitle(th.ID, "   ")
+	assert.ErrorIs(t, err, ErrEmptyTitle)
+}

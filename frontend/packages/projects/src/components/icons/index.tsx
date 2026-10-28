@@ -15,6 +15,7 @@ import {
     IconFolderPlus,
     IconFolderShare,
     IconGitBranch,
+    IconGitCommit,
     IconGitMerge,
     IconHandStop,
     IconHistoryToggle,
@@ -60,6 +61,7 @@ export const Attach = tablerMui(IconPaperclip);
 export const MemoryOff = tablerMui(IconHistoryToggle);
 export const Branch = tablerMui(IconGitBranch);
 export const Merge = tablerMui(IconGitMerge);
+export const GitCommit = tablerMui(IconGitCommit);
 export const OverviewPane = tablerMui(IconLayoutSidebarRight);
 export const Question = tablerMui(IconMessageCircleQuestion);
 export const DiffIcon = tablerMui(IconFileDiff);
