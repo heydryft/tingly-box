@@ -126,6 +126,16 @@ func (w *World) anyRunning() bool {
 	return false
 }
 
+// UpdateProject changes the project's settings, as the user would in the UI
+// (without waking the coordinator).
+func (w *World) UpdateProject(change func(*db.Project)) {
+	w.T.Helper()
+	p, err := w.Store.GetProject(w.Project.ID)
+	require.NoError(w.T, err)
+	change(p)
+	require.NoError(w.T, w.Store.SaveProject(p))
+}
+
 // Say is the user writing in the project conversation.
 func (w *World) Say(text string) {
 	w.T.Helper()
@@ -207,9 +217,22 @@ func (w *World) ThreadIs(title, status string) db.Thread {
 }
 
 // Quiet waits for the coordinator and every thread to go idle.
+//
+// A thread goes idle a moment before its report reaches the coordinator, so
+// idle must hold steadily, not just once.
 func (w *World) Quiet() {
 	w.T.Helper()
-	w.Eventually("everything idle", func() bool { return !w.Coord.Busy(w.Project.ID) && !w.anyRunning() })
+	idleSince := time.Time{}
+	w.Eventually("everything idle", func() bool {
+		if w.Coord.Busy(w.Project.ID) || w.anyRunning() {
+			idleSince = time.Time{}
+			return false
+		}
+		if idleSince.IsZero() {
+			idleSince = time.Now()
+		}
+		return time.Since(idleSince) > 150*time.Millisecond
+	})
 }
 
 // Requests are the model requests the coordinator made, in order.

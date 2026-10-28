@@ -18,6 +18,8 @@ type BrainFunc func(c *BrainCtx) llm.Result
 // BrainCtx is one request to the coordinator's model.
 type BrainCtx struct {
 	Req llm.Request
+	// Err, when set, makes the request fail as an upstream error would.
+	Err error
 }
 
 // Last is the text of the last user message.
@@ -75,7 +77,11 @@ func (b *brain) Stream(_ context.Context, req llm.Request, onDelta func(string))
 	b.mu.Unlock()
 	res := llm.Result{Text: NoUpdate}
 	if b.fn != nil {
-		res = b.fn(&BrainCtx{Req: req})
+		c := &BrainCtx{Req: req}
+		res = b.fn(c)
+		if c.Err != nil {
+			return llm.Result{}, c.Err
+		}
 	}
 	if res.Text != "" {
 		onDelta(res.Text)

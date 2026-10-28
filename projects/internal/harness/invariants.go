@@ -15,6 +15,8 @@ import (
 //	trust.report-labelled  a thread's report reaches the coordinator labelled
 //	                       as a report, never as the user's words
 //	wait.has-reason        a thread waiting on the user says what for
+//	status.ready-has-commits  a thread is only "ready for review" when its
+//	                       branch has commits to review
 //	memory.index-resolves  every link in MEMORY.md names a file that exists
 func (w *World) CheckInvariants() {
 	t := w.T
@@ -31,6 +33,12 @@ func (w *World) CheckInvariants() {
 	for _, th := range w.ThreadList() {
 		if th.Status == db.ThreadWaiting && strings.TrimSpace(th.WaitReason) == "" {
 			t.Errorf("wait.has-reason: thread %q is waiting with no reason", th.Title)
+		}
+	}
+
+	for _, th := range w.ThreadList() {
+		if th.Status == db.ThreadReady && th.Branch != "" && th.CommitsAhead == 0 {
+			t.Errorf("status.ready-has-commits: thread %q is ready with no commits", th.Title)
 		}
 	}
 
