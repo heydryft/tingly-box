@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>6 · 三个方案对比</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+body{margin:0;font-family:Inter,system-ui,"PingFang SC","Noto Sans CJK SC",sans-serif;color:#16181d;-webkit-font-smoothing:antialiased}
+.m{font-family:"JetBrains Mono",ui-monospace,monospace}
+</style>
+</helmet>
+<div style="position:relative;width:1560px;height:560px;box-sizing:border-box;background:#f7f7f4;overflow:hidden;padding:32px 40px;display:flex;flex-direction:column;gap:18px">
+<div><div style="font-size:26px;font-weight:700;letter-spacing:-0.3px">6 · 三个方案对比</div><div style="font-size:15px;color:#4a4f5a;margin-top:4px;max-width:1400px;line-height:1.55">同一份判断标准（ux-principles 的 12 条）下的取舍。</div></div>
+<table style="border-collapse:collapse;width:100%;font-size:14px;background:#fff;border:1px solid #e3e4e8;border-radius:10px;overflow:hidden"><thead><tr style="background:#f1f2f4;text-align:left"><th style="padding:12px 16px;width:200px"></th><th style="padding:12px 16px">A 收紧令牌</th><th style="padding:12px 16px">B 换视觉语法</th><th style="padding:12px 16px">C 换壳</th></tr></thead><tbody><tr style="border-top:1px solid #eceef1"><td style="padding:11px 16px;font-weight:600">观感变化</td><td style="padding:11px 16px;">几乎无</td><td style="padding:11px 16px;">明显，更干净、更有层次</td><td style="padding:11px 16px;">彻底</td></tr><tr style="border-top:1px solid #eceef1"><td style="padding:11px 16px;font-weight:600">老用户学习成本</td><td style="padding:11px 16px;">无</td><td style="padding:11px 16px;">很低，位置不变</td><td style="padding:11px 16px;">高</td></tr><tr style="border-top:1px solid #eceef1"><td style="padding:11px 16px;font-weight:600">解决"没重心"</td><td style="padding:11px 16px;">否</td><td style="padding:11px 16px;">是</td><td style="padding:11px 16px;">是</td></tr><tr style="border-top:1px solid #eceef1"><td style="padding:11px 16px;font-weight:600">解决"嵌套边框"</td><td style="padding:11px 16px;">否</td><td style="padding:11px 16px;">是</td><td style="padding:11px 16px;">是</td></tr><tr style="border-top:1px solid #eceef1"><td style="padding:11px 16px;font-weight:600">改动范围</td><td style="padding:11px 16px;">全局令牌 + lint</td><td style="padding:11px 16px;">页头、规则卡、连接区、导航选中态、主题令牌</td><td style="padding:11px 16px;">整个壳、导航、Projects 适配、全部页面</td></tr><tr style="border-top:1px solid #eceef1"><td style="padding:11px 16px;font-weight:600">可否分阶段回退</td><td style="padding:11px 16px;">是</td><td style="padding:11px 16px;">是，逐页推进</td><td style="padding:11px 16px;">很难</td></tr><tr style="border-top:1px solid #eceef1"><td style="padding:11px 16px;font-weight:600">验证面（主题 × 明暗 × 语言）</td><td style="padding:11px 16px;">不变</td><td style="padding:11px 16px;">分隔线需重校</td><td style="padding:11px 16px;">全部重来</td></tr><tr style="border-top:1px solid #eceef1"><td style="padding:11px 16px;font-weight:600;background:#f7f8fb">建议</td><td style="padding:11px 16px;;background:#f7f8fb">做，作为 B 的第一步</td><td style="padding:11px 16px;;background:#f7f8fb">主推</td><td style="padding:11px 16px;;background:#f7f8fb">仅当产品重心转向 Projects 时才启动</td></tr></tbody></table>
+</div>
+</x-dc>
+</body>
+</html>

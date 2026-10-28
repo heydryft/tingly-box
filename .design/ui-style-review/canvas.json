@@ -1,0 +1,63 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-28T16:00:00Z"
+  },
+  "title": "UI style direction review",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "A-Overview.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1560,
+      "h": 760,
+      "title": "0 · 怎么读这份评审"
+    },
+    "B-AgentNow.dc.html": {
+      "x": 0,
+      "y": 880,
+      "w": 1560,
+      "h": 1000,
+      "title": "1 · Agent 页现状"
+    },
+    "C-OptionA.dc.html": {
+      "x": 0,
+      "y": 2000,
+      "w": 1560,
+      "h": 1130,
+      "title": "2 · 方案 A：收紧令牌"
+    },
+    "D-OptionB.dc.html": {
+      "x": 0,
+      "y": 3250,
+      "w": 1560,
+      "h": 1130,
+      "title": "3 · 方案 B：换视觉语法"
+    },
+    "E-OptionC.dc.html": {
+      "x": 0,
+      "y": 4500,
+      "w": 1560,
+      "h": 1130,
+      "title": "4 · 方案 C：换壳"
+    },
+    "F-DashInB.dc.html": {
+      "x": 0,
+      "y": 5750,
+      "w": 1560,
+      "h": 1130,
+      "title": "5 · B 推广到 Dashboard"
+    },
+    "G-Compare.dc.html": {
+      "x": 0,
+      "y": 7000,
+      "w": 1560,
+      "h": 560,
+      "title": "6 · 对比"
+    }
+  }
+}
