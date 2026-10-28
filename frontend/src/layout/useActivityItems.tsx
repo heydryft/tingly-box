@@ -249,16 +249,6 @@ export function useActivityItems(): ActivityItem[] {
 
         // Children of the Power-ups rail item, one group per enabled feature.
         const powerUpGroups: NavItem[][] = [];
-        if (enableGuardrails) {
-            powerUpGroups.push([
-                { path: '/guardrails', label: t('layout.guardrails'), icon: <IconShield sx={{ fontSize: 20 }} /> },
-                { path: '/guardrails/groups', label: t('layout.policyGroups'), icon: <IconLicense sx={{ fontSize: 20 }} /> },
-                { path: '/guardrails/rules', label: t('layout.policies'), icon: <IconLicense sx={{ fontSize: 20 }} /> },
-                { path: '/guardrails/credentials', label: t('layout.protectedCredentials', { defaultValue: 'Secrets' }), icon: <IconKey sx={{ fontSize: 20 }} /> },
-                { path: '/guardrails/history', label: t('layout.guardrailsHistory'), icon: <IconQuota sx={{ fontSize: 20 }} /> },
-            ]);
-        }
-        if (promptMenuItems.length > 0) powerUpGroups.push(promptMenuItems);
         // Bench — the customizable end-to-end test workbench (.design/bench.md).
         if (enableBench) {
             powerUpGroups.push([
@@ -278,6 +268,16 @@ export function useActivityItems(): ActivityItem[] {
             })),
             { path: '/mcp/profile/new', label: t('mcp.workspace.newProfileAction', { defaultValue: 'New profile' }), icon: <IconPlus sx={{ fontSize: 20 }} /> },
         ]);
+        if (enableGuardrails) {
+            powerUpGroups.push([
+                { path: '/guardrails', label: t('layout.guardrails'), icon: <IconShield sx={{ fontSize: 20 }} /> },
+                { path: '/guardrails/groups', label: t('layout.policyGroups'), icon: <IconLicense sx={{ fontSize: 20 }} /> },
+                { path: '/guardrails/rules', label: t('layout.policies'), icon: <IconLicense sx={{ fontSize: 20 }} /> },
+                { path: '/guardrails/credentials', label: t('layout.protectedCredentials', { defaultValue: 'Secrets' }), icon: <IconKey sx={{ fontSize: 20 }} /> },
+                { path: '/guardrails/history', label: t('layout.guardrailsHistory'), icon: <IconQuota sx={{ fontSize: 20 }} /> },
+            ]);
+        }
+        if (promptMenuItems.length > 0) powerUpGroups.push(promptMenuItems);
         const powerUpChildren: NavItem[] = powerUpGroups.flatMap((group, i) => (i === 0 ? group : [{ type: 'divider' as const }, ...group]));
 
         // Rail order, top to bottom: usage → use → power-ups → configuration.
