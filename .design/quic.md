@@ -22,7 +22,7 @@ Caddy 在一个公网端口号的 TCP/UDP 上承载 HTTPS 和 HTTP/3，负责证
 - 本地 TB 只接受已验证 HTTPS 的同源同端口 H3 声明，后台对业务请求同一 URL 发带标记的 HEAD 探测云端 TB 的能力，探测结果按 URL 隔离；探测成功后才切换后续请求。明文 HTTP 不自动升级。
 - 客户端需要信任部署层证书。自签名证书应通过受控 CA/信任库配置，禁止以关闭证书验证代替信任配置。当前 TB 没有专门的证书导入 UI；实验用进程级 `SSL_CERT_FILE`。
 - 不支持 H3 或 UDP 不可达时继续走 TCP；业务请求结果不明或已返回部分流时不能透明重放，避免重复生成和计费。主动取消向上游传播。
-- 云端 TB 的探测端点只回答能力，不处理业务请求；模型入口仍由已有认证与策略保护。
+- 云端 TB 对带 `Tingly-Transport-Probe: tb-peer-v1` 的 HEAD 请求返回 `Tingly-Transport: tb-peer-v1`，表明请求到达支持此探测的 TB；这个标记不表示 TB 自身监听 HTTP/3。探测走通 HTTP/3 链路还需部署层支持，普通业务请求继续由已有认证与策略保护。
 - Caddy 的明文 HTTP 和 HTTPS 共用同一 TCP 端口时，默认 TLS 入口不提供透明明文 API。可用 308 跳转，但客户端必须支持跳转并信任证书。
 - 代理到后端使用 HTTP/3 时，Caddy 的 H3-only upstream 不自动回落 HTTP/2；这里推荐的部署是 Caddy → TB 既有 HTTP。
 - 原端口明文 HTTP、HTTPS、QUIC 三协议共存曾以 cmux 做独立实验；未接入 `tb start`，不属于本方案的交付。

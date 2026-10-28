@@ -20,7 +20,9 @@ import (
 
 const ProbeHeader = "Tingly-Transport-Probe"
 const CapabilityHeader = "Tingly-Transport"
-const Capability = "http3-v1"
+
+// Capability identifies a TB peer that supports this probe, not a direct HTTP/3 server.
+const Capability = "tb-peer-v1"
 
 type peer struct {
 	ready      bool

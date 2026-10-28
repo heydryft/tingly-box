@@ -15,7 +15,10 @@ TB's peer URL as the proxy's trusted HTTPS URL. Plain `http://` URLs keep their
 existing transport; they are not automatically upgraded.
 
 The first request uses TCP. A verified HTTPS response advertising same-origin,
-same-port HTTP/3 starts a background HEAD probe. Success enables HTTP/3 for
+same-port HTTP/3 starts a background HEAD probe. The cloud TB answers a
+`Tingly-Transport-Probe: tb-peer-v1` request with `Tingly-Transport: tb-peer-v1`;
+this identifies the TB peer, not direct HTTP/3 support by the TB listener.
+The probe must also reach TB over HTTP/3 through the deployment. Success enables HTTP/3 for
 later requests; failure enters a bounded cooldown. Explicit HTTP/SOCKS proxies
 retain their configured path. Set `TINGLY_HTTP3=off` to disable discovery for
 new provider clients. Generic OpenAI and Anthropic provider paths are covered;

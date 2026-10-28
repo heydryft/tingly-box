@@ -8,7 +8,8 @@ HTTP-01 certificate issuance. Existing network or container firewall rules must
 publish both 443 protocols.
 
 The deployment forwards `/tingly/*` to the existing TB HTTP listener for model
-requests and same-path HEAD capability probes. Point a
+requests and same-path HEAD capability probes. TB handles the probe and identifies
+itself; Caddy only forwards it. Point a
 local TB peer at the authenticated `https://` URL. Plain `http://` peer URLs do
 not automatically upgrade. Existing `/mirror/*` and `/hi` behavior is retained.
 Caddy serves SSE without response buffering using its default event-stream
